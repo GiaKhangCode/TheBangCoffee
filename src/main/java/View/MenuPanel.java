@@ -1,15 +1,17 @@
 package View;
 
+import Model.ProductListModel;
+import Model.ProductModel;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * Giao diện Quản lý Thực đơn (Menu Đồ uống) - Dạng lưới (Card Layout)
- */
 public class MenuPanel extends JPanel {
 
     private final Color PRIMARY_COLOR = new Color(67, 142, 104);
@@ -18,8 +20,11 @@ public class MenuPanel extends JPanel {
 
     private JPanel gridPanel;
     private JButton btnAddProduct;
-    // Dùng backgroundLogin làm ảnh mẫu
+    private JTextField txtSearch;
+
     private ImageIcon defaultImage;
+    // Listener
+    private ProductClickListener productClickListener;
 
     public MenuPanel() {
         setLayout(new BorderLayout(0, 20));
@@ -29,12 +34,12 @@ public class MenuPanel extends JPanel {
         loadDefaultImage();
         initHeader();
         initProductGrid();
-        loadMockData();
+        
     }
 
+    // ================= LOAD IMAGE =================
     private void loadDefaultImage() {
         try {
-            // Lấy ảnh từ src/main/resources/images/ (Sử dụng backgroundLogin làm mockup)
             URL imgUrl = getClass().getResource("/images/backgroundLogin.jpg");
             if (imgUrl != null) {
                 ImageIcon originalIcon = new ImageIcon(imgUrl);
@@ -49,7 +54,6 @@ public class MenuPanel extends JPanel {
     }
 
     private ImageIcon createPlaceholderIcon(int width, int height) {
-        // Tạo 1 ảnh xám giữ chỗ nếu không lẫy được hình gốc
         java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(width, height, java.awt.image.BufferedImage.TYPE_INT_RGB);
         Graphics2D g2 = img.createGraphics();
         g2.setColor(new Color(230, 230, 230));
@@ -60,21 +64,19 @@ public class MenuPanel extends JPanel {
         return new ImageIcon(img);
     }
 
+    // ================= HEADER =================
     private void initHeader() {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
 
-        // Bên trái: Ô tìm kiếm
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         leftPanel.setOpaque(false);
-        
-        JTextField txtSearch = new JTextField(25);
+
+        txtSearch = new JTextField(25);
         txtSearch.setPreferredSize(new Dimension(300, 40));
         txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtSearch.putClientProperty("JTextField.placeholderText", "Tìm kiếm đồ uống...");
         leftPanel.add(txtSearch);
 
-        // Bên phải: Nút Thêm Mới
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         rightPanel.setOpaque(false);
 
@@ -86,12 +88,6 @@ public class MenuPanel extends JPanel {
         btnAddProduct.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnAddProduct.setFocusPainted(false);
         btnAddProduct.setBorderPainted(false);
-        
-        btnAddProduct.addActionListener(e -> {
-            Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
-            ProductDetailDialog dialog = new ProductDetailDialog(parentFrame);
-            dialog.setVisible(true);
-        });
 
         rightPanel.add(btnAddProduct);
 
@@ -101,8 +97,8 @@ public class MenuPanel extends JPanel {
         add(headerPanel, BorderLayout.NORTH);
     }
 
+    // ================= GRID =================
     private void initProductGrid() {
-        // Dùng GridLayout(0, 4) và ScrollablePanel để ép chiều rộng vừa khít màn hình, không bị tràn (Không có thanh cuộn ngang)
         gridPanel = new ScrollablePanel(new GridLayout(0, 4, 20, 20));
         gridPanel.setOpaque(false);
         gridPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -110,127 +106,117 @@ public class MenuPanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(gridPanel);
         scrollPane.getViewport().setBackground(Color.WHITE);
         scrollPane.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230)));
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER); // Tắt thanh cuộn ngang
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         add(scrollPane, BorderLayout.CENTER);
     }
 
-    // Class con cài đặt trạng thái cuộn để tắt cuộn ngang, giúp các thẻ tự động thu phóng lại nếu màn hình hẹp
     private class ScrollablePanel extends JPanel implements Scrollable {
         public ScrollablePanel(LayoutManager layout) {
             super(layout);
         }
-        @Override public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
-        @Override public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) { return 16; }
-        @Override public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) { return visibleRect.height; }
-        @Override public boolean getScrollableTracksViewportWidth() { return true; } // Bắt buộc panel thu lại vừa JScrollPane
-        @Override public boolean getScrollableTracksViewportHeight() { return false; } // Vẫn cho phép cuộn dọc
+
+        public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
+        public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) { return 16; }
+        public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) { return visibleRect.height; }
+        public boolean getScrollableTracksViewportWidth() { return true; }
+        public boolean getScrollableTracksViewportHeight() { return false; }
     }
-
-    private void loadMockData() {
+    
+    // ================= DISPLAY DATA =================
+    public void displayProductList(ProductListModel list) {
         gridPanel.removeAll();
-        
-        Object[][] data = {
-            {"Cà phê sữa đá", "29,000", "Truyền thống"},
-            {"Bạc xỉu 3 tầng", "35,000", "Truyền thống"},
-            {"Trà đào cam sả", "45,000", "Trà trái cây"},
-            {"Trà vải kiều mạch", "45,000", "Trà trái cây"},
-            {"Đá xay việt quất", "55,000", "Đá xay"},
-            {"Trà ổi hồng hồng", "40,000", "Trà trái cây"},
-            {"Cà phê đen đá", "25,000", "Truyền thống"},
-            {"Matcha đá xay", "49,000", "Đá xay"},
-            {"Trà hạt sen", "39,000", "Trà trái cây"},
-            {"Cacao nóng", "35,000", "Cổ điển"}
-        };
 
-        for (Object[] row : data) {
-            String name = (String) row[0];
-            String price = (String) row[1];
-            String category = (String) row[2];
-            
-            gridPanel.add(createProductCard(name, price, category));
+        for (ProductModel p : list.getProductList()) {
+            gridPanel.add(createProductCard(p));
         }
 
         gridPanel.revalidate();
         gridPanel.repaint();
     }
 
-    private JPanel createProductCard(String name, String price, String category) {
+    // ================= CARD =================
+    private JPanel createProductCard(ProductModel product) {
+
         JPanel card = new JPanel(new BorderLayout(0, 15)) {
-            @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(Color.WHITE);
-                g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 15, 15);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
                 g2.setColor(new Color(220, 220, 220));
-                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 15, 15);
+                g2.drawRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
                 g2.dispose();
             }
         };
+
         card.setOpaque(false);
         card.setBorder(new EmptyBorder(15, 15, 15, 15));
-        card.setPreferredSize(new Dimension(220, 280));
         card.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // Hover Effect
+        // Hover
         card.addMouseListener(new MouseAdapter() {
-            @Override
             public void mouseEntered(MouseEvent e) {
-                card.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(PRIMARY_COLOR, 2, true),
-                    new EmptyBorder(13, 13, 13, 13)
-                ));
+                card.setBorder(BorderFactory.createLineBorder(PRIMARY_COLOR, 2, true));
             }
 
-            @Override
             public void mouseExited(MouseEvent e) {
                 card.setBorder(new EmptyBorder(15, 15, 15, 15));
             }
-            
-            @Override
+
             public void mouseClicked(MouseEvent e) {
-                // Ví dụ khi click vào món thì cũng mở detail lên (edit mode)
-                Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(card);
-                ProductDetailDialog dialog = new ProductDetailDialog(parentFrame);
-                dialog.setVisible(true);
+                if (productClickListener != null) {
+                    productClickListener.onClick(product);
+                }
             }
         });
 
-        // Ảnh món nước (đã bo tròn một phần nếu có thể, tạm dùng icon phẳng)
-        JLabel lblImage = new JLabel(defaultImage);
+        ImageIcon icon = product.getImageData() != null ? product.getImageData() : defaultImage;
+
+        JLabel lblImage = new JLabel(icon);
         lblImage.setHorizontalAlignment(SwingConstants.CENTER);
 
-        // Cụm Thông tin (Tên, Thể loại, Giá)
-        JPanel infoPanel = new JPanel();
-        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
-        infoPanel.setOpaque(false);
+        JPanel info = new JPanel();
+        info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
+        info.setOpaque(false);
 
-        JLabel lblName = new JLabel(name);
-        lblName.setFont(new Font("Segoe UI", Font.BOLD, 17));
-        lblName.setForeground(TEXT_DARK);
-        lblName.setAlignmentX(Component.CENTER_ALIGNMENT);
+        JLabel lblName = new JLabel(product.getProductName());
+        lblName.setFont(new Font("Segoe UI", Font.BOLD, 16));
 
-        JLabel lblCategory = new JLabel(category);
-        lblCategory.setFont(new Font("Segoe UI", Font.ITALIC, 14));
+        JLabel lblCategory = new JLabel(product.getCategoryName());
         lblCategory.setForeground(TEXT_MUTED);
-        lblCategory.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel lblPrice = new JLabel(price + " đ");
-        lblPrice.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        JLabel lblPrice = new JLabel(product.getBasicPrice()+ " đ");
         lblPrice.setForeground(PRIMARY_COLOR);
-        lblPrice.setAlignmentX(Component.CENTER_ALIGNMENT);
-        lblPrice.setBorder(new EmptyBorder(8, 0, 0, 0));
 
-        infoPanel.add(lblName);
-        infoPanel.add(Box.createRigidArea(new Dimension(0, 3)));
-        infoPanel.add(lblCategory);
-        infoPanel.add(lblPrice);
+        lblName.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblCategory.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblPrice.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        info.add(lblName);
+        info.add(lblCategory);
+        info.add(lblPrice);
 
         card.add(lblImage, BorderLayout.NORTH);
-        card.add(infoPanel, BorderLayout.CENTER);
+        card.add(info, BorderLayout.CENTER);
 
         return card;
+    }
+
+    // ================= LISTENER =================
+    public void addAddProductListener(java.awt.event.ActionListener listener) {
+        btnAddProduct.addActionListener(listener);
+    }
+
+    public void setProductClickListener(ProductClickListener listener) {
+        this.productClickListener = listener;
+    }
+
+    public String getSearchText() {
+        return txtSearch.getText();
+    }
+
+    // ================= INTERFACE =================
+    public interface ProductClickListener {
+        void onClick(ProductModel product);
     }
 }

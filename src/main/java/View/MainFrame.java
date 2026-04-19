@@ -22,7 +22,7 @@ public class MainFrame extends JFrame {
     private JPanel contentArea;
     private CardLayout cardLayout;
     private StockPanel stockPanel;
-    
+    private MenuPanel menuPanel;
     private Map<String, NavButton> navButtons;
     private NavButton activeButton;
     
@@ -88,8 +88,9 @@ public class MainFrame extends JFrame {
         contentArea.add(new MenuPanel(), "Menu");
         //------------------------------------------------------------------------
         this.stockPanel = new StockPanel(); 
+        this.menuPanel = new MenuPanel();
         contentArea.add(this.stockPanel, "Stock"); 
-        
+        contentArea.add(this.menuPanel, "Menu"); 
 //        try {
 //            DatabaseAccessObject.NguyenLieuDAO dao = new DatabaseAccessObject.NguyenLieuDAO();
 //            java.util.List<Model.NguyenLieu> data = dao.getNguyenLieu();
@@ -165,5 +166,9 @@ public class MainFrame extends JFrame {
     
     public StockPanel getStockPanel(){
         return stockPanel;
+    }
+    
+    public MenuPanel getMenuPanel(){
+        return menuPanel;
     }
 }
