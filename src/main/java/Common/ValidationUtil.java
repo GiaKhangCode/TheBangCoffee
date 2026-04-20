@@ -164,4 +164,20 @@ public class ValidationUtil {
 
         return true;
     }
+    
+    public static String validateProductDetail(String productName, double basicPrice, String category, String status){
+        if (productName == null || productName.equals("")) {
+            return "Tên sản phẩm không được để trống";
+        }
+        if (category == null || category.equals("")) {
+            return "Loại sản phẩm không được để trống";
+        }
+        if (status == null || status.equals("")) {
+            return "Trạng thái không được để trống";
+        }
+        if(basicPrice == 0.0){
+            return "Giá tiền cơ bản không được để trống";
+        }
+        return "Hợp lệ";
+    }
 }

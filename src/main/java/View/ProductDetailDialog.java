@@ -1,599 +1,418 @@
 package View;
 
+import Model.OptionModel;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.RoundRectangle2D;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Giao diện Chi tiết / Tạo Sản Phẩm - The Bang Coffee.
- * Thiết kế hiện đại, đồng bộ database SAN_PHAM + LOAI_SAN_PHAM.
+ * Giao diện Tạo món mới và Thiết lập công thức - The Bang Coffee.
+ * Thiết kế hiện đại, đồng bộ với phong cách hệ thống.
+ * Đã nâng cấp: Render Tùy chọn (Checkbox) ĐỘNG giữ nguyên Layout.
  */
 public class ProductDetailDialog extends JDialog {
 
-    // ── Palette ────────────────────────────────────────────────────────────
-    private static final Color PRIMARY      = new Color(44, 62, 80);   // deep navy
-    private static final Color ACCENT       = new Color(52, 152, 219); // blue
-    private static final Color ACCENT_LIGHT = new Color(235, 245, 255);
-    private static final Color SUCCESS      = new Color(39, 174, 96);
-    private static final Color SURFACE      = Color.WHITE;
-    private static final Color BG           = new Color(245, 247, 250);
-    private static final Color BORDER_CLR   = new Color(218, 224, 232);
-    private static final Color TEXT_PRIMARY = new Color(30, 39, 46);
-    private static final Color TEXT_MUTED   = new Color(127, 140, 141);
-    private static final Color HEADER_BG    = new Color(52, 73, 94);
-
-    // ── Tab panels ─────────────────────────────────────────────────────────
     private JTabbedPane tabbedPane;
     private JPanel tabInfo, tabRecipe;
+    private Color PRIMARY_COLOR = AppColor.PRIMARY;
+    private Color TEXT_DARK = AppColor.TEXT_DARK;
+    private Color TEXT_MUTED = AppColor.TEXT_MUTED;
 
-    // ── Tab 1 – Thông tin sản phẩm ─────────────────────────────────────────
-    private JTextField txtTenMon;
-    private JTextField txtGiaBan;
+    // Components Tab 1
+    private JTextField txtTenMon, txtGiaBan;
     private JComboBox<String> cbDanhMuc;
-    private JLabel    lblImagePreview;
-    private JRadioButton rbDangSuDung, rbChuaSuDung;
+    private JTextArea txtMoTa;
+    private JLabel lblImagePlaceholder;
+    private JRadioButton rbDangBan, rbTamHet, rbNgungBan;
 
-    // ── Tab 2 – Công thức / Định lượng ─────────────────────────────────────
+    // Biến toàn cục cho Panel Tùy Chọn Động
+    private JPanel optionsPanel;
+    private Map<Integer, JCheckBox> optionCheckboxMap = new LinkedHashMap<>();
+
+    // Các nút bấm để Controller có thể gắn Listener
+    private JButton btnSave;
+    private JButton btnUpload;
+
+    // Components Tab 2
     private JComboBox<String> cbNguyenLieu;
     private JTextField txtDonVi, txtDinhLuong;
     private JTable recipeTable;
     private DefaultTableModel recipeModel;
     private JLabel lblTotalCost;
-    
-    private JButton btnSave;
-    private JButton btnUpload;
 
-    // ── Constructor ────────────────────────────────────────────────────────
     public ProductDetailDialog(Frame parent) {
-        super(parent, "THÊM SẢN PHẨM MỚI", true);
+        super(parent, "TẠO MÓN NƯỚC MỚI", true);
         initComponents();
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  INIT
-    // ══════════════════════════════════════════════════════════════════════
     private void initComponents() {
-        setSize(1000, 680);
+        setSize(1050, 700);
         setLocationRelativeTo(null);
-        setUndecorated(false);
         setLayout(new BorderLayout());
-        getContentPane().setBackground(BG);
+        getContentPane().setBackground(Color.WHITE);
 
-        add(buildHeader(), BorderLayout.NORTH);
-        add(buildBody(),   BorderLayout.CENTER);
-        add(buildFooter(), BorderLayout.SOUTH);
-    }
-
-    // ── Header ─────────────────────────────────────────────────────────────
-    private JPanel buildHeader() {
-        JPanel header = new JPanel(new BorderLayout()) {
-            @Override protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                GradientPaint gp = new GradientPaint(0, 0, HEADER_BG, getWidth(), 0, new Color(41, 128, 185));
-                g2.setPaint(gp);
-                g2.fillRect(0, 0, getWidth(), getHeight());
-                g2.dispose();
-            }
-        };
-        header.setPreferredSize(new Dimension(getWidth(), 58));
-        header.setBorder(new EmptyBorder(0, 24, 0, 16));
-
-        // Icon + Title
-        JLabel icon = new JLabel("☕");
-        icon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 22));
-        icon.setForeground(Color.WHITE);
-
-        JLabel title = new JLabel("  THÊM SẢN PHẨM MỚI");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 17));
+        // Header
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(PRIMARY_COLOR);
+        header.setPreferredSize(new Dimension(getWidth(), 50));
+        JLabel title = new JLabel("  TẠO MÓN NƯỚC MỚI");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 18));
         title.setForeground(Color.WHITE);
+        header.add(title, BorderLayout.WEST);
+        add(header, BorderLayout.NORTH);
 
-        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 14));
-        left.setOpaque(false);
-        left.add(icon);
-        left.add(title);
-
-        // Close button
-        JButton btnClose = new JButton("✕");
-        btnClose.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnClose.setForeground(new Color(255,255,255,180));
-        btnClose.setBackground(new Color(0,0,0,0));
-        btnClose.setBorder(new EmptyBorder(8, 12, 8, 8));
-        btnClose.setFocusPainted(false);
-        btnClose.setContentAreaFilled(false);
-        btnClose.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnClose.addMouseListener(new MouseAdapter() {
-            @Override public void mouseEntered(MouseEvent e) { btnClose.setForeground(Color.WHITE); }
-            @Override public void mouseExited(MouseEvent e)  { btnClose.setForeground(new Color(255,255,255,180)); }
-        });
-        btnClose.addActionListener(e -> dispose());
-
-        header.add(left,     BorderLayout.WEST);
-        header.add(btnClose, BorderLayout.EAST);
-        return header;
-    }
-
-    // ── Body (TabbedPane) ──────────────────────────────────────────────────
-    private JComponent buildBody() {
-        tabbedPane = new JTabbedPane(JTabbedPane.TOP) {
-            @Override public void updateUI() {
-                super.updateUI();
-                setUI(new javax.swing.plaf.basic.BasicTabbedPaneUI() {
-                    @Override protected void installDefaults() {
-                        super.installDefaults();
-                        highlight       = BG;
-                        lightHighlight  = BG;
-                        shadow          = BORDER_CLR;
-                        darkShadow      = BORDER_CLR;
-                        focus           = ACCENT;
-                    }
-                });
-            }
-        };
-        tabbedPane.setBackground(BG);
-        tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        tabbedPane.setForeground(TEXT_PRIMARY);
-        tabbedPane.setBorder(new EmptyBorder(8, 8, 0, 8));
-
+        // TabbedPane
+        tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tabbedPane.setBackground(Color.WHITE);
+        
         initTabInfo();
         initTabRecipe();
 
-        tabbedPane.addTab("Thông tin sản phẩm  ", tabInfo);
-        tabbedPane.addTab("Công thức & Định lượng  ", tabRecipe);
+        tabbedPane.addTab("Thông tin chung", tabInfo);
+        tabbedPane.addTab("Công thức (Định lượng)", tabRecipe);
+        
+        add(tabbedPane, BorderLayout.CENTER);
 
-        return tabbedPane;
-    }
+        // Footer
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
+        footer.setBackground(new Color(245, 245, 245));
+        footer.setBorder(new MatteBorder(1, 0, 0, 0, new Color(230, 230, 230)));
 
-    // ── Footer ─────────────────────────────────────────────────────────────
-    private JPanel buildFooter() {
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 12));
-        footer.setBackground(SURFACE);
-        footer.setBorder(new MatteBorder(1, 0, 0, 0, BORDER_CLR));
-
-        JButton btnCancel = buildButton("Hủy bỏ",        new Color(236,240,241), TEXT_PRIMARY, false);
-        btnSave = buildButton("Lưu sản phẩm", ACCENT, Color.WHITE, true);
-
+        btnSave = createModernButton("Lưu sản phẩm", PRIMARY_COLOR, Color.WHITE);
+        JButton btnCancel = createModernButton("Hủy bỏ", new Color(220, 220, 220), TEXT_DARK);
+        
         btnCancel.addActionListener(e -> dispose());
-        // btnSave.addActionListener(e -> controller.save());
 
-        footer.add(btnCancel);
         footer.add(btnSave);
-        return footer;
+        footer.add(btnCancel);
+        add(footer, BorderLayout.SOUTH);
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  TAB 1 – THÔNG TIN SẢN PHẨM
-    // ══════════════════════════════════════════════════════════════════════
     private void initTabInfo() {
-        tabInfo = new JPanel(new BorderLayout());
-        tabInfo.setBackground(BG);
-        tabInfo.setBorder(new EmptyBorder(16, 16, 16, 16));
+        tabInfo = new JPanel(new GridBagLayout());
+        tabInfo.setBackground(Color.WHITE);
+        tabInfo.setBorder(new EmptyBorder(15, 15, 15, 15));
 
-        JPanel row = new JPanel(new GridLayout(1, 2, 14, 0));
-        row.setOpaque(false);
-        row.add(buildInfoLeftCard());
-        row.add(buildInfoRightCard());
+        GridBagConstraints mainGbc = new GridBagConstraints();
+        mainGbc.fill = GridBagConstraints.BOTH;
+        mainGbc.weighty = 1.0;
 
-        tabInfo.add(row, BorderLayout.CENTER);
-    }
-
-    // LEFT card: Thông tin cơ bản + Hình ảnh + Mô tả
-    private JPanel buildInfoLeftCard() {
-        JPanel card = createCard("Thông tin cơ bản");
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-
-        // Tên sản phẩm
-        txtTenMon = createTextField("");
-        card.add(buildFieldRow("Tên sản phẩm *", txtTenMon, false));
-        card.add(vgap(6));
-
-        // Loại sản phẩm (LOAI_SAN_PHAM)
-        cbDanhMuc = createComboBox();
-        card.add(buildFieldRow("Loại sản phẩm *", cbDanhMuc, false));
-        card.add(vgap(6));
-
-        // Giá cơ bản (GiaCoBan)
-        txtGiaBan = createTextField("0");
-        card.add(buildFieldRow("Giá cơ bản (VND) *", txtGiaBan, false));
-        card.add(vgap(12));
-
-        // Hình ảnh
-        card.add(buildImageSection());
-        card.add(vgap(12));
-
-
-        // glue
-        card.add(Box.createVerticalGlue());
-        return card;
-    }
-
-    // RIGHT card: Trạng thái
-    private JPanel buildInfoRightCard() {
-        JPanel wrapper = new JPanel(new GridBagLayout());
-        wrapper.setOpaque(false);
-
-        JPanel statusCard = createCard("Trạng thái sản phẩm");
-        statusCard.setLayout(new BoxLayout(statusCard, BoxLayout.Y_AXIS));
-
-        ButtonGroup bg = new ButtonGroup();
-        rbDangSuDung = buildRadioButton("Đang sử dụng", SUCCESS, true);
-        rbChuaSuDung = buildRadioButton("Chưa sử dụng", TEXT_MUTED, false);
-        bg.add(rbDangSuDung);
-        bg.add(rbChuaSuDung);
-
-        statusCard.add(vgap(8));
-        statusCard.add(buildRadioRow(rbDangSuDung, "Sản phẩm đang được kinh doanh"));
-        statusCard.add(vgap(8));
-        statusCard.add(buildRadioRow(rbChuaSuDung, "Sản phẩm tạm ngừng / chưa dùng"));
-        statusCard.add(vgap(8));
-        statusCard.add(Box.createVerticalGlue());
-
-        // Tip box
-        JPanel tip = new JPanel(new BorderLayout());
-        tip.setBackground(ACCENT_LIGHT);
-        tip.setBorder(new CompoundBorder(
-                new LineBorder(new Color(174, 214, 241), 1, true),
-                new EmptyBorder(10, 12, 10, 12)));
-        tip.setAlignmentX(Component.LEFT_ALIGNMENT);
-        JLabel tipText = new JLabel("<html><b>💡 Lưu ý:</b> Tùy chọn đá, đường, size<br>được cấu hình riêng ở phần <b>Tùy chọn thêm</b><br>khi tạo/sửa đơn hàng.</html>");
-        tipText.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        tipText.setForeground(new Color(41, 128, 185));
-        tip.add(tipText);
-        tip.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
-
-        statusCard.add(tip);
-        statusCard.add(vgap(12));
-
+        // LEFT: Basic Info
+        JPanel leftPanel = createSectionPanel("Thông tin cơ bản");
+        leftPanel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 1; gbc.weighty = 1;
-        wrapper.add(statusCard, gbc);
-        return wrapper;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(4, 8, 4, 8);
+        gbc.anchor = GridBagConstraints.WEST;
+
+        txtTenMon = createStyledTextField("");
+        cbDanhMuc = new JComboBox<>();
+        cbDanhMuc.setPreferredSize(new Dimension(200, 35));
+        txtGiaBan = createStyledTextField("");
+        txtMoTa = new JTextArea(3, 20);
+        txtMoTa.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220)));
+        txtMoTa.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        txtMoTa.setLineWrap(true);
+        txtMoTa.setWrapStyleWord(true);
+        
+        gbc.weightx = 0.3; addComponent(leftPanel, new JLabel("Tên món: *"), 0, 1, gbc);
+        gbc.weightx = 0.7; addComponent(leftPanel, txtTenMon, 1, 1, gbc);
+        
+        gbc.weightx = 0.3; addComponent(leftPanel, new JLabel("Danh mục món: *"), 0, 2, gbc);
+        gbc.weightx = 0.7; addComponent(leftPanel, cbDanhMuc, 1, 2, gbc);
+        
+        gbc.weightx = 0.3; addComponent(leftPanel, new JLabel("Giá bán tiêu chuẩn: *"), 0, 3, gbc);
+        gbc.weightx = 0.7; addComponent(leftPanel, txtGiaBan, 1, 3, gbc);
+        
+        // Image Section
+        JPanel imgPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 5));
+        imgPanel.setOpaque(false);
+        lblImagePlaceholder = new JLabel("Hình ảnh mẫu", SwingConstants.CENTER);
+        lblImagePlaceholder.setPreferredSize(new Dimension(100, 100));
+        lblImagePlaceholder.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220)));
+        
+        btnUpload = new JButton("Tải ảnh lên");
+        btnUpload.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        imgPanel.add(lblImagePlaceholder);
+        imgPanel.add(btnUpload);
+        
+        gbc.gridwidth = 2; gbc.weightx = 1.0;
+        addComponent(leftPanel, new JLabel("Hình ảnh:"), 0, 4, gbc);
+        addComponent(leftPanel, imgPanel, 0, 5, gbc);
+        addComponent(leftPanel, new JLabel("Mô tả món:"), 0, 6, gbc);
+        gbc.weighty = 0.1; addComponent(leftPanel, new JScrollPane(txtMoTa), 0, 7, gbc);
+        gbc.weighty = 0;
+
+        // RIGHT: Options & Status
+        JPanel rightContainer = new JPanel(new GridBagLayout());
+        rightContainer.setOpaque(false);
+        GridBagConstraints rightGbc = new GridBagConstraints();
+        rightGbc.fill = GridBagConstraints.BOTH;
+        rightGbc.weightx = 1.0;
+        rightGbc.insets = new Insets(0, 10, 0, 0);
+
+        // LOGIC MỚI: Khởi tạo optionsPanel trống, chuẩn bị để load dữ liệu động
+        optionsPanel = createSectionPanel("Tùy chọn & Biến thể");
+        optionsPanel.setLayout(new GridBagLayout());
+        
+        // Status Panel
+        JPanel statusPanel = createSectionPanel("Trạng thái");
+        statusPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 8));
+        rbDangBan = new JRadioButton("Đang bán", true);
+        rbTamHet = new JRadioButton("Tạm hết");
+        rbNgungBan = new JRadioButton("Ngừng bán");
+        ButtonGroup bg = new ButtonGroup();
+        bg.add(rbDangBan); bg.add(rbTamHet); bg.add(rbNgungBan);
+        statusPanel.add(rbDangBan); statusPanel.add(rbTamHet); statusPanel.add(rbNgungBan);
+
+        rightGbc.gridy = 0; rightGbc.weighty = 0.8;
+        rightContainer.add(optionsPanel, rightGbc);
+        rightGbc.gridy = 1; rightGbc.weighty = 0.2;
+        rightContainer.add(statusPanel, rightGbc);
+
+        mainGbc.gridx = 0; mainGbc.weightx = 0.6;
+        tabInfo.add(leftPanel, mainGbc);
+        mainGbc.gridx = 1; mainGbc.weightx = 0.4;
+        tabInfo.add(rightContainer, mainGbc);
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  TAB 2 – CÔNG THỨC
-    // ══════════════════════════════════════════════════════════════════════
     private void initTabRecipe() {
-        tabRecipe = new JPanel(new BorderLayout(0, 12));
-        tabRecipe.setBackground(BG);
-        tabRecipe.setBorder(new EmptyBorder(16, 16, 16, 16));
+        tabRecipe = new JPanel(new BorderLayout(0, 20));
+        tabRecipe.setBackground(Color.WHITE);
+        tabRecipe.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        // ── Tiêu đề ───────────────────────────────────────────────────────
-        JPanel recipeHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        // Header Info
+        JPanel recipeHeader = new JPanel(new FlowLayout(FlowLayout.LEFT));
         recipeHeader.setOpaque(false);
-        JLabel lblTarget = new JLabel("Đang tạo công thức cho: ");
-        lblTarget.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblTarget.setForeground(TEXT_MUTED);
-        JLabel lblProductName = new JLabel("— chưa đặt tên —");
-        lblProductName.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        lblProductName.setForeground(ACCENT);
+        JLabel lblTarget = new JLabel("Đang tạo món: ---");
+        lblTarget.setFont(new Font("Segoe UI", Font.BOLD, 16));
         recipeHeader.add(lblTarget);
-        recipeHeader.add(lblProductName);
 
-        // ── Input card ────────────────────────────────────────────────────
-        JPanel inputCard = createCard(null);
-        inputCard.setLayout(new GridBagLayout());
-        GridBagConstraints g = new GridBagConstraints();
-        g.insets = new Insets(6, 10, 6, 10);
-        g.anchor = GridBagConstraints.WEST;
-        g.fill   = GridBagConstraints.HORIZONTAL;
+        // Input Area
+        JPanel inputPanel = new JPanel(new GridBagLayout());
+        inputPanel.setBackground(new Color(248, 249, 250));
+        inputPanel.setBorder(new CompoundBorder(new LineBorder(new Color(230, 230, 230)), new EmptyBorder(15, 15, 15, 15)));
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.anchor = GridBagConstraints.WEST;
 
-        cbNguyenLieu = createComboBox();
-        cbNguyenLieu.setPreferredSize(new Dimension(220, 36));
-        txtDonVi = createTextField("");
+        cbNguyenLieu = new JComboBox<>();
+        txtDonVi = createStyledTextField("");
         txtDonVi.setEditable(false);
-        txtDonVi.setPreferredSize(new Dimension(100, 36));
-        txtDonVi.setBackground(new Color(248, 249, 250));
-        txtDinhLuong = createTextField("0");
-        txtDinhLuong.setPreferredSize(new Dimension(110, 36));
+        txtDinhLuong = createStyledTextField("");
+        JButton btnAdd = createModernButton(" ➕ Thêm vào công thức", PRIMARY_COLOR, Color.WHITE);
 
-        JButton btnAdd = buildButton("➕  Thêm vào công thức", ACCENT, Color.WHITE, true);
+        gbc.gridx = 0; gbc.gridy = 0; inputPanel.add(new JLabel("Nguyên liệu:"), gbc);
+        gbc.gridx = 0; gbc.gridy = 1; inputPanel.add(cbNguyenLieu, gbc);
+        gbc.gridx = 1; gbc.gridy = 0; inputPanel.add(new JLabel("Đơn vị:"), gbc);
+        gbc.gridx = 1; gbc.gridy = 1; inputPanel.add(txtDonVi, gbc);
+        gbc.gridx = 2; gbc.gridy = 0; inputPanel.add(new JLabel("Định lượng (Lượng):"), gbc);
+        gbc.gridx = 2; gbc.gridy = 1; inputPanel.add(txtDinhLuong, gbc);
+        gbc.gridx = 3; gbc.gridy = 1; inputPanel.add(btnAdd, gbc);
 
-        // Labels row
-        g.gridy = 0;
-        g.gridx = 0; inputCard.add(makeLabel("Nguyên liệu"), g);
-        g.gridx = 1; inputCard.add(makeLabel("Đơn vị"), g);
-        g.gridx = 2; inputCard.add(makeLabel("Định lượng"), g);
-        g.gridx = 3; inputCard.add(new JLabel(""), g);
-
-        // Inputs row
-        g.gridy = 1;
-        g.gridx = 0; inputCard.add(cbNguyenLieu, g);
-        g.gridx = 1; inputCard.add(txtDonVi, g);
-        g.gridx = 2; inputCard.add(txtDinhLuong, g);
-        g.gridx = 3; inputCard.add(btnAdd, g);
-
-        // ── Table ─────────────────────────────────────────────────────────
-        String[] cols = {"STT", "Tên nguyên liệu", "Đơn vị", "Định lượng", "Thao tác"};
-        recipeModel = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
-        };
+        // Table
+        String[] cols = {"STT", "Mã NL", "Tên Nguyên Liệu", "Đơn vị", "Định lượng", "Giá vốn ước tính", "Thành tiền", "Thao tác"};
+        recipeModel = new DefaultTableModel(cols, 0);
         recipeTable = new JTable(recipeModel);
         styleTable(recipeTable);
+        
         JScrollPane scroll = new JScrollPane(recipeTable);
-        scroll.getViewport().setBackground(SURFACE);
-        scroll.setBorder(new LineBorder(BORDER_CLR));
+        scroll.getViewport().setBackground(Color.WHITE);
+        scroll.setBorder(new LineBorder(new Color(230, 230, 230)));
 
-        // ── Summary ───────────────────────────────────────────────────────
-        JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 6));
+        // Summary
+        JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         summaryPanel.setOpaque(false);
-        lblTotalCost = new JLabel("Tổng nguyên liệu: 0 dòng");
-        lblTotalCost.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        lblTotalCost.setForeground(ACCENT);
+        lblTotalCost = new JLabel("Tổng giá vốn ước tính: 0 VND");
+        lblTotalCost.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblTotalCost.setForeground(PRIMARY_COLOR);
         summaryPanel.add(lblTotalCost);
 
-        JPanel center = new JPanel(new BorderLayout(0, 10));
-        center.setOpaque(false);
-        center.add(inputCard, BorderLayout.NORTH);
-        center.add(scroll,    BorderLayout.CENTER);
-        center.add(summaryPanel, BorderLayout.SOUTH);
-
         tabRecipe.add(recipeHeader, BorderLayout.NORTH);
-        tabRecipe.add(center,       BorderLayout.CENTER);
+        
+        JPanel centerPanel = new JPanel(new BorderLayout(0, 15));
+        centerPanel.setOpaque(false);
+        centerPanel.add(inputPanel, BorderLayout.NORTH);
+        centerPanel.add(scroll, BorderLayout.CENTER);
+        centerPanel.add(summaryPanel, BorderLayout.SOUTH);
+        
+        tabRecipe.add(centerPanel, BorderLayout.CENTER);
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  HELPER – UI Builders
-    // ══════════════════════════════════════════════════════════════════════
+    // --- Helper Methods ---
 
-    /** Card với title (optional) và drop-shadow giả bằng border */
-    private JPanel createCard(String title) {
-        JPanel card = new JPanel();
-        card.setBackground(SURFACE);
-        card.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        Border shadow = new EmptyBorder(1, 1, 3, 3);
-        Border line   = new LineBorder(BORDER_CLR, 1, true);
-        Border pad    = new EmptyBorder(16, 18, 16, 18);
-
-        if (title != null && !title.isEmpty()) {
-            TitledBorder titled = new TitledBorder(
-                    new CompoundBorder(shadow, line),
-                    title,
-                    TitledBorder.LEFT, TitledBorder.TOP,
-                    new Font("Segoe UI", Font.BOLD, 13),
-                    TEXT_PRIMARY);
-            card.setBorder(new CompoundBorder(titled, pad));
-        } else {
-            card.setBorder(new CompoundBorder(new CompoundBorder(shadow, line), pad));
-        }
-        return card;
+    private JPanel createSectionPanel(String title) {
+        JPanel p = new JPanel();
+        p.setBackground(Color.WHITE);
+        p.setBorder(new TitledBorder(new LineBorder(new Color(230, 230, 230)), title, TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 14)));
+        return p;
     }
 
-    /** Field label + component row */
-    private JPanel buildFieldRow(String labelText, Component field, boolean stretch) {
-        JPanel row = new JPanel(new BorderLayout(0, 4));
-        row.setOpaque(false);
-        row.setAlignmentX(Component.LEFT_ALIGNMENT);
-        row.setMaximumSize(stretch
-                ? new Dimension(Integer.MAX_VALUE, 120)
-                : new Dimension(Integer.MAX_VALUE, 64));
-
-        JLabel lbl = new JLabel(labelText);
-        lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lbl.setForeground(TEXT_MUTED);
-
-        row.add(lbl,   BorderLayout.NORTH);
-        row.add(field, BorderLayout.CENTER);
-        return row;
+    private JTextField createStyledTextField(String text) {
+        JTextField tf = new JTextField(text, 15);
+        tf.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tf.setBorder(new CompoundBorder(new LineBorder(new Color(200, 200, 200)), new EmptyBorder(5, 10, 5, 10)));
+        return tf;
     }
 
-    /** Image upload section */
-    private JPanel buildImageSection() {
-        JPanel section = new JPanel(new BorderLayout(12, 0));
-        section.setOpaque(false);
-        section.setAlignmentX(Component.LEFT_ALIGNMENT);
-        section.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
-
-        // Preview box
-        lblImagePreview = new JLabel("📷", SwingConstants.CENTER);
-        lblImagePreview.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 26));
-        lblImagePreview.setPreferredSize(new Dimension(90, 90));
-        lblImagePreview.setMinimumSize(new Dimension(90, 90));
-        lblImagePreview.setBackground(new Color(248, 249, 250));
-        lblImagePreview.setOpaque(true);
-        lblImagePreview.setBorder(new DashBorder(BORDER_CLR, 1, 6));
-
-        // Buttons
-        JPanel btnCol = new JPanel(new GridLayout(3, 1, 0, 6));
-        btnCol.setOpaque(false);
-        btnUpload = buildButton("Chọn ảnh", ACCENT, Color.WHITE, true);
-        JButton btnRemove = buildButton("Xóa ảnh", new Color(231,76,60), Color.WHITE, false);
-        JLabel  lblHint   = new JLabel("JPG / PNG, tối đa 2MB");
-        lblHint.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lblHint.setForeground(TEXT_MUTED);
-        btnCol.add(btnUpload);
-        btnCol.add(btnRemove);
-        btnCol.add(lblHint);
-
-        JLabel lbl = new JLabel("Hình ảnh sản phẩm");
-        lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lbl.setForeground(TEXT_MUTED);
-
-        JPanel inner = new JPanel(new BorderLayout(0, 4));
-        inner.setOpaque(false);
-        inner.add(lbl,    BorderLayout.NORTH);
-        inner.add(btnCol, BorderLayout.CENTER);
-
-        section.add(lblImagePreview, BorderLayout.WEST);
-        section.add(inner,           BorderLayout.CENTER);
-        return section;
+    private void addComponent(JPanel p, Component c, int x, int y, GridBagConstraints gbc) {
+        gbc.gridx = x; gbc.gridy = y;
+        p.add(c, gbc);
     }
 
-    /** Radio button with color indicator */
-    private JRadioButton buildRadioButton(String text, Color color, boolean selected) {
-        JRadioButton rb = new JRadioButton(text, selected);
-        rb.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        rb.setForeground(color);
-        rb.setOpaque(false);
-        rb.setFocusPainted(false);
-        rb.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return rb;
-    }
-
-    /** Radio row with description */
-    private JPanel buildRadioRow(JRadioButton rb, String desc) {
-        JPanel row = new JPanel(new BorderLayout(0, 2));
-        row.setOpaque(false);
-        row.setAlignmentX(Component.LEFT_ALIGNMENT);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-        JLabel d = new JLabel("   " + desc);
-        d.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        d.setForeground(TEXT_MUTED);
-        row.add(rb, BorderLayout.NORTH);
-        row.add(d,  BorderLayout.CENTER);
-        return row;
-    }
-
-    private JButton buildButton(String text, Color bg, Color fg, boolean primary) {
+    private JButton createModernButton(String text, Color bg, Color fg) {
         JButton btn = new JButton(text) {
-            @Override protected void paintComponent(Graphics g) {
+            @Override
+            protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getModel().isRollover()
-                        ? bg.darker()
-                        : bg);
-                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
+                g2.setColor(getBackground());
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
-        btn.setFont(new Font("Segoe UI", primary ? Font.BOLD : Font.PLAIN, 13));
-        btn.setForeground(fg);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btn.setBackground(bg);
+        btn.setForeground(fg);
         btn.setFocusPainted(false);
+        btn.setBorder(new EmptyBorder(10, 20, 10, 20));
         btn.setContentAreaFilled(false);
-        btn.setBorderPainted(false);
-        btn.setBorder(new EmptyBorder(9, 18, 9, 18));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
     }
 
-    private JTextField createTextField(String placeholder) {
-        JTextField tf = new JTextField(placeholder, 16);
-        tf.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        tf.setForeground(TEXT_PRIMARY);
-        tf.setBackground(SURFACE);
-        tf.setPreferredSize(new Dimension(200, 36));
-        tf.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        tf.setBorder(new CompoundBorder(
-                new LineBorder(BORDER_CLR, 1, true),
-                new EmptyBorder(6, 10, 6, 10)));
-        return tf;
-    }
-
-    private JComboBox<String> createComboBox() {
-        JComboBox<String> cb = new JComboBox<>();
-        cb.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        cb.setPreferredSize(new Dimension(200, 36));
-        cb.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        cb.setBackground(SURFACE);
-        return cb;
-    }
-
-    private JLabel makeLabel(String text) {
-        JLabel l = new JLabel(text);
-        l.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        l.setForeground(TEXT_MUTED);
-        return l;
-    }
-
-    private Component vgap(int h) {
-        return Box.createRigidArea(new Dimension(0, h));
-    }
-
     private void styleTable(JTable table) {
-        table.setRowHeight(38);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        table.setRowHeight(40);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        table.getTableHeader().setBackground(new Color(242, 242, 242));
+        table.getTableHeader().setForeground(TEXT_DARK);
         table.setShowGrid(false);
         table.setIntercellSpacing(new Dimension(0, 0));
-        table.setBackground(SURFACE);
-        table.setSelectionBackground(ACCENT_LIGHT);
-        table.setSelectionForeground(TEXT_PRIMARY);
+        table.setSelectionBackground(new Color(PRIMARY_COLOR.getRed(), PRIMARY_COLOR.getGreen(), PRIMARY_COLOR.getBlue(), 30));
+        table.setSelectionForeground(TEXT_DARK);
+    }
 
-        JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        header.setBackground(new Color(241, 244, 248));
-        header.setForeground(TEXT_PRIMARY);
-        header.setBorder(new MatteBorder(0, 0, 1, 0, BORDER_CLR));
-        header.setReorderingAllowed(false);
+    // =====================================================================
+    // PUBLIC API - ĐÃ NÂNG CẤP XỬ LÝ CHECKBOX ĐỘNG
+    // =====================================================================
 
-        // Alternating row colors
-        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int row, int col) {
-                Component c = super.getTableCellRendererComponent(t, v, sel, foc, row, col);
-                if (!sel) c.setBackground(row % 2 == 0 ? SURFACE : new Color(248, 250, 253));
-                setBorder(new EmptyBorder(0, 10, 0, 10));
-                return c;
+    /**
+     * Hàm render giao diện Checkbox Động thay thế cho code cứng.
+     * Áp dụng nguyên lý removeAll -> loop -> revalidate & repaint.
+     */
+    public void setOptionGroups(HashMap<String, ArrayList<OptionModel>> groups) {
+        optionsPanel.removeAll();
+        optionCheckboxMap.clear();
+
+        GridBagConstraints optGbc = new GridBagConstraints();
+        optGbc.fill = GridBagConstraints.HORIZONTAL;
+        optGbc.insets = new Insets(5, 5, 5, 5);
+        optGbc.anchor = GridBagConstraints.NORTHWEST;
+
+        int row = 0;
+        for (Map.Entry<String, ArrayList<OptionModel>> entry : groups.entrySet()) {
+            
+            // 1. Cột trái (30%): Label Tên Nhóm
+            optGbc.gridx = 0; 
+            optGbc.gridy = row; 
+            optGbc.weightx = 0.3;
+            optionsPanel.add(new JLabel(entry.getKey() + ":"), optGbc);
+
+            // 2. Cột phải (70%): Danh sách Checkbox
+            JPanel itemsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+            itemsPanel.setOpaque(false);
+
+            for (OptionModel item : entry.getValue()) {
+                JCheckBox cb = new JCheckBox(item.getLabel());
+                cb.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+                cb.setOpaque(false);
+                
+                // Mặc định tích nếu trong database set là "Dang su dung"
+                cb.setSelected("Đang sử dụng".equals(item.getTrangThai())); 
+                
+                optionCheckboxMap.put(item.getMaTuyChon(), cb);
+                itemsPanel.add(cb);
             }
-        });
-    }
 
-    // ══════════════════════════════════════════════════════════════════════
-    //  PUBLIC API (Controller injection)
-    // ══════════════════════════════════════════════════════════════════════
-
-    /** Inject danh sách loại sản phẩm (LOAI_SAN_PHAM.TenLoaiSanPham) */
-    public void setCategoryList(java.util.List<String> categories) {
-        cbDanhMuc.removeAllItems();
-        for (String c : categories) {
-            cbDanhMuc.addItem(c);
+            optGbc.gridx = 1; 
+            optGbc.weightx = 0.7;
+            optionsPanel.add(itemsPanel, optGbc);
+            
+            row++;
         }
+
+        // Đẩy toàn bộ nội dung lên trên
+        optGbc.gridx = 0; 
+        optGbc.gridy = row; 
+        optGbc.gridwidth = 2; 
+        optGbc.weighty = 1.0;
+        optionsPanel.add(Box.createVerticalGlue(), optGbc);
+
+        // Làm mới giao diện
+        optionsPanel.revalidate();
+        optionsPanel.repaint();
     }
 
-    /** Inject danh sách nguyên liệu (NGUYEN_LIEU.TenNguyenLieu) */
-    public void setIngredientList(String[] ingredients) {
-        cbNguyenLieu.setModel(new DefaultComboBoxModel<>(ingredients));
-    }
-
-    /** Đổi tiêu đề dialog (edit vs create) */
-    public void setDialogMode(boolean isEdit) {
-        setTitle(isEdit ? "CHỈNH SỬA SẢN PHẨM" : "THÊM SẢN PHẨM MỚI");
-    }
-
-    // ══════════════════════════════════════════════════════════════════════
-    //  Inner: Dashed border cho image preview
-    // ══════════════════════════════════════════════════════════════════════
-    private static class DashBorder extends AbstractBorder {
-        private final Color color; private final int thick, arc;
-        DashBorder(Color c, int t, int a) { color = c; thick = t; arc = a; }
-        @Override public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(color);
-            g2.setStroke(new BasicStroke(thick, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND,
-                    0, new float[]{6, 4}, 0));
-            g2.drawRoundRect(x, y, w-1, h-1, arc, arc);
-            g2.dispose();
+    /**
+     * Hàm lấy danh sách các mã tùy chọn (ID) đã được người dùng tích chọn
+     */
+    public List<Integer> getSelectedOptionIds() {
+        List<Integer> result = new ArrayList<>();
+        for (Map.Entry<Integer, JCheckBox> entry : optionCheckboxMap.entrySet()) {
+            if (entry.getValue().isSelected()) {
+                result.add(entry.getKey());
+            }
         }
-        @Override public Insets getBorderInsets(Component c) { return new Insets(thick, thick, thick, thick); }
+        return result;
     }
-    
+
+    public void setCategoryList(List<String> categories) {
+        cbDanhMuc.setModel(new DefaultComboBoxModel<>(categories.toArray(new String[0])));
+    }
+
+    public void setIngredientList(List<String> ingredients) {
+        cbNguyenLieu.setModel(new DefaultComboBoxModel<>(ingredients.toArray(new String[0])));
+    }
+
     public void setImage(ImageIcon icon) {
         if (icon != null) {
-            Image img = icon.getImage().getScaledInstance(90, 90, Image.SCALE_SMOOTH);
-            lblImagePreview.setIcon(new ImageIcon(img));
-            lblImagePreview.setText("");
+            Image img = icon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+            lblImagePlaceholder.setIcon(new ImageIcon(img));
+            lblImagePlaceholder.setText("");
         } else {
-            lblImagePreview.setIcon(null);
-            lblImagePreview.setText("📷");
+            lblImagePlaceholder.setIcon(null);
+            lblImagePlaceholder.setText("Hình ảnh mẫu");
         }
     }
-    
+
+    public void addChooseImageListener(ActionListener listener) {
+        btnUpload.addActionListener(listener);
+    }
+
+    public void addSaveListener(ActionListener listener) {
+        btnSave.addActionListener(listener);
+    }
+
     public String getTenSanPham() {
         return txtTenMon.getText().trim();
     }
 
     public double getGiaBan() {
         try {
-            return Double.parseDouble(txtGiaBan.getText().trim());
-        } catch (Exception e) {
-            return 0;
+            return Double.parseDouble(txtGiaBan.getText().trim().replace(".", "").replace(",", ""));
+        } catch (Exception e) { 
+            return 0; 
         }
     }
 
@@ -602,36 +421,45 @@ public class ProductDetailDialog extends JDialog {
     }
 
     public String getTrangThai() {
-        return rbDangSuDung.isSelected() ? "Đang sử dụng" : "Chưa sử dụng";
+        if (rbDangBan.isSelected()) return "Đang sử dụng";
+        if (rbTamHet.isSelected()) return "Tạm hết";
+        return "Chưa sử dụng";
     }
     
-    public void addSaveListener(java.awt.event.ActionListener listener) {
-        btnSave.addActionListener(listener);
+    public void clearForm() {
+        // ===== TAB 1: Thông tin =====
+        if(txtTenMon == null) return;
+        txtTenMon.setText("");
+        txtGiaBan.setText("");
+        txtMoTa.setText("");
+
+        cbDanhMuc.setSelectedIndex(-1);
+
+        // Reset trạng thái
+        rbDangBan.setSelected(true);
+
+        // Reset hình ảnh
+        lblImagePlaceholder.setIcon(null);
+        lblImagePlaceholder.setText("Hình ảnh mẫu");
+
+        // ===== CHECKBOX OPTIONS =====
+        for (JCheckBox cb : optionCheckboxMap.values()) {
+            cb.setSelected(false);
+        }
+
+        // ===== TAB 2: Công thức =====
+        cbNguyenLieu.setSelectedIndex(-1);
+        txtDonVi.setText("");
+        txtDinhLuong.setText("");
+
+        // Xóa bảng công thức
+        recipeModel.setRowCount(0);
+
+        // Reset tổng tiền
+        lblTotalCost.setText("Tổng giá vốn ước tính: 0 VND");
     }
-    
-    public void addChooseImageListener(java.awt.event.ActionListener listener) {
-        btnUpload.addActionListener(listener);
-    }
-    // ══════════════════════════════════════════════════════════════════════
-    //  Main – standalone preview
-    // ══════════════════════════════════════════════════════════════════════
+
     public static void main(String[] args) {
-//        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
-//        catch (Exception ignored) {}
-//
-//        SwingUtilities.invokeLater(() -> {
-//            JFrame frame = new JFrame();
-//            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//            ProductDetailDialog dialog = new ProductDetailDialog(frame);
-//
-//            // Demo data
-//            dialog.setCategoryList(new String[]{"Cà phê", "Trà sữa", "Nước ép", "Sinh tố"});
-//            dialog.setIngredientList(new String[]{"Cà phê Arabica", "Sữa tươi", "Đường", "Trà xanh"});
-//
-//            dialog.addWindowListener(new WindowAdapter() {
-//                @Override public void windowClosing(WindowEvent e) { System.exit(0); }
-//            });
-//            dialog.setVisible(true);
-//        });
+        // Hàm Main để Test độc lập
     }
 }

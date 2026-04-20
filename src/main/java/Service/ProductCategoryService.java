@@ -18,7 +18,7 @@ public class ProductCategoryService {
         productCategoryDAO = new ProductCategoryDAO();
     }
     
-    public ProductCategoryListModel getProductCategoryList(){
+    public ProductCategoryListModel getProductCategory(){
         ProductCategoryListModel productCategoryList = new ProductCategoryListModel(productCategoryDAO.getProductCategory());
         return productCategoryList;
     }

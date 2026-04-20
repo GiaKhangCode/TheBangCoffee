@@ -3,13 +3,18 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package Controller;
+import Common.ValidationUtil;
+import Model.OptionModel;
 import Model.ProductListModel;
+import Service.OptionService;
 import Service.ProductCategoryService;
 import Service.ProductService;
 import View.MenuPanel;
 import View.MainFrame;
 import View.ProductDetailDialog;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.swing.*;
 import java.util.List;
@@ -28,6 +33,8 @@ public class ProductController {
     private ProductCategoryService categoryService;
     private File selectedFile;
     private JFrame parent;
+    private HashMap<String, ArrayList<OptionModel>> optionHashMap;
+    private OptionService optionService;
     
     public ProductController(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
@@ -41,16 +48,19 @@ public class ProductController {
         this.categoryService = new ProductCategoryService();
         
         this.selectedFile = null;
+        this.optionService = new OptionService();
+        this.optionHashMap = optionService.getOption();
         
         initListeners();
         loadData();
-        loadCategory();
+        loadProductDetailDialogFrame();
     }
 
     private void initListeners() {
 
         // Nút thêm sản phẩm
         menuPanel.addAddProductListener(e -> {
+            productDetailDialogFrame.clearForm();
             productDetailDialogFrame.setVisible(true);
         });
 
@@ -58,12 +68,13 @@ public class ProductController {
         menuPanel.setProductClickListener(product -> {
             View.ProductDetailDialog dialog = new View.ProductDetailDialog(parent);
             dialog.setCategoryList(categoryService
-                .getProductCategoryList()
+                .getProductCategory()
                 .getProductCategoryList());
 
             dialog.setImage(product.getImageData());
             // Có thể set data vào dialog nếu cần
             dialog.setVisible(true);
+            loadData();
         });
         
         productDetailDialogFrame.addChooseImageListener(e -> {
@@ -81,9 +92,9 @@ public class ProductController {
             String category = productDetailDialogFrame.getLoaiSanPham();
             String status = productDetailDialogFrame.getTrangThai();
             
-            
-            if (productName.isEmpty() || productName.equals("")) {
-                JOptionPane.showMessageDialog(productDetailDialogFrame, "Tên sản phẩm không được để trống");
+            String validateProductDetail = ValidationUtil.validateProductDetail(productName, basicPrice, category, status);
+            if (!(validateProductDetail.equalsIgnoreCase("Hợp lệ"))) {
+                JOptionPane.showMessageDialog(productDetailDialogFrame, validateProductDetail);
                 return;
             }
             productService.insertProduct(category, productName, basicPrice, selectedFile, status);
@@ -93,16 +104,17 @@ public class ProductController {
     }
 
     private void loadData() {
-        productService.getProductList();
+        productList = productService.getProductList();
         menuPanel.displayProductList(productList);
     }
-    private void loadCategory(){
+    private void loadProductDetailDialogFrame(){
         // Load category từ DB
         List<String> categories = categoryService
-                .getProductCategoryList()
+                .getProductCategory()
                 .getProductCategoryList();
 
         productDetailDialogFrame.setCategoryList(categories);
+        productDetailDialogFrame.setOptionGroups(optionHashMap);
     }
 
 }

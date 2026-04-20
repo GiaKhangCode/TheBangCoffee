@@ -2,10 +2,12 @@ package View;
 
 import Model.SessionManager;
 import Common.ValidationUtil;
+import Controller.AccountController;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,11 +29,11 @@ public class MainFrame extends JFrame {
     private Map<String, NavButton> navButtons;
     private NavButton activeButton;
     
-    public MainFrame() {
+    public MainFrame() throws SQLException {
         initComponents();
     }
 
-    private void initComponents() {
+    private void initComponents() throws SQLException {
         setTitle("Quản Lý Hệ Thống - The Bang Coffee");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -127,15 +129,21 @@ public class MainFrame extends JFrame {
         sidebar.add(Box.createRigidArea(new Dimension(0, 5)));
         
         if (!cardName.equals("Logout")) {
-            btn.addActionListener(e -> setPageActive(cardName));
+            btn.addActionListener(e -> {
+                try {
+                    setPageActive(cardName);
+                } catch (SQLException ex) {
+                    System.getLogger(MainFrame.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+                }
+            });
         }
     }
 
-    private void setPageActive(String cardName) {
+    private void setPageActive(String cardName) throws SQLException {
         if (!cardName.equals("Logout") && SessionManager.isLoggedIn() && !ValidationUtil.validateSession()) {
             SessionManager.clear();
             this.setVisible(false);
-            new LoginFrame().setVisible(true);
+            new AccountController(this);
             return;
         }
         
@@ -164,13 +172,13 @@ public class MainFrame extends JFrame {
     }
 
     public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {}
-
-        SwingUtilities.invokeLater(() -> {
-            new MainFrame().setVisible(true);
-        });
+//        try {
+//            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+//        } catch (Exception ignored) {}
+//
+//        SwingUtilities.invokeLater(() -> {
+//            new MainFrame().setVisible(true);
+//        });
     }
     
     public StockPanel getStockPanel(){

@@ -3,12 +3,9 @@ View\StockPanel$ActionButtonEditor.class
 Controller\StockPanelController$1.class
 View\MenuPanel.class
 View\LoginFrame$1.class
-View\ProductDetailDialog$DashBorder.class
 View\StockPanel$3.class
 View\HeaderPanel.class
 View\MenuPanel$2.class
-View\ProductDetailDialog$3$1.class
-Common\SessionManager.class
 Service\ProductCategoryService.class
 View\StockPanel$HistoryActionButtonRenderer.class
 View\StockPanel.class
@@ -24,6 +21,7 @@ Controller\ProductController.class
 View\OtpDialog.class
 View\ForgotPasswordFrame.class
 View\StockPanel$5.class
+DatabaseAccessObject\OptionDAO.class
 DatabaseAccessObject\SessionDAO.class
 View\RegisterFrame.class
 Model\ProductCategoryListModel.class
@@ -34,17 +32,16 @@ View\RegisterFrame$1.class
 View\MainFrame.class
 View\StockPanel$ActionButtonRenderer.class
 Common\ValidationUtil.class
-View\ProductDetailDialog$6.class
 View\StockPanel$1.class
 com\is216\thebangcf\TheBangCF.class
 View\ForgotPasswordFrame$1.class
-View\ProductDetailDialog$5.class
 Model\IngredientListModel.class
 Model\WarehouseReceiptModel.class
 Common\EmailUtil$1.class
 View\HeaderPanel$RoundedButtonWrapper.class
 Controller\StockPanelController.class
 View\StockPanel$StatCard.class
+Service\OptionService.class
 View\LoginFrame.class
 Service\IngredientService.class
 View\MenuPanel$ProductClickListener.class
@@ -52,12 +49,13 @@ View\NavButton.class
 View\ProductDetailDialog.class
 View\ForgotPasswordFrame$2.class
 Common\HashUtil.class
-View\ProductDetailDialog$4.class
+Model\OptionModel.class
 View\DashboardPanel.class
 DatabaseAccessObject\WarehouseReceiptDAO.class
 View\StockPanel$ActionButtonListener.class
 View\RegisterFrame$2.class
 View\RolePanel$1.class
+Model\SessionManager.class
 Model\ProductModel.class
 Service\SessionService.class
 Common\ComponentUI.class
@@ -83,7 +81,6 @@ View\ContentBasePanel.class
 View\StatCard.class
 Controller\StockPanelController$3.class
 View\LoginFrame$2.class
-View\ProductDetailDialog$3.class
 DatabaseAccessObject\IngredientDAO.class
 View\MenuPanel$ScrollablePanel.class
 Service\AccountService.class
@@ -99,4 +96,3 @@ DatabaseAccessObject\ProductDAO.class
 View\StockPanel$ReceiptItem.class
 Model\WarehouseReceiptListModel.class
 View\StockPanel$HistoryActionPanel.class
-View\ProductDetailDialog$2.class
