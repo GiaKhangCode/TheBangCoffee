@@ -8,28 +8,23 @@ package Controller;
  *
  * @author Kiet
  */
+import Model.SessionManager;
 import Common.ValidationUtil;
 import Model.WarehouseReceiptDetailModel;
-import Model.IngredientListModel;
-import Model.WarehouseReceiptListModel;
 import Model.IngredientModel;
 import Model.WarehouseReceiptModel;
 import Service.IngredientService;
 import Service.WarehouseReceiptService;
 import View.MainFrame;
 import View.StockPanel;
-import View.StockPanel.ActionButtonListener;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.table.DefaultTableModel;
 
 
 public class StockPanelController {
@@ -39,7 +34,7 @@ public class StockPanelController {
     private MainFrame mainFrame;
     private IngredientService ingredientService;
     private WarehouseReceiptService warehouseReceiptService;
-    
+
     public StockPanelController(MainFrame sharedMainFrame) throws SQLException {
         this.mainFrame = sharedMainFrame;
         
@@ -47,10 +42,8 @@ public class StockPanelController {
         warehouseReceiptService = new WarehouseReceiptService();
         
         this.stockPanelView = mainFrame.getStockPanel();
-        
-        
+
         initStockListeners();
-        
         loadIngredientToView();
         loadWarehouseReceiptToView();
     }
@@ -139,7 +132,7 @@ public class StockPanelController {
                     }
 
                     // 3. Gọi Service/DAO xử lý
-                    int currentUserID = AccountController.loggedInAccount.getAccountID();
+                    int currentUserID = SessionManager.getAccount().getAccountID();
                     boolean success = ingredientService.deleteIngredient(maNL, currentUserID, lyDo);
 
                     if (success) {
@@ -169,7 +162,7 @@ public class StockPanelController {
                 String lyDo = (String) duLieuMoi[4]; // Nhận thêm lý do
                 
                 // Lấy ID tài khoản người đang đăng nhập
-                int currentUserID = AccountController.loggedInAccount.getAccountID(); 
+                int currentUserID = SessionManager.getAccount().getAccountID(); 
 
                 // 4. Gọi Service để đẩy xuống Database
                 boolean isSuccess = ingredientService.updateIngredient(maNL, tenMoi, dvtMoi, tonMoi, nguongMoi, currentUserID, lyDo);
@@ -243,7 +236,7 @@ public class StockPanelController {
                     }
 
                     // 3. Gọi Service xử lý (DAO sẽ gọi Oracle Procedure như đã thống nhất)
-                    int currentUserID = AccountController.loggedInAccount.getAccountID();
+                    int currentUserID = SessionManager.getAccount().getAccountID();
                     boolean success = warehouseReceiptService.deleteWarehouseReceipt(maPhieuNhap, currentUserID, lyDo);
 
                     if (success) {
@@ -292,7 +285,7 @@ public class StockPanelController {
         }
 
         // 3. THÊM VÀO DATABASE
-        warehouseReceiptService.createReceipt(AccountController.loggedInAccount.getAccountID(), warehouseReceiptListDetail);
+        warehouseReceiptService.createReceipt(SessionManager.getAccount().getAccountID(), warehouseReceiptListDetail);
 
         JOptionPane.showMessageDialog(stockPanelView, "Đã nhập hàng thành công!");
         stockPanelView.clearReceiptForm();
@@ -300,15 +293,13 @@ public class StockPanelController {
     
         // Hàm load dữ liệu lần đầu khi vừa mở app
     
-    public void loadIngredientToView() throws SQLException {
+    private void loadIngredientToView() throws SQLException {
         ingredientListModel = ingredientService.getIngredientList();
         stockPanelView.displayIngredientData(ingredientListModel);
     }
     
-    public void loadWarehouseReceiptToView() throws SQLException {
+    private void loadWarehouseReceiptToView() throws SQLException {
         warehouseReceiptListModel = warehouseReceiptService.getWarehouseReceiptList();
         stockPanelView.displayWarehouseReceiptData(warehouseReceiptListModel);
     }
-    
- 
 }

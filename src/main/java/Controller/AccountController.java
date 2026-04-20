@@ -5,10 +5,12 @@
 package Controller;
 
 import Common.EmailUtil;
+import Model.SessionManager;
 import Common.ValidationUtil;
 import Service.OtpService;
 import Model.AccountModel;
 import Service.AccountService;
+import Service.SessionService;
 import View.ForgotPasswordFrame;
 import View.LoginFrame;
 import View.MainFrame;
@@ -30,8 +32,7 @@ public class AccountController {
     private MainFrame mainFrame;
     private AccountService accountService;
     private OtpDialog otpDialog;
-    public static String currentToken;
-    public static AccountModel loggedInAccount;
+    private SessionService sessionService;
     
     public AccountController(MainFrame sharedMainFrame) throws SQLException {
         this.mainFrame = sharedMainFrame;
@@ -42,7 +43,8 @@ public class AccountController {
         forgotPasswordFrame = new ForgotPasswordFrame();
         accountService = new AccountService();
         otpDialog = new OtpDialog(registerFrame);
-        
+        sessionService = new SessionService();
+                
         initListeners();
         loginFrame.setVisible(true);
     }
@@ -59,12 +61,18 @@ public class AccountController {
                 dialog.setAlwaysOnTop(true);
                 dialog.setVisible(true);
                 
-                String token = accountService.loginAndCreateToken(accountModel);
-                AccountController.currentToken = token; 
-                AccountController.loggedInAccount = accountModel;
+                String token = sessionService.loginAndCreateToken(accountModel);
+                SessionManager.setSession(token, accountModel);
                 
+                try {
+                    new StockPanelController(mainFrame);
+                } catch (SQLException ex) {
+                    System.getLogger(AccountController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+                }
+                new ProductController(mainFrame);
                 loginFrame.setVisible(false);
                 mainFrame.setVisible(true);
+                
             }
             else {
                 JOptionPane optionPane = new JOptionPane("Đăng nhập thất bại", JOptionPane.ERROR_MESSAGE);
@@ -191,7 +199,7 @@ public class AccountController {
             boolean success = accountService.resetPassword(email, newPass);
 
             if (success) {
-                accountService.revokeAllTokens(email);
+                sessionService.revokeAllTokens(email);
                 
                 JOptionPane.showMessageDialog(null, "Đổi mật khẩu thành công!");
                 forgotPasswordFrame.setVisible(false);
@@ -212,9 +220,8 @@ public class AccountController {
         });
         
         this.mainFrame.addLogoutListener(e -> {
-            accountService.logout(currentToken);
-            AccountController.currentToken = null;
-            AccountController.loggedInAccount = null;
+            sessionService.logout(SessionManager.getToken());
+            SessionManager.clear();
             
             mainFrame.setVisible(false);
             loginFrame.setVisible(true);

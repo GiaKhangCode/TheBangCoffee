@@ -6,12 +6,8 @@ package Service;
 
 import DatabaseAccessObject.ProductDAO;
 import Model.ProductListModel;
-import java.awt.Color;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.sql.SQLException;
 import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**

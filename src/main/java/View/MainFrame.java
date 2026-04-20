@@ -1,10 +1,11 @@
 package View;
 
+import Model.SessionManager;
+import Common.ValidationUtil;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.awt.geom.RoundRectangle2D;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -131,9 +132,17 @@ public class MainFrame extends JFrame {
     }
 
     private void setPageActive(String cardName) {
+        if (!cardName.equals("Logout") && SessionManager.isLoggedIn() && !ValidationUtil.validateSession()) {
+            SessionManager.clear();
+            this.setVisible(false);
+            new LoginFrame().setVisible(true);
+            return;
+        }
+        
         if (activeButton != null) {
             activeButton.setActive(false);
         }
+        
         activeButton = navButtons.get(cardName);
         if (activeButton != null) {
             activeButton.setActive(true);

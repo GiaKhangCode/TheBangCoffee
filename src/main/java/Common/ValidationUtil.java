@@ -4,12 +4,11 @@
  */
 package Common;
 
-import Model.WarehouseReceiptDetailModel;
+import Model.SessionManager;
+import Service.SessionService;
 import View.StockPanel;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
@@ -18,6 +17,7 @@ import javax.swing.table.DefaultTableModel;
  * @author FAKK
  */
 public class ValidationUtil {
+    private static SessionService sessionService = new SessionService();
     public static String checkValidateLogin(String fullName, String username, String password, String phoneNumber, String email){
         if(fullName.isEmpty()){
             return "Họ tên không được để trống";
@@ -148,5 +148,20 @@ public class ValidationUtil {
 
         // Vượt qua vòng lặp mà không có lỗi nào -> Trả về true
         return true; 
+    }
+    
+    public static boolean validateSession() {
+        if (!SessionManager.isLoggedIn()) {
+            JOptionPane.showMessageDialog(null, "Chưa đăng nhập!");
+            return false;
+        }
+
+        if (!sessionService.isValid(SessionManager.getToken())) {
+            JOptionPane.showMessageDialog(null, "Phiên đăng nhập đã hết hạn!");
+            SessionManager.clear();
+            return false;
+        }
+
+        return true;
     }
 }

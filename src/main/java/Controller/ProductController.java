@@ -4,14 +4,12 @@
  */
 package Controller;
 import Model.ProductListModel;
-import Model.ProductModel;
 import Service.ProductCategoryService;
 import Service.ProductService;
 import View.MenuPanel;
 import View.MainFrame;
 import View.ProductDetailDialog;
 import java.io.File;
-import java.util.ArrayList;
 
 import javax.swing.*;
 import java.util.List;
@@ -106,4 +104,5 @@ public class ProductController {
 
         productDetailDialogFrame.setCategoryList(categories);
     }
+
 }

@@ -4,9 +4,6 @@
  */
 package Model;
 
-import DatabaseAccessObject.IngredientDAO;
-import DatabaseAccessObject.WarehouseReceiptDAO;
-import java.sql.SQLException;
 import java.util.List;
 
 /**

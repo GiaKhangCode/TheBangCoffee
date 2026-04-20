@@ -4,8 +4,6 @@
  */
 package Model;
 
-import DatabaseAccessObject.IngredientDAO;
-import java.sql.SQLException;
 import java.util.List;
 
 /**

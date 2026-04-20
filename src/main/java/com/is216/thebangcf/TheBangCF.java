@@ -23,12 +23,7 @@ public class TheBangCF {
                     // 2. GIAO NHIỆM VỤ: Khởi tạo các Controller và truyền MainFrame vào
                     
                     // AccountController nhận MainFrame, tự động mở màn hình Login lên
-                    AccountController accountController = new AccountController(sharedMainFrame);
-                    
-                    // StockPanelController nhận MainFrame, âm thầm chuẩn bị sẵn dữ liệu Kho bên trong
-                    StockPanelController stockController = new StockPanelController(sharedMainFrame);
-                    
-                    ProductController productController = new ProductController(sharedMainFrame);
+                    new AccountController(sharedMainFrame);
                     
                 } catch (SQLException ex) {
                     System.err.println("Lỗi kết nối cơ sở dữ liệu khi khởi động ứng dụng!");

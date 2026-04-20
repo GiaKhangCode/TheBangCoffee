@@ -30,20 +30,6 @@ public class AccountService {
         return dao.updatePassword(email, hashedPassword);
     }
     
-    public String loginAndCreateToken(AccountModel acc){
-        if(acc == null) return null;
-
-        return dao.createToken(acc.getAccountID());
-    }
-    
-    public boolean logout(String token){
-        return dao.revokeToken(token);
-    }
-    
-    public boolean revokeAllTokens(String email) {
-        return dao.revokeAllTokensByEmail(email);
-    }
-    
     public boolean isEmailExists(String email){
         return dao.isEmailExists(email);
     }

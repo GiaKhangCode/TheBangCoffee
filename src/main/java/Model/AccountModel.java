@@ -4,8 +4,6 @@
  */
 package Model;
 
-import Common.HashUtil;
-import DatabaseAccessObject.AccountDAO;
 
 /**
  *

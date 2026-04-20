@@ -8,6 +8,7 @@ View\StockPanel$3.class
 View\HeaderPanel.class
 View\MenuPanel$2.class
 View\ProductDetailDialog$3$1.class
+Common\SessionManager.class
 Service\ProductCategoryService.class
 View\StockPanel$HistoryActionButtonRenderer.class
 View\StockPanel.class
@@ -23,6 +24,7 @@ Controller\ProductController.class
 View\OtpDialog.class
 View\ForgotPasswordFrame.class
 View\StockPanel$5.class
+DatabaseAccessObject\SessionDAO.class
 View\RegisterFrame.class
 Model\ProductCategoryListModel.class
 ConnectDatabase\ConnectionUtils.class
@@ -57,6 +59,7 @@ View\StockPanel$ActionButtonListener.class
 View\RegisterFrame$2.class
 View\RolePanel$1.class
 Model\ProductModel.class
+Service\SessionService.class
 Common\ComponentUI.class
 Controller\StockPanelController$5.class
 View\ProductDetailDialog$1.class
