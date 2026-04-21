@@ -244,11 +244,11 @@ public class StockPanel extends JPanel {
         
         for (IngredientModel nl : danhSach) {
             Object[] rowData = {
-                nl.getID(),           // Lấy mã nguyên liệu
-                nl.getTenNguyenLieu(), // Lấy tên nguyên liệu
-                nl.getDonViTinh(),    // Lấy đơn vị tính (KG, Lít...)
-                nl.getTonKho(),       // Lấy số lượng tồn hiện tại
-                nl.getNguong(),       // Lấy ngưỡng báo động
+                nl.getIngredientID(),           // Lấy mã nguyên liệu
+nl.getIngredientName(), // Lấy tên nguyên liệu
+nl.getUnit(),    // Lấy đơn vị tính (KG, Lít...)
+nl.getInventory(),       // Lấy số lượng tồn hiện tại
+nl.getThreshold(),       // Lấy ngưỡng báo động
                 nl.getTrangThai(),    // Gọi logic tự tính "Còn hàng/Hết hàng"
                 "Sửa / Xóa"           // Cột hành động (Không có cũng không sao)
             };

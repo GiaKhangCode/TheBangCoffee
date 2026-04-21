@@ -60,8 +60,8 @@ public class WarehouseReceiptService {
         return total;
     }
     
-    public boolean deleteWarehouseReceipt(int maPhieuNhap, int maTaiKhoan, String lyDo) {
-        return warehouseReceiptDAO.deleteReceiptWithLog(maPhieuNhap, maTaiKhoan, lyDo);
+    public boolean deleteWarehouseReceipt(int warehouseReceiptID, int accountID, String reason) {
+        return warehouseReceiptDAO.deleteReceiptWithLog(warehouseReceiptID, accountID, reason);
     }
     
     public String getDetailReceipt(int receiptID){

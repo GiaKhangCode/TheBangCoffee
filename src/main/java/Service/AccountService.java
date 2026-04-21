@@ -7,6 +7,10 @@ package Service;
 import Common.HashUtil;
 import DatabaseAccessObject.AccountDAO;
 import Model.AccountModel;
+import Model.RoleGroupModel;
+import Model.RoleModel;
+import java.sql.SQLException;
+import java.util.List;
 
 /**
  *
@@ -30,7 +34,57 @@ public class AccountService {
         return dao.updatePassword(email, hashedPassword);
     }
     
+    public String loginAndCreateToken(AccountModel acc){
+        if(acc == null) return null;
+
+        return dao.createToken(acc.getAccountID());
+    }
+    
+    public boolean logout(String token){
+        return dao.revokeToken(token);
+    }
+    
+    public boolean revokeAllTokens(String email) {
+        return dao.revokeAllTokensByEmail(email);
+    }
+    
     public boolean isEmailExists(String email){
         return dao.isEmailExists(email);
+    }
+    
+    public List<AccountModel> getAccountList(){
+        return dao.getAccountList();
+    }
+    
+    public boolean assignRoleGroupToAccount(int accountId, int roleGroupId){
+        return dao.assignRoleGroupToAccount(accountId, roleGroupId);
+    }
+    
+    public boolean deleteRoleGroupFromAccount(int accountId, int roleGroupId){
+        return dao.deleteRoleGroupFromAccount(accountId, roleGroupId);
+    }
+    
+    public boolean assignRoleToAccount(int accountId, int roleId){
+        return dao.assignRoleToAccount(accountId, roleId);
+    }
+    
+    public boolean deleteRoleFromAccount(int accountId, int roleId){
+        return dao.deleteRoleFromAccount(accountId, roleId);
+    }
+    
+    public List<RoleGroupModel> getAssignedRoleGroupsByAccountId(int accountId) throws SQLException{
+        return dao.getAssignedRoleGroupsByAccountId(accountId);
+    }
+    
+    public List<RoleGroupModel> getUnassignedRoleGroupsByAccountId(int accountId) throws SQLException{
+        return dao.getUnassignedRoleGroupsByAccountId(accountId);
+    }
+    
+    public List<RoleModel> getUnassignedRolesByAccountId(int accountId) throws SQLException{
+        return dao.getUnassignedRolesByAccountId(accountId);
+    }
+    
+    public List<RoleModel> getAssignedRolesByAccountId(int accountId) throws SQLException{
+        return dao.getAssignedRolesByAccountId(accountId);
     }
 }

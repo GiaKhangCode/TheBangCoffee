@@ -7,6 +7,7 @@ D:\DoAn\TheBangCoffee\src\main\java\ConnectDatabase\ConnectionOracle.java
 D:\DoAn\TheBangCoffee\src\main\java\ConnectDatabase\ConnectionUtils.java
 D:\DoAn\TheBangCoffee\src\main\java\Controller\AccountController.java
 D:\DoAn\TheBangCoffee\src\main\java\Controller\ProductController.java
+D:\DoAn\TheBangCoffee\src\main\java\Controller\RoleController.java
 D:\DoAn\TheBangCoffee\src\main\java\Controller\StockPanelController.java
 D:\DoAn\TheBangCoffee\src\main\java\Controller\TheBangCoffeeController.java
 D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\AccountDAO.java
@@ -14,15 +15,21 @@ D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\IngredientDAO.java
 D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\OptionDAO.java
 D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\ProductCategoryDAO.java
 D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\ProductDAO.java
+D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\RoleDAO.java
 D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\SessionDAO.java
 D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\WarehouseReceiptDAO.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\AccountModel.java
+D:\DoAn\TheBangCoffee\src\main\java\Model\CategoryModel.java
+D:\DoAn\TheBangCoffee\src\main\java\Model\FunctionModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\IngredientListModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\IngredientModel.java
+D:\DoAn\TheBangCoffee\src\main\java\Model\OptionGroupModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\OptionModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\ProductCategoryListModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\ProductListModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\ProductModel.java
+D:\DoAn\TheBangCoffee\src\main\java\Model\RoleGroupModel.java
+D:\DoAn\TheBangCoffee\src\main\java\Model\RoleModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\SessionManager.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\WarehouseReceiptDetailModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\WarehouseReceiptListModel.java
@@ -33,6 +40,7 @@ D:\DoAn\TheBangCoffee\src\main\java\Service\OptionService.java
 D:\DoAn\TheBangCoffee\src\main\java\Service\OtpService.java
 D:\DoAn\TheBangCoffee\src\main\java\Service\ProductCategoryService.java
 D:\DoAn\TheBangCoffee\src\main\java\Service\ProductService.java
+D:\DoAn\TheBangCoffee\src\main\java\Service\RoleService.java
 D:\DoAn\TheBangCoffee\src\main\java\Service\SessionService.java
 D:\DoAn\TheBangCoffee\src\main\java\Service\WarehouseReceiptService.java
 D:\DoAn\TheBangCoffee\src\main\java\View\AppColor.java

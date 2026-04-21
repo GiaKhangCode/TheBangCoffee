@@ -10,42 +10,42 @@ package Model;
  * @author Kiet
  */
 public class IngredientModel {
-    private int ID;
-    private String tenNguyenLieu;
-    private String donViTinh;
-    private int tonKho;
-    private int nguong;
-    
-    public IngredientModel(int ID, String tenNguyenLieu, String donViTinh, int tonKho, int nguong) {
-        this.ID = ID;
-        this.tenNguyenLieu = tenNguyenLieu;
-        this.donViTinh = donViTinh;
-        this.tonKho = tonKho;
-        this.nguong = nguong;
+    private int ingredientID;
+    private String ingredientName;
+    private String unit;
+    private int inventory;
+    private int threshold;
+
+    public IngredientModel(int ingredientID, String ingredientName, String unit, int inventory, int threshold) {
+        this.ingredientID = ingredientID;
+        this.ingredientName = ingredientName;
+        this.unit = unit;
+        this.inventory = inventory;
+        this.threshold = threshold;
     }
 
-    public int getID() {
-        return ID;
+    public int getIngredientID() {
+        return ingredientID;
     }
 
-    public String getTenNguyenLieu() {
-        return tenNguyenLieu;
+    public String getIngredientName() {
+        return ingredientName;
     }
 
-    public String getDonViTinh() {
-        return donViTinh;
+    public String getUnit() {
+        return unit;
     }
 
-    public int getTonKho() {
-        return tonKho;
+    public int getInventory() {
+        return inventory;
     }
 
-    public int getNguong() {
-        return nguong;
+    public int getThreshold() {
+        return threshold;
     }
     
     public String getTrangThai(){
-        if (this.tonKho < this.nguong){
+        if (this.inventory < this.threshold){
             return "Hết hàng";
         }
         return "Còn hàng";

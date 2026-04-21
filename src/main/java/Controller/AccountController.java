@@ -5,12 +5,10 @@
 package Controller;
 
 import Common.EmailUtil;
-import Model.SessionManager;
 import Common.ValidationUtil;
 import Service.OtpService;
 import Model.AccountModel;
 import Service.AccountService;
-import Service.SessionService;
 import View.ForgotPasswordFrame;
 import View.LoginFrame;
 import View.MainFrame;
@@ -19,7 +17,10 @@ import View.RegisterFrame;
 import java.sql.SQLException;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
-
+import javax.swing.JTextField;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.DefaultTableModel;
 /**
  *
  * @author Kiet
@@ -32,7 +33,15 @@ public class AccountController {
     private MainFrame mainFrame;
     private AccountService accountService;
     private OtpDialog otpDialog;
-    private SessionService sessionService;
+    public static String currentToken;
+    public static AccountModel loggedInAccount;
+    
+    // THÊM 2 DÒNG NÀY ĐỂ NHẬN ROLE CONTROLLER TỪ BÊN NGOÀI VÀO
+    private RoleController roleController;
+    public void setRoleController(RoleController roleController) {
+        this.roleController = roleController;
+    }
+    // ----------------------------------------------------------
     
     public AccountController(MainFrame sharedMainFrame) throws SQLException {
         this.mainFrame = sharedMainFrame;
@@ -43,8 +52,7 @@ public class AccountController {
         forgotPasswordFrame = new ForgotPasswordFrame();
         accountService = new AccountService();
         otpDialog = new OtpDialog(registerFrame);
-        sessionService = new SessionService();
-                
+        
         initListeners();
         loginFrame.setVisible(true);
     }
@@ -61,18 +69,12 @@ public class AccountController {
                 dialog.setAlwaysOnTop(true);
                 dialog.setVisible(true);
                 
-                String token = sessionService.loginAndCreateToken(accountModel);
-                SessionManager.setSession(token, accountModel);
+                String token = accountService.loginAndCreateToken(accountModel);
+                AccountController.currentToken = token; 
+                AccountController.loggedInAccount = accountModel;
                 
-                try {
-                    new StockPanelController(mainFrame);
-                } catch (SQLException ex) {
-                    System.getLogger(AccountController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
-                }
-                new ProductController(mainFrame);
                 loginFrame.setVisible(false);
                 mainFrame.setVisible(true);
-                
             }
             else {
                 JOptionPane optionPane = new JOptionPane("Đăng nhập thất bại", JOptionPane.ERROR_MESSAGE);
@@ -110,9 +112,7 @@ public class AccountController {
                 dialog.setVisible(true);
                 return;
             }
-            
-            
-            
+
             try {
                 String otp = OtpService.generateOTP(email, OtpService.OtpType.REGISTER);
                 EmailUtil.sendOTP(email, otp, "đăng ký tài khoản");
@@ -136,6 +136,12 @@ public class AccountController {
             if(result.equals("Thành công")){
                 registerFrame.setVisible(false);
                 loginFrame.setVisible(true);
+                
+                // --> GỌI LỆNH LÀM MỚI COMBOBOX BÊN PHÂN QUYỀN <--
+                if (this.roleController != null) {
+                    this.roleController.refreshAccountList();
+                }
+                // ------------------------------------------------
             }
         });
         
@@ -199,7 +205,7 @@ public class AccountController {
             boolean success = accountService.resetPassword(email, newPass);
 
             if (success) {
-                sessionService.revokeAllTokens(email);
+                accountService.revokeAllTokens(email);
                 
                 JOptionPane.showMessageDialog(null, "Đổi mật khẩu thành công!");
                 forgotPasswordFrame.setVisible(false);
@@ -220,8 +226,9 @@ public class AccountController {
         });
         
         this.mainFrame.addLogoutListener(e -> {
-            sessionService.logout(SessionManager.getToken());
-            SessionManager.clear();
+            accountService.logout(currentToken);
+            AccountController.currentToken = null;
+            AccountController.loggedInAccount = null;
             
             mainFrame.setVisible(false);
             loginFrame.setVisible(true);

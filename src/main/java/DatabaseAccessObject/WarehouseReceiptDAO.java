@@ -53,17 +53,17 @@ public class WarehouseReceiptDAO {
     }
 
 
-    public int insertPhieuNhap(int maTaiKhoan, List<WarehouseReceiptDetailModel> danhSach) throws Exception {
+    public int insertPhieuNhap(int accountID, List<WarehouseReceiptDetailModel> list) throws Exception {
         // Lấy Connection từ class quản lý DB của bạn (ví dụ: DatabaseHelper)
         Connection conn = ConnectionUtils.getMyConnection(); 
         int maPhieuMoi = -1;
 
         try {
             // 1. Tạo mảng Struct chứa các dòng chi tiết
-            Struct[] structArray = new Struct[danhSach.size()];
+            Struct[] structArray = new Struct[list.size()];
 
-            for (int i = 0; i < danhSach.size(); i++) {
-                WarehouseReceiptDetailModel item = danhSach.get(i);
+            for (int i = 0; i < list.size(); i++) {
+                WarehouseReceiptDetailModel item = list.get(i);
 
                 // THỨ TỰ BẮT BUỘC KHỚP VỚI 'T_CHI_TIET_PN_FULL' TRONG ORACLE:
                 // (MaNguyenLieu, MaLoaiNguyenLieu, TenNguyenLieu, DonViTinh, NhaCungCap, SoLuong, DonGia)
@@ -100,9 +100,9 @@ public class WarehouseReceiptDAO {
             
             try (CallableStatement cstmt = conn.prepareCall(sql)) {
                 // Set dữ liệu cho các tham số IN
-                cstmt.setInt(1, maTaiKhoan);
+                cstmt.setInt(1, accountID);
                 cstmt.setArray(2, oracleArray); // Truyền nguyên mảng dữ liệu vào DB
-                java.sql.Date sqlDate = java.sql.Date.valueOf(danhSach.get(0).getImportingDate());
+                java.sql.Date sqlDate = java.sql.Date.valueOf(list.get(0).getImportingDate());
                 cstmt.setDate(3, sqlDate);
                 
                 // Đăng ký tham số OUT để lấy Mã phiếu vừa được tự động sinh ra
@@ -127,15 +127,15 @@ public class WarehouseReceiptDAO {
         }
     }
     
-    public boolean deleteReceiptWithLog(int maPhieuNhap, int maTaiKhoan, String lyDo) {
+    public boolean deleteReceiptWithLog(int warehouseReceiptID, int accountID, String reason) {
         String sql = "{CALL SP_XOA_PHIEU_NHAP(?, ?, ?, ?)}"; 
 
         try (Connection conn = getMyConnection();
             CallableStatement cs = conn.prepareCall(sql)) {
 
-            cs.setInt(1, maPhieuNhap);
-            cs.setInt(2, maTaiKhoan);
-            cs.setString(3, lyDo);
+            cs.setInt(1, warehouseReceiptID);
+            cs.setInt(2, accountID);
+            cs.setString(3, reason);
             cs.registerOutParameter(4, java.sql.Types.NVARCHAR);
 
             cs.execute();

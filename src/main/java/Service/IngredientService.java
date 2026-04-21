@@ -25,12 +25,12 @@ public class IngredientService {
     }
     
     // Thêm hàm này vào class IngredientService
-    public boolean updateIngredient(int maNL, String tenMoi, String dvtMoi, int tonKhoMoi, int nguongMoi, int maTaiKhoan, String lyDo) {
-        return ingredientDAO.updateIngredientWithLog(maNL, tenMoi, dvtMoi, tonKhoMoi, nguongMoi, maTaiKhoan, lyDo);
+    public boolean updateIngredient(int ingredientID, String newName, String newUnit, int newInventory, int newThreshold, int accountID, String reason) {
+        return ingredientDAO.updateIngredientWithLog(ingredientID, newName, newUnit, newInventory, newThreshold, accountID, reason);
     }
     
-    public boolean deleteIngredient(int maNL, int currentUserID, String lyDo) {
-        return ingredientDAO.deleteIngredientWithLog(maNL, currentUserID, lyDo);
+    public boolean deleteIngredient(int ingredientID, int currentUserID, String reason) {
+        return ingredientDAO.deleteIngredientWithLog(ingredientID, currentUserID, reason);
     }
 }
 

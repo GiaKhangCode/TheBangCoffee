@@ -11,9 +11,9 @@ import java.util.ArrayList;
  * @author FAKK
  */
 public class ProductCategoryListModel {
-    private ArrayList<String> productCategoryList;
+    private ArrayList<CategoryModel> productCategoryList;
 
-    public ProductCategoryListModel(ArrayList<String> productCategoryList) {
+    public ProductCategoryListModel(ArrayList<CategoryModel> productCategoryList) {
         this.productCategoryList = productCategoryList;
     }
 
@@ -21,11 +21,19 @@ public class ProductCategoryListModel {
         productCategoryList = new ArrayList<>();
     }
 
-    public ArrayList<String> getProductCategoryList() {
+    public ArrayList<CategoryModel> getProductCategoryList() {
         return productCategoryList;
     }
+    
+    public ArrayList<String> getCategoryNames() {
+        ArrayList<String> categoryNames = new ArrayList<>();
+        for(CategoryModel categoryModel : productCategoryList){
+            categoryNames.add(categoryModel.getCategoryName());
+        }
+        return categoryNames;
+    }
 
-    public void setProductCategoryList(ArrayList<String> productCategoryList) {
+    public void setProductCategoryList(ArrayList<CategoryModel> productCategoryList) {
         this.productCategoryList = productCategoryList;
     }
 }

@@ -18,8 +18,15 @@ public class ProductCategoryService {
         productCategoryDAO = new ProductCategoryDAO();
     }
     
-    public ProductCategoryListModel getProductCategory(){
-        ProductCategoryListModel productCategoryList = new ProductCategoryListModel(productCategoryDAO.getProductCategory());
+    public ProductCategoryListModel getAllCategory(){
+        ProductCategoryListModel productCategoryList = new ProductCategoryListModel(productCategoryDAO.getAllCategoriesFull());
         return productCategoryList;
+    }
+    
+    public boolean addCategory(String categoryName, String status) {
+        return productCategoryDAO.insertCategory(categoryName, status);
+    }
+    public boolean deleteCategory(int categoryId) {
+        return productCategoryDAO.deleteCategory(categoryId);
     }
 }

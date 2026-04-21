@@ -180,4 +180,10 @@ public class ValidationUtil {
         }
         return "Hợp lệ";
     }
+    public static boolean validateAddCategory(String newCategoryName){
+        return newCategoryName != null && !newCategoryName.trim().isEmpty();
+    }
+    public static boolean validateAddOptionGroup(String newGroupName){
+        return (newGroupName != null && !newGroupName.trim().isEmpty());
+    }
 }

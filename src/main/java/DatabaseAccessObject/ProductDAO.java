@@ -15,6 +15,10 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.Types;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.swing.ImageIcon;
 
 /**
@@ -73,37 +77,55 @@ public class ProductDAO {
         return productList;
     }
     
-    public void insertProduct(String categoryName, String productName, double basicPrice, File imageFile, String status) {
-        String sql = "{call SP_INSERT_SAN_PHAM(?, ?, ?, ?, ?, ?, ?)}";
+    public void insertProduct(String categoryName, String productName, double basicPrice, File imageFile, String status, HashMap<String, List<String>> selectedOptions) {
+        String sqlProduct = "{call SP_INSERT_SAN_PHAM(?, ?, ?, ?, ?, ?, ?, ?)}";
+        String sqlOption = "{call SP_INSERT_CT_TUY_CHON(?, ?, ?)}";
 
-        try (
-            Connection conn = getMyConnection();
-            CallableStatement cs = conn.prepareCall(sql);
-        ) {
+        try (Connection conn = getMyConnection()) {
+            conn.setAutoCommit(false);
+            int newProductId = -1;
+            try (CallableStatement cs = conn.prepareCall(sqlProduct)){
+                cs.setString(1, productName);
+                cs.setDouble(2, basicPrice);
 
-            cs.setString(1, productName);
-            cs.setDouble(2, basicPrice);
+                if (imageFile != null) {
+                    FileInputStream fis = new FileInputStream(imageFile);
 
-            if (imageFile != null) {
-                FileInputStream fis = new FileInputStream(imageFile);
+                    String fileName = imageFile.getName();
+                    String mimeType = "image/" + fileName.substring(fileName.lastIndexOf(".") + 1);
 
-                String fileName = imageFile.getName();
-                String mimeType = "image/" + fileName.substring(fileName.lastIndexOf(".") + 1);
+                    cs.setString(3, fileName);
+                    cs.setString(4, mimeType);
+                    cs.setBinaryStream(5, fis, imageFile.length());
+                } else {
+                    cs.setString(3, null);
+                    cs.setString(4, null);
+                    cs.setNull(5, java.sql.Types.BLOB);
+                }
 
-                cs.setString(3, fileName);
-                cs.setString(4, mimeType);
-                cs.setBinaryStream(5, fis, imageFile.length());
-            } else {
-                cs.setString(3, null);
-                cs.setString(4, null);
-                cs.setNull(5, java.sql.Types.BLOB);
+                cs.setString(6, status);
+                cs.setString(7, categoryName);
+                cs.registerOutParameter(8, Types.NUMERIC);
+
+                cs.execute();
+                newProductId = cs.getInt(8);
             }
+            if (newProductId > 0 && selectedOptions != null && !selectedOptions.isEmpty()){
+                try (CallableStatement csOpt = conn.prepareCall(sqlOption)) {
+                    for (Map.Entry<String, List<String>> entry : selectedOptions.entrySet()) {
+                        String groupName = entry.getKey();
 
-            cs.setString(6, status);
-            cs.setString(7, categoryName);
-
-            cs.execute();
-
+                        for (String optionName : entry.getValue()) {
+                            csOpt.setInt(1, newProductId);
+                            csOpt.setString(2, optionName);
+                            csOpt.setString(3, groupName);
+                            csOpt.addBatch();
+                        }
+                    }
+                    csOpt.executeBatch();
+                }
+            }
+            conn.commit();
         } catch (Exception e) {
             e.printStackTrace();
         }

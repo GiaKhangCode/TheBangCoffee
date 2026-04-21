@@ -48,12 +48,12 @@ public class IngredientDAO {
         return ingredientList;
     }
     
-    public boolean deleteIngredient(int maNL) {
+    public boolean deleteIngredient(int ingredientID) {
         try {
             Connection conn = getMyConnection();
             String sql = "DELETE FROM NGUYEN_LIEU WHERE MaNguyenLieu = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setInt(1, maNL);
+            ps.setInt(1, ingredientID);
 
             int rowAffected = ps.executeUpdate(); // Thực hiện lệnh xóa
             conn.close();
@@ -65,20 +65,20 @@ public class IngredientDAO {
         }
     }
     
-    public boolean updateIngredientWithLog(int maNL, String tenMoi, String dvtMoi, int tonKhoMoi, int nguongMoi, int maTaiKhoan, String lyDo) {
+    public boolean updateIngredientWithLog(int ingredientID, String newName, String newUnit, int newInventory, int newThreshold, int accountID, String reason) {
         String sql = "{CALL SP_SUA_NGUYEN_LIEU(?, ?, ?, ?, ?, ?, ?, ?)}"; // 8 tham số (7 IN, 1 OUT)
         
   
         try (Connection conn = getMyConnection();
              CallableStatement cs = conn.prepareCall(sql)) {
             
-            cs.setInt(1, maNL);
-            cs.setString(2, tenMoi);
-            cs.setString(3, dvtMoi);
-            cs.setInt(4, tonKhoMoi);
-            cs.setInt(5, nguongMoi);
-            cs.setInt(6, maTaiKhoan); // Truyền ID người dùng đang thao tác
-            cs.setString(7, lyDo);
+            cs.setInt(1, ingredientID);
+            cs.setString(2, newName);
+            cs.setString(3, newUnit);
+            cs.setInt(4, newInventory);
+            cs.setInt(5, newThreshold);
+            cs.setInt(6, accountID); // Truyền ID người dùng đang thao tác
+            cs.setString(7, reason);
             
             // Khai báo tham số hứng kết quả (Tương ứng với OUT trong Procedure)
             cs.registerOutParameter(8, Types.NVARCHAR);
@@ -101,14 +101,14 @@ public class IngredientDAO {
         }
     }
 
-    public boolean deleteIngredientWithLog(int maNL, int maTaiKhoan, String lyDo) {
+    public boolean deleteIngredientWithLog(int ingredientID, int accountID, String reason) {
     String sql = "{CALL SP_XOA_NGUYEN_LIEU(?, ?, ?, ?)}";
     try (Connection conn = getMyConnection();
          CallableStatement cs = conn.prepareCall(sql)) {
         
-        cs.setInt(1, maNL);
-        cs.setInt(2, maTaiKhoan);
-        cs.setString(3, lyDo);
+        cs.setInt(1, ingredientID);
+        cs.setInt(2, accountID);
+        cs.setString(3, reason);
         cs.registerOutParameter(4, java.sql.Types.NVARCHAR);
         
         cs.execute();

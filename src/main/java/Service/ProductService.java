@@ -7,6 +7,8 @@ package Service;
 import DatabaseAccessObject.ProductDAO;
 import Model.ProductListModel;
 import java.io.File;
+import java.util.HashMap;
+import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -39,7 +41,7 @@ public class ProductService {
         return null; // Người dùng hủy chọn
     }
     
-    public void insertProduct(String categoryName, String productName, double basicPrice, File imageFile, String status){
-        productDAO.insertProduct(categoryName, productName, basicPrice, imageFile, status);
+    public void insertProduct(String categoryName, String productName, double basicPrice, File imageFile, String status, HashMap<String, List<String>> selectedOptions){
+        productDAO.insertProduct(categoryName, productName, basicPrice, imageFile, status, selectedOptions);
     }
 }

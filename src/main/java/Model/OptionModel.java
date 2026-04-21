@@ -9,52 +9,50 @@ package Model;
  * @author FAKK
  */
 public class OptionModel {
-    private int maTuyChon;
-    private String tenTuyChon, trangThai;
-    private double giaPhuThu;
+    private int optionID;
+    private String optionName, optionStatus;
+    private double extraPrice;
 
-    public OptionModel(int maTuyChon, String tenTuyChon, double giaPhuThu, String trangThai) {
-        this.maTuyChon = maTuyChon;
-        this.tenTuyChon = tenTuyChon;
-        this.giaPhuThu = giaPhuThu;
-        this.trangThai = trangThai;
+    public OptionModel(int optionID, String optionName, double extraPrice, String optionStatus) {
+        this.optionID = optionID;
+        this.optionName = optionName;
+        this.optionStatus = optionStatus;
+        this.extraPrice = extraPrice;
     }
 
-
-
-    public int getMaTuyChon() {
-        return maTuyChon;
+    public int getOptionID() {
+        return optionID;
     }
 
-    public void setMaTuyChon(int maTuyChon) {
-        this.maTuyChon = maTuyChon;
+    public void setOptionID(int optionID) {
+        this.optionID = optionID;
     }
 
-    public String getTenTuyChon() {
-        return tenTuyChon;
+    public String getOptionName() {
+        return optionName;
     }
 
-    public void setTenTuyChon(String tenTuyChon) {
-        this.tenTuyChon = tenTuyChon;
+    public void setOptionName(String optionName) {
+        this.optionName = optionName;
     }
 
-    public double getGiaPhuThu() {
-        return giaPhuThu;
+    public double getExtraPrice() {
+        return extraPrice;
     }
 
-    public void setGiaPhuThu(double giaPhuThu) {
-        this.giaPhuThu = giaPhuThu;
+    public void setExtraPrice(double extraPrice) {
+        this.extraPrice = extraPrice;
     }
 
-    public String getTrangThai() {
-        return trangThai;
+    public String getOptionStatus() {
+        return optionStatus;
     }
 
-    public void setTrangThai(String trangThai) {
-        this.trangThai = trangThai;
+    public void setOptionStatus(String optionStatus) {
+        this.optionStatus = optionStatus;
     }
     public String getLabel() {
-        if (giaPhuThu > 0) return tenTuyChon + " (+" + String.format("%,d", (long)giaPhuThu).replace(',', '.') + "đ)";
-        return tenTuyChon;
+        if (extraPrice > 0) return optionName + " (+" + String.format("%,d", (long)extraPrice).replace(',', '.') + "đ)";
+        return optionName;
     }
 }

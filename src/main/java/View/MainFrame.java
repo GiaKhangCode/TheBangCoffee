@@ -28,6 +28,7 @@ public class MainFrame extends JFrame {
     private MenuPanel menuPanel;
     private Map<String, NavButton> navButtons;
     private NavButton activeButton;
+    private RolePanel rolePanel;
     
     public MainFrame() throws SQLException {
         initComponents();
@@ -92,6 +93,7 @@ public class MainFrame extends JFrame {
         //------------------------------------------------------------------------
         this.stockPanel = new StockPanel(); 
         this.menuPanel = new MenuPanel();
+        this.rolePanel = new RolePanel();
         contentArea.add(this.stockPanel, "Stock"); 
         contentArea.add(this.menuPanel, "Menu"); 
 //        try {
@@ -108,7 +110,7 @@ public class MainFrame extends JFrame {
         
         //------------------------------------------------------------------------
         contentArea.add(new ContentBasePanel("Đội ngũ Nhân viên", "Quản lý thông tin và lịch làm việc."), "Staff");
-        contentArea.add(new RolePanel(), "Role"); // Giao diện Phân quyền
+        contentArea.add(this.rolePanel, "Role"); // Giao diện Phân quyền
         contentArea.add(new ContentBasePanel("Cài đặt Hệ thống", "Tùy chỉnh các tham số vận hành."), "Settings");
 
         mainContainer.add(contentArea, BorderLayout.CENTER);
@@ -187,5 +189,8 @@ public class MainFrame extends JFrame {
     
     public MenuPanel getMenuPanel(){
         return menuPanel;
+    }
+    public RolePanel getRolePanel(){
+        return rolePanel;
     }
 }
