@@ -26,7 +26,12 @@ public class ProductCategoryService {
     public boolean addCategory(String categoryName, String status) {
         return productCategoryDAO.insertCategory(categoryName, status);
     }
+    
     public boolean deleteCategory(int categoryId) {
         return productCategoryDAO.deleteCategory(categoryId);
+    }
+    
+    public boolean updateCategory(int categoryId, String newName, String status) {
+        return productCategoryDAO.updateCategory(categoryId, newName, status);
     }
 }

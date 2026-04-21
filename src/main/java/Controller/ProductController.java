@@ -11,6 +11,7 @@ import Service.ProductService;
 import View.MenuPanel;
 import View.MainFrame;
 import View.ProductDetailDialog;
+import View.ProductEditDialog;
 import java.awt.GridLayout;
 import java.io.File;
 import java.util.ArrayList;
@@ -53,11 +54,29 @@ public class ProductController {
 
         // Click vào card sản phẩm
         menuPanel.setProductClickListener(product -> {
-            //CHƯA UPDATE CHƯA XỬ LÝ
-            productDetailDialogFrame = new ProductDetailDialog(mainFrame);
-            loadDialogData();
-            productDetailDialogFrame.setImage(product.getImageData());
-            productDetailDialogFrame.setVisible(true);
+            //CÒN BUG
+            ProductEditDialog editDialog = new ProductEditDialog(mainFrame);
+            List<String> categoryNames = categoryService.getAllCategory().getCategoryNames();
+            editDialog.setCategoryList(categoryNames);
+            editDialog.loadOptionCheckboxes(optionService.getOption());
+            editDialog.setProductData(
+            product.getProductName(), 
+            product.getCategoryName(), 
+            product.getBasicPrice(), 
+            product.getProductStatus(), 
+            "", // Truyền description nếu bạn có lấy từ DB lên
+            product.getImageData()
+            );
+            editDialog.addUpdateListener(ev -> {
+            // Logic lấy data từ editDialog.getProductName()... và update DB
+            });
+
+            // Bắt sự kiện Xóa
+            editDialog.addDeleteListener(ev -> {
+                // Logic hỏi xác nhận và xóa DB
+            });
+
+            editDialog.setVisible(true);
         });
         
         productDetailDialogFrame.addChooseImageListener(e -> {
@@ -188,6 +207,191 @@ public class ProductController {
                     loadDialogData(); // Refresh lại View
                 } else {
                     JOptionPane.showMessageDialog(productDetailDialogFrame, "Thêm thất bại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+        
+        productDetailDialogFrame.setCategoryTableListener(new ProductDetailDialog.ProductActionListener() {
+            @Override
+            public void onEdit(int row) {
+                int selectedId = productDetailDialogFrame.getCategoryIdAt(row);
+                String currentName = productDetailDialogFrame.getCategoryNameAt(row);
+                JPanel panel = new JPanel(new GridLayout(0, 1, 5, 5));
+                JTextField txtName = new JTextField(currentName);
+                JComboBox<String> cbStatus = new JComboBox<>(new String[]{"Đang sử dụng", "Chưa sử dụng"});
+
+                panel.add(new JLabel("Tên Loại Sản Phẩm:")); panel.add(txtName);
+                panel.add(new JLabel("Trạng thái:")); panel.add(cbStatus);
+
+                int result = JOptionPane.showConfirmDialog(productDetailDialogFrame, panel, "Sửa Loại Sản Phẩm", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                
+                if (result == JOptionPane.OK_OPTION) {
+                    String newName = txtName.getText().trim();
+                    if (newName.isEmpty()) {
+                        JOptionPane.showMessageDialog(productDetailDialogFrame, "Tên không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    boolean isSuccess = categoryService.updateCategory(selectedId, newName, (String) cbStatus.getSelectedItem());
+                    if (isSuccess) {
+                        JOptionPane.showMessageDialog(productDetailDialogFrame, "Cập nhật thành công!");
+                        loadDialogData(); // Refresh UI
+                        loadMainMenuData();
+                    } else {
+                        JOptionPane.showMessageDialog(productDetailDialogFrame, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+
+            @Override
+            public void onDelete(int row) {
+                int selectedId = productDetailDialogFrame.getCategoryIdAt(row);
+
+                if (selectedId != -1) {
+                    String catName = productDetailDialogFrame.getCategoryNameAt(row);
+
+                    int confirm = JOptionPane.showConfirmDialog(
+                            productDetailDialogFrame, 
+                            "Bạn có chắc chắn muốn xóa danh mục: [" + catName + "]?\nThao tác này không thể hoàn tác.", 
+                            "Xác nhận xóa", 
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE
+                    );
+
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        boolean isSuccess = categoryService.deleteCategory(selectedId);
+                        if (isSuccess) {
+                            JOptionPane.showMessageDialog(productDetailDialogFrame, "Xóa thành công!");
+                            loadDialogData(); // Refresh toàn bộ View
+                        } else {
+                            JOptionPane.showMessageDialog(productDetailDialogFrame, "Xóa thất bại! Danh mục này đang được sử dụng cho các sản phẩm hiện có.", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(productDetailDialogFrame, "Vui lòng chọn một dòng trên bảng để xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        });
+        
+        productDetailDialogFrame.setOptionGroupTableListener(new ProductDetailDialog.ProductActionListener() {
+            @Override
+            public void onEdit(int row) {
+                int selectedId = productDetailDialogFrame.getOptionGroupIdAt(row);
+                String catName = productDetailDialogFrame.getOptionGroupNameAt(row);
+
+                String newName = JOptionPane.showInputDialog(productDetailDialogFrame, "Sửa Tên Nhóm Tùy Chọn:", catName);
+                if (newName != null && !newName.trim().isEmpty()) {
+                    if (optionService.updateOptionGroup(selectedId, newName.trim())) {
+                        JOptionPane.showMessageDialog(productDetailDialogFrame, "Cập nhật thành công!");
+                        loadDialogData();
+                    } else {
+                        JOptionPane.showMessageDialog(productDetailDialogFrame, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+
+            @Override
+            public void onDelete(int row) {
+                int selectedId = productDetailDialogFrame.getOptionGroupIdAt(row);
+
+                if (selectedId != -1) {
+                    String catName = productDetailDialogFrame.getOptionGroupNameAt(row);
+
+                    int confirm = JOptionPane.showConfirmDialog(
+                            productDetailDialogFrame, 
+                            "Bạn có chắc chắn muốn xóa danh mục: [" + catName + "]?\nThao tác này không thể hoàn tác.", 
+                            "Xác nhận xóa", 
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE
+                    );
+
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        boolean isSuccess = optionService.deleteOptionGroup(selectedId);
+                        if (isSuccess) {
+                            JOptionPane.showMessageDialog(productDetailDialogFrame, "Xóa thành công!");
+                            loadDialogData(); // Refresh toàn bộ View
+                        } else {
+                            JOptionPane.showMessageDialog(productDetailDialogFrame, "Xóa thất bại! Danh mục này đang được sử dụng cho các sản phẩm hiện có.", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(productDetailDialogFrame, "Vui lòng chọn một dòng trên bảng để xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        });
+        
+        productDetailDialogFrame.setOptionTableListener(new ProductDetailDialog.ProductActionListener() {
+            @Override
+            public void onEdit(int row) {
+                int selectedId = productDetailDialogFrame.getOptionIdAt(row);
+                String currentName = productDetailDialogFrame.getOptionNameAt(row);
+
+                JPanel panel = new JPanel(new GridLayout(0, 1, 5, 5));
+                JComboBox<String> cbGroup = new JComboBox<>();
+                ArrayList<Model.OptionGroupModel> groups = optionService.getAllOptionGroups();
+                if (groups != null) {
+                    for (Model.OptionGroupModel group : groups) {
+                        cbGroup.addItem(group.getOptionGroupName());
+                    }
+                }
+                
+                JTextField txtTenTuyChon = new JTextField(currentName);
+                JTextField txtPhuThu = new JTextField();
+                JComboBox<String> cbStatus = new JComboBox<>(new String[]{"Đang sử dụng", "Chưa sử dụng"});
+                
+                panel.add(new JLabel("Thuộc Nhóm:")); panel.add(cbGroup);
+                panel.add(new JLabel("Tên Tùy Chọn:")); panel.add(txtTenTuyChon);
+                panel.add(new JLabel("Giá Phụ Thu (VNĐ):")); panel.add(txtPhuThu);
+                panel.add(new JLabel("Trạng Thái:")); panel.add(cbStatus);
+
+                int result = JOptionPane.showConfirmDialog(productDetailDialogFrame, panel, "Sửa Tùy Chọn", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+                if (result == JOptionPane.OK_OPTION) {
+                    String selectedGroup = (String) cbGroup.getSelectedItem();
+                    String newName = txtTenTuyChon.getText().trim();
+                    if (selectedGroup == null || newName.isEmpty()) return;
+
+                    try {
+                        double newPrice = Double.parseDouble(txtPhuThu.getText().trim());
+                        int groupID = optionService.getGroupIdByName(selectedGroup);
+                        
+                        if (optionService.updateOptionDetail(selectedId, groupID, newName, newPrice, (String) cbStatus.getSelectedItem())) {
+                            JOptionPane.showMessageDialog(productDetailDialogFrame, "Cập nhật thành công!");
+                            loadDialogData();
+                        } else {
+                            JOptionPane.showMessageDialog(productDetailDialogFrame, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(productDetailDialogFrame, "Giá phụ thu không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+
+            @Override
+            public void onDelete(int row) {
+                int selectedId = productDetailDialogFrame.getOptionIdAt(row);
+
+                if (selectedId != -1) {
+                    String catName = productDetailDialogFrame.getOptionNameAt(row);
+
+                    int confirm = JOptionPane.showConfirmDialog(
+                            productDetailDialogFrame, 
+                            "Bạn có chắc chắn muốn xóa danh mục: [" + catName + "]?\nThao tác này không thể hoàn tác.", 
+                            "Xác nhận xóa", 
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE
+                    );
+
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        boolean isSuccess = optionService.deleteOptionDetail(selectedId);
+                        if (isSuccess) {
+                            JOptionPane.showMessageDialog(productDetailDialogFrame, "Xóa thành công!");
+                            loadDialogData(); // Refresh toàn bộ View
+                        } else {
+                            JOptionPane.showMessageDialog(productDetailDialogFrame, "Xóa thất bại! Danh mục này đang được sử dụng cho các sản phẩm hiện có.", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(productDetailDialogFrame, "Vui lòng chọn một dòng trên bảng để xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
                 }
             }
         });

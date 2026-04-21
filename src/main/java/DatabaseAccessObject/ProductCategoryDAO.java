@@ -67,4 +67,20 @@ public class ProductCategoryDAO {
             return false;
         }
     }
+    
+    public boolean updateCategory(int categoryId, String newName, String status) {
+        String sql = "UPDATE LOAI_SAN_PHAM SET TenLoaiSanPham = ?, TrangThai = ? WHERE MaLoaiSanPham = ?";
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+             
+            ps.setString(1, newName);
+            ps.setString(2, status);
+            ps.setInt(3, categoryId);
+            
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

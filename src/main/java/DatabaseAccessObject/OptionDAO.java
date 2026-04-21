@@ -137,4 +137,36 @@ public class OptionDAO {
             return false;
         }
     }
+    public boolean updateOptionGroup(int groupId, String newName) {
+        String sql = "UPDATE NHOM_TUY_CHON SET TenNhomTuyChon = ? WHERE MaNhomTuyChon = ?";
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+             
+            ps.setString(1, newName);
+            ps.setInt(2, groupId);
+            
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateOptionDetail(int optionId, int newGroupId, String newName, double newPrice, String status) {
+        String sql = "UPDATE TUY_CHON SET MaNhomTuyChon = ?, TenTuyChon = ?, GiaPhuThu = ?, TrangThai = ? WHERE MaTuyChon = ?";
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+             
+            ps.setInt(1, newGroupId);
+            ps.setString(2, newName);
+            ps.setDouble(3, newPrice);
+            ps.setString(4, status);
+            ps.setInt(5, optionId);
+            
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

@@ -40,6 +40,7 @@ public class OptionService {
     public int getGroupIdByName(String groupName) {
         return optionDAO.getGroupIdByName(groupName);
     }
+    
     public boolean deleteOptionGroup(int groupID) {
         return optionDAO.deleteOptionGroup(groupID);
     }
@@ -48,4 +49,11 @@ public class OptionService {
         return optionDAO.deleteOptionDetail(optionId);
     }
     
+    public boolean updateOptionGroup(int groupId, String newName) {
+        return optionDAO.updateOptionGroup(groupId, newName);
+    }
+
+    public boolean updateOptionDetail(int optionId, int newGroupId, String newName, double newPrice, String status) {
+        return optionDAO.updateOptionDetail(optionId, newGroupId, newName, newPrice, status);
+    }
 }
