@@ -8,24 +8,31 @@ package Controller;
  *
  * @author Kiet
  */
-import Model.SessionManager;
 import Common.ValidationUtil;
 import Model.WarehouseReceiptDetailModel;
+import Model.IngredientListModel;
+import Model.WarehouseReceiptListModel;
 import Model.IngredientModel;
+import Model.IngredientTypeModel;
+import Model.SessionManager;
 import Model.WarehouseReceiptModel;
 import Service.IngredientService;
 import Service.WarehouseReceiptService;
 import View.MainFrame;
 import View.StockPanel;
+import View.StockPanel.ActionButtonListener;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-
+import javax.swing.table.DefaultTableModel;
+import Service.IngredientTypeService;
 
 public class StockPanelController {
     private List<IngredientModel> ingredientListModel;
@@ -34,16 +41,24 @@ public class StockPanelController {
     private MainFrame mainFrame;
     private IngredientService ingredientService;
     private WarehouseReceiptService warehouseReceiptService;
-
+    private IngredientTypeService ingredientTypeService;
+    private List<IngredientTypeModel> ingredientTypeList;
+    
     public StockPanelController(MainFrame sharedMainFrame) throws SQLException {
         this.mainFrame = sharedMainFrame;
         
         ingredientService = new IngredientService();
         warehouseReceiptService = new WarehouseReceiptService();
+        ingredientTypeService = new IngredientTypeService();
         
         this.stockPanelView = mainFrame.getStockPanel();
-
+        
+        
         initStockListeners();
+        
+        ingredientTypeList = ingredientTypeService.getIngredientTypes();
+        stockPanelView.loadIngredientTypesToComboBox(ingredientTypeList);
+        
         loadIngredientToView();
         loadWarehouseReceiptToView();
     }
@@ -79,7 +94,7 @@ public class StockPanelController {
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 try {
                     loadWarehouseReceiptToView(); // Gọi hàm kéo data từ DB
-                } catch (Exception ex) { // <-- ĐÃ SỬA: Dùng Exception để tóm gọn mọi loại lỗi
+                } catch (Exception ex) { 
 
                     // 1. In chi tiết lỗi chữ đỏ ra tab Console/Output trong IDE để bạn rà soát
                     ex.printStackTrace(); 
@@ -99,17 +114,30 @@ public class StockPanelController {
             @Override
             public void tableChanged(TableModelEvent e) {
                 // Nếu là sự kiện THÊM DÒNG mới, hoặc CẬP NHẬT cột 2 (Số lượng), cột 3 (Đơn giá)
-                if (e.getType() == TableModelEvent.INSERT || 
-                   (e.getType() == TableModelEvent.UPDATE && (e.getColumn() == 2 || e.getColumn() == 3))) {
+                if (e.getType() == TableModelEvent.INSERT ||
+                    e.getType() == TableModelEvent.DELETE ||
+                   (e.getType() == TableModelEvent.UPDATE && e.getColumn() == 5)) {
                     long total = warehouseReceiptService.calculateTotal(stockPanelView.getReceiptItemModel());
                     stockPanelView.setTotalAmountLabel(total);
                 }
             }
         });
         
-        // Bên trong hàm initStockListeners(), phần setInventoryActionListener:
-    
+        // --- LẮNG NGHE SỰ KIỆN TRÊN BẢNG TỒN KHO ---
         this.stockPanelView.setInventoryActionListener(new View.StockPanel.ActionButtonListener() {
+            
+            // ĐÃ SỬA: Đưa hàm onDetail vào ĐÚNG BÊN TRONG khối ngoặc của Listener
+            @Override
+            public void onDetail(int row) {
+                // 1. Lấy tên nguyên liệu đang được chọn
+                String tenNL = stockPanelView.getInventoryTable().getValueAt(row, 1).toString();
+                // 2. Xuống Database lấy lịch sử
+                String detail = ingredientService.getIngredientDetail(tenNL);
+                // 3. In ra màn hình
+                JOptionPane.showMessageDialog(null, detail, "Lịch sử nhập: " + tenNL, JOptionPane.INFORMATION_MESSAGE);
+            }
+            
+            @Override
             public void onDelete(int row) {
                 // 1. Lấy thông tin cơ bản để hiển thị xác nhận
                 int maNL = Integer.parseInt(stockPanelView.getInventoryTable().getValueAt(row, 0).toString());
@@ -140,51 +168,54 @@ public class StockPanelController {
                         JOptionPane.showMessageDialog(null, "Đã xóa nguyên liệu và lưu log thành công.");
                     }
                 } 
-        }
+            }
         
-        public void onEdit(int row) {
-            // 1. Lấy dữ liệu cũ từ dòng đang chọn
-            int maNL = Integer.parseInt(stockPanelView.getInventoryTable().getValueAt(row, 0).toString());
-            String tenCu = stockPanelView.getInventoryTable().getValueAt(row, 1).toString();
-            String dvtCu = stockPanelView.getInventoryTable().getValueAt(row, 2).toString();
-            int tonCu = Integer.parseInt(stockPanelView.getInventoryTable().getValueAt(row, 3).toString());
-            int nguongCu = Integer.parseInt(stockPanelView.getInventoryTable().getValueAt(row, 4).toString());
+            @Override
+            public void onEdit(int row) {
+                // 1. Lấy dữ liệu cũ từ dòng đang chọn
+                int maNL = Integer.parseInt(stockPanelView.getInventoryTable().getValueAt(row, 0).toString());
+                String tenCu = stockPanelView.getInventoryTable().getValueAt(row, 1).toString();
+                String dvtCu = stockPanelView.getInventoryTable().getValueAt(row, 2).toString();
+                int tonCu = Integer.parseInt(stockPanelView.getInventoryTable().getValueAt(row, 3).toString());
+                int nguongCu = Integer.parseInt(stockPanelView.getInventoryTable().getValueAt(row, 4).toString());
 
-            // 2. Gọi View hiện Form nhập liệu mới (kèm ô Lý do)
-            Object[] duLieuMoi = stockPanelView.showEditDialog(tenCu, dvtCu, tonCu, nguongCu);
+                // 2. Gọi View hiện Form nhập liệu mới (kèm ô Lý do)
+                Object[] duLieuMoi = stockPanelView.showEditDialog(tenCu, dvtCu, tonCu, nguongCu);
 
-            // 3. Xử lý khi người dùng bấm OK
-            if (duLieuMoi != null) {
-                String tenMoi = (String) duLieuMoi[0];
-                String dvtMoi = (String) duLieuMoi[1];
-                int tonMoi = (int) duLieuMoi[2];
-                int nguongMoi = (int) duLieuMoi[3];
-                String lyDo = (String) duLieuMoi[4]; // Nhận thêm lý do
-                
-                // Lấy ID tài khoản người đang đăng nhập
-                int currentUserID = SessionManager.getAccount().getAccountID(); 
+                // 3. Xử lý khi người dùng bấm OK
+                if (duLieuMoi != null) {
+                    String tenMoi = (String) duLieuMoi[0];
+                    String dvtMoi = (String) duLieuMoi[1];
+                    int tonMoi = (int) duLieuMoi[2];
+                    int nguongMoi = (int) duLieuMoi[3];
+                    String lyDo = (String) duLieuMoi[4]; // Nhận thêm lý do
 
-                // 4. Gọi Service để đẩy xuống Database
-                boolean isSuccess = ingredientService.updateIngredient(maNL, tenMoi, dvtMoi, tonMoi, nguongMoi, currentUserID, lyDo);
+                    // Lấy ID tài khoản người đang đăng nhập
+                    int currentUserID = SessionManager.getAccount().getAccountID(); 
 
-                if (isSuccess) {
-                    // 5. Cập nhật UI ngay lập tức
-                    stockPanelView.getInventoryTable().setValueAt(tenMoi, row, 1);
-                    stockPanelView.getInventoryTable().setValueAt(dvtMoi, row, 2);
-                    stockPanelView.getInventoryTable().setValueAt(tonMoi, row, 3);
-                    stockPanelView.getInventoryTable().setValueAt(nguongMoi, row, 4);
-                    
-                    // Logic tính lại trạng thái "Còn hàng / Hết hàng" trên bảng
-                    String trangThai = (tonMoi < nguongMoi) ? "Hết hàng" : "Còn hàng";
-                    stockPanelView.getInventoryTable().setValueAt(trangThai, row, 5);
+                    // 4. Gọi Service để đẩy xuống Database
+                    boolean isSuccess = ingredientService.updateIngredient(maNL, tenMoi, dvtMoi, tonMoi, nguongMoi, currentUserID, lyDo);
 
-                    JOptionPane.showMessageDialog(null, "Cập nhật và lưu log thành công!");
+                    if (isSuccess) {
+                        // 5. Cập nhật UI ngay lập tức
+                        stockPanelView.getInventoryTable().setValueAt(tenMoi, row, 1);
+                        stockPanelView.getInventoryTable().setValueAt(dvtMoi, row, 2);
+                        stockPanelView.getInventoryTable().setValueAt(tonMoi, row, 3);
+                        stockPanelView.getInventoryTable().setValueAt(nguongMoi, row, 4);
+
+                        // Logic tính lại trạng thái "Còn hàng / Hết hàng" trên bảng
+                        String trangThai = (tonMoi < nguongMoi) ? "Hết hàng" : "Còn hàng";
+                        stockPanelView.getInventoryTable().setValueAt(trangThai, row, 5);
+
+                        JOptionPane.showMessageDialog(null, "Cập nhật và lưu log thành công!");
+                    }
                 }
             }
-        }
-    });
-        // Lắng nghe sự kiện Sửa/Xóa trên bảng Lịch sử nhập hàng
-        this.stockPanelView.setHistoryActionListener(new View.StockPanel.HistoryActionButtonListener() {
+        });
+        
+        
+        // --- LẮNG NGHE SỰ KIỆN TRÊN BẢNG LỊCH SỬ NHẬP HÀNG ---
+        this.stockPanelView.setHistoryActionListener(new View.StockPanel.ActionButtonListener() {
             @Override
             public void onDetail(int row){
                 javax.swing.table.DefaultTableModel historyModel = stockPanelView.getHistoryModel();
@@ -260,46 +291,52 @@ public class StockPanelController {
         
     private void implementCreateReceipt() throws Exception {
         javax.swing.table.DefaultTableModel itemModel = stockPanelView.getReceiptItemModel();
-
-        boolean isValid = ValidationUtil.validateAttributesOfWarehouseReceipt(itemModel, stockPanelView);
-        if (!isValid) {
+        if (!ValidationUtil.validateAttributesOfWarehouseReceipt(itemModel, stockPanelView)) 
             return; 
-        }
 
         int rowCount = itemModel.getRowCount();
-        List<WarehouseReceiptDetailModel> warehouseReceiptListDetail = new ArrayList<>();
+        List<WarehouseReceiptDetailModel> listDetails = new ArrayList<>();
 
         for (int i = 0; i < rowCount; i++) {
-            String tenNguyenLieu = String.valueOf(itemModel.getValueAt(i, 0)).trim();
-            String donViTinh = String.valueOf(itemModel.getValueAt(i, 1)).trim();
-            int soLuong = Integer.parseInt(String.valueOf(itemModel.getValueAt(i, 2)).trim()); // Thoải mái ép kiểu vì đã validate ở trên
-            long donGia = Long.parseLong(String.valueOf(itemModel.getValueAt(i, 3)).trim());
-            int nguong = Integer.parseInt(String.valueOf(itemModel.getValueAt(i, 4)).trim());
-            String nhaCungCap = String.valueOf(itemModel.getValueAt(i, 5)).trim();
-            LocalDate ngayNhap = LocalDate.parse(String.valueOf(itemModel.getValueAt(i, 6)).trim()); 
+            String category = String.valueOf(itemModel.getValueAt(i, 0)).trim();
+            String name = String.valueOf(itemModel.getValueAt(i, 1)).trim();
+            String unit = String.valueOf(itemModel.getValueAt(i, 2)).trim();
+            int capacity = Integer.parseInt(String.valueOf(itemModel.getValueAt(i, 3)).trim()); 
+            int quantity = Integer.parseInt(String.valueOf(itemModel.getValueAt(i, 4)).trim()); 
+            long totalPrice = Long.parseLong(String.valueOf(itemModel.getValueAt(i, 5)).trim());
+            int threshold = Integer.parseInt(String.valueOf(itemModel.getValueAt(i, 6)).trim());
+            String provider = String.valueOf(itemModel.getValueAt(i, 7)).trim();
+            LocalDate importingDate = LocalDate.parse(String.valueOf(itemModel.getValueAt(i, 8)).trim()); 
+            LocalDate expiryDate = LocalDate.parse(String.valueOf(itemModel.getValueAt(i, 9)).trim()); 
 
-            // Đóng gói nó thành đối tượng
-            WarehouseReceiptDetailModel detail = new WarehouseReceiptDetailModel(tenNguyenLieu, donViTinh, soLuong, donGia, nguong, nhaCungCap, ngayNhap);
+            // Map ID động từ tên danh mục
+            int typeID = 1; 
+            for (IngredientTypeModel type : ingredientTypeList) {
+                if (type.getTypeName().equals(category)) { 
+                    typeID = type.getTypeID(); 
+                    break; 
+                }
+            }
 
-            warehouseReceiptListDetail.add(detail);
+            WarehouseReceiptDetailModel detail = new WarehouseReceiptDetailModel(typeID, category, name, unit, capacity, quantity, totalPrice, threshold, provider, importingDate, expiryDate);
+            listDetails.add(detail);
         }
 
-        // 3. THÊM VÀO DATABASE
-        warehouseReceiptService.createReceipt(SessionManager.getAccount().getAccountID(), warehouseReceiptListDetail);
-
-        JOptionPane.showMessageDialog(stockPanelView, "Đã nhập hàng thành công!");
+        warehouseReceiptService.createReceipt(SessionManager.getAccount().getAccountID(), listDetails);
+        JOptionPane.showMessageDialog(stockPanelView, "Lập phiếu nhập thành công!");
         stockPanelView.clearReceiptForm();
     }
     
-        // Hàm load dữ liệu lần đầu khi vừa mở app
+    // Hàm load dữ liệu lần đầu khi vừa mở app
     
-    private void loadIngredientToView() throws SQLException {
+    public void loadIngredientToView() throws SQLException {
         ingredientListModel = ingredientService.getIngredientList();
         stockPanelView.displayIngredientData(ingredientListModel);
     }
     
-    private void loadWarehouseReceiptToView() throws SQLException {
+    public void loadWarehouseReceiptToView() throws SQLException {
         warehouseReceiptListModel = warehouseReceiptService.getWarehouseReceiptList();
         stockPanelView.displayWarehouseReceiptData(warehouseReceiptListModel);
     }
+    
 }

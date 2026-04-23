@@ -7,13 +7,16 @@ package DatabaseAccessObject;
 import ConnectDatabase.ConnectionUtils;
 import static ConnectDatabase.ConnectionUtils.getMyConnection;
 import oracle.jdbc.OracleConnection;
+import Model.AccountModel;
 import Model.WarehouseReceiptDetailModel;
+import Model.IngredientModel;
 import Model.WarehouseReceiptModel;
 import java.sql.Array;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Struct;
 import java.sql.Types;
@@ -31,7 +34,8 @@ public class WarehouseReceiptDAO {
         String query = "SELECT MaPhieuNhap, NgayNhap, TK.MaTaiKhoan, TongGiaTri, ND.HoTen "
                 + "FROM PHIEU_NHAP_KHO PNK "
                 + "JOIN TAI_KHOAN TK on PNK.MaTaiKhoan = TK.MaTaiKhoan "
-                + "JOIN NGUOI_DUNG ND ON TK.MaNguoiDung = ND.MaNguoiDung ";
+                + "JOIN NGUOI_DUNG ND ON TK.MaNguoiDung = ND.MaNguoiDung "
+                + "ORDER BY MaPhieuNhap";
    
         try (Connection conn = getMyConnection();
              Statement stmt = conn.createStatement();
@@ -53,30 +57,31 @@ public class WarehouseReceiptDAO {
     }
 
 
-    public int insertPhieuNhap(int accountID, List<WarehouseReceiptDetailModel> list) throws Exception {
+    public int insertPhieuNhap(int maTaiKhoan, List<WarehouseReceiptDetailModel> danhSach) throws Exception {
         // Lấy Connection từ class quản lý DB của bạn (ví dụ: DatabaseHelper)
         Connection conn = ConnectionUtils.getMyConnection(); 
         int maPhieuMoi = -1;
 
         try {
             // 1. Tạo mảng Struct chứa các dòng chi tiết
-            Struct[] structArray = new Struct[list.size()];
+            Struct[] structArray = new Struct[danhSach.size()];
 
-            for (int i = 0; i < list.size(); i++) {
-                WarehouseReceiptDetailModel item = list.get(i);
+            for (int i = 0; i < danhSach.size(); i++) {
+                WarehouseReceiptDetailModel item = danhSach.get(i);
 
                 // THỨ TỰ BẮT BUỘC KHỚP VỚI 'T_CHI_TIET_PN_FULL' TRONG ORACLE:
-                // (MaNguyenLieu, MaLoaiNguyenLieu, TenNguyenLieu, DonViTinh, NhaCungCap, SoLuong, DonGia)
                 Object[] attributes = new Object[] {
-                    item.getIngredientID(),       // Nếu là nguyên liệu mới, cái này mang giá trị null
-                    item.getIngredientTypeID(),
-                    item.getIngredientName(),
-                    item.getUnit(),
-                    item.getProviderName(),
-                    item.getQuantity(),
-                    item.getPrice()
-                };
-
+                    item.getIngredientID(),       // 1.
+                    item.getIngredientTypeID(),   // 2.
+                    item.getIngredientName(),     // 3.
+                    item.getUnit(),               // 4.
+                    item.getProviderName(),       // 5.
+                    item.getTotalCapacity(),      // 6. 
+                    item.getQuantity(),           // 7. 
+                    item.getTotalPrice(),         // 8. 
+                    item.getThreshold(),         // 9.
+                    item.getExpiryDate().toString()
+                };            
                 // Ép kiểu dòng này thành Struct. Tên type phải VIẾT IN HOA
                 structArray[i] = conn.createStruct("T_CHI_TIET_PN_FULL", attributes);
             }
@@ -100,9 +105,9 @@ public class WarehouseReceiptDAO {
             
             try (CallableStatement cstmt = conn.prepareCall(sql)) {
                 // Set dữ liệu cho các tham số IN
-                cstmt.setInt(1, accountID);
+                cstmt.setInt(1, maTaiKhoan);
                 cstmt.setArray(2, oracleArray); // Truyền nguyên mảng dữ liệu vào DB
-                java.sql.Date sqlDate = java.sql.Date.valueOf(list.get(0).getImportingDate());
+                java.sql.Date sqlDate = java.sql.Date.valueOf(danhSach.get(0).getImportingDate());
                 cstmt.setDate(3, sqlDate);
                 
                 // Đăng ký tham số OUT để lấy Mã phiếu vừa được tự động sinh ra
@@ -127,15 +132,15 @@ public class WarehouseReceiptDAO {
         }
     }
     
-    public boolean deleteReceiptWithLog(int warehouseReceiptID, int accountID, String reason) {
+    public boolean deleteReceiptWithLog(int maPhieuNhap, int maTaiKhoan, String lyDo) {
         String sql = "{CALL SP_XOA_PHIEU_NHAP(?, ?, ?, ?)}"; 
 
         try (Connection conn = getMyConnection();
             CallableStatement cs = conn.prepareCall(sql)) {
 
-            cs.setInt(1, warehouseReceiptID);
-            cs.setInt(2, accountID);
-            cs.setString(3, reason);
+            cs.setInt(1, maPhieuNhap);
+            cs.setInt(2, maTaiKhoan);
+            cs.setString(3, lyDo);
             cs.registerOutParameter(4, java.sql.Types.NVARCHAR);
 
             cs.execute();
@@ -156,15 +161,16 @@ public class WarehouseReceiptDAO {
         }
     }
     
-    public String getReceiptDetail(int receiptID){
+    public String getReceiptDetail(int receiptID) {
         String receiptDetail = "";
-        String query = "select TenNguyenLieu, SoLuong, DonViTinh " +
-                    "from PHIEU_NHAP_KHO pnk " +
-                    "join chi_tiet_phieu_nhap ct on ct.MaPhieuNhap = pnk.MaPhieuNhap " +
-                    "join nguyen_lieu nl on nl.MaNguyenLieu = ct.MaNguyenLieu " + 
-                    "where ct.MaPhieuNhap = ?";
+        
+        String query = "SELECT nl.TenNguyenLieu, ct.TongDinhLuong, nl.DonViTinh, TO_CHAR(nl.HanSuDung, 'DD/MM/YYYY') AS HSD " +
+                       "FROM PHIEU_NHAP_KHO pnk " +
+                       "JOIN CHI_TIET_PHIEU_NHAP ct ON ct.MaPhieuNhap = pnk.MaPhieuNhap " +
+                       "JOIN NGUYEN_LIEU nl ON nl.MaNguyenLieu = ct.MaNguyenLieu " +
+                       "WHERE ct.MaPhieuNhap = ?";
    
-        try (Connection conn = getMyConnection();){ 
+        try (Connection conn = getMyConnection();) { 
             
             PreparedStatement ps = conn.prepareStatement(query);
             ps.setInt(1, receiptID);
@@ -173,14 +179,21 @@ public class WarehouseReceiptDAO {
             while(rs.next()){
                 receiptDetail += "- " + rs.getString("TenNguyenLieu") 
                               + " nhập " 
-                              + rs.getInt("SoLuong") 
+                              + rs.getInt("TongDinhLuong") + " " 
                               + rs.getString("DonViTinh") 
-                              + "\n";
+                              + " (HSD: " + rs.getString("HSD") + ")\n";
             }
         }
         catch (Exception e){
-            e.printStackTrace(); //In ra dấu vết bắt lỗi
+            e.printStackTrace(); 
         }
+        
+        if (receiptDetail.isEmpty()) {
+            return "Không có chi tiết nguyên liệu cho phiếu nhập này.";
+        }
+        
         return receiptDetail;
     }
 }
+
+

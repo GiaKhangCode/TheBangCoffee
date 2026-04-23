@@ -4,6 +4,9 @@
  */
 package Model;
 
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.List;
 
 /**
  *
@@ -13,14 +16,14 @@ public class IngredientModel {
     private int ingredientID;
     private String ingredientName;
     private String unit;
-    private int inventory;
+    private int inStock;
     private int threshold;
-
-    public IngredientModel(int ingredientID, String ingredientName, String unit, int inventory, int threshold) {
+    
+    public IngredientModel(int ingredientID, String ingredientName, String unit, int inStock, int threshold) {
         this.ingredientID = ingredientID;
         this.ingredientName = ingredientName;
         this.unit = unit;
-        this.inventory = inventory;
+        this.inStock = inStock;
         this.threshold = threshold;
     }
 
@@ -36,19 +39,21 @@ public class IngredientModel {
         return unit;
     }
 
-    public int getInventory() {
-        return inventory;
+    public int getInStock() {
+        return inStock;
     }
 
     public int getThreshold() {
         return threshold;
     }
     
-    public String getTrangThai(){
-        if (this.inventory < this.threshold){
-            return "Hết hàng";
+    public String getStatus() {
+        if (this.inStock > this.threshold){
+            return "Còn hàng";
         }
-        return "Còn hàng";
+        else
+            return "Hết hàng";
     }
+    
     
 }

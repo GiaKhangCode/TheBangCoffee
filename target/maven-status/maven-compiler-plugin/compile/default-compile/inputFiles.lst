@@ -12,6 +12,7 @@ D:\DoAn\TheBangCoffee\src\main\java\Controller\StockPanelController.java
 D:\DoAn\TheBangCoffee\src\main\java\Controller\TheBangCoffeeController.java
 D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\AccountDAO.java
 D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\IngredientDAO.java
+D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\IngredientTypeDAO.java
 D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\OptionDAO.java
 D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\ProductCategoryDAO.java
 D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\ProductDAO.java
@@ -23,6 +24,7 @@ D:\DoAn\TheBangCoffee\src\main\java\Model\CategoryModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\FunctionModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\IngredientListModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\IngredientModel.java
+D:\DoAn\TheBangCoffee\src\main\java\Model\IngredientTypeModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\OptionGroupModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\OptionModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\ProductCategoryListModel.java
@@ -36,6 +38,7 @@ D:\DoAn\TheBangCoffee\src\main\java\Model\WarehouseReceiptListModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\WarehouseReceiptModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Service\AccountService.java
 D:\DoAn\TheBangCoffee\src\main\java\Service\IngredientService.java
+D:\DoAn\TheBangCoffee\src\main\java\Service\IngredientTypeService.java
 D:\DoAn\TheBangCoffee\src\main\java\Service\OptionService.java
 D:\DoAn\TheBangCoffee\src\main\java\Service\OtpService.java
 D:\DoAn\TheBangCoffee\src\main\java\Service\ProductCategoryService.java

@@ -349,7 +349,7 @@ public class AccountDAO {
                         "FROM TAI_KHOAN TK " +
                         "JOIN PHAN_QUYEN_TAI_KHOAN PQTK ON TK.MATAIKHOAN = PQTK.MATAIKHOAN " +
                         "JOIN PHAM_VI_QUYEN PVQ ON PVQ.MaPhamVi = PQTK.MaPhamVi " +
-                        "WHERE TK.MaTaiKhoan = 1 " +
+                        "WHERE TK.MaTaiKhoan = ? " +
                         "UNION " +
                         "SELECT PVQ.MaPhamVi, PVQ.TenPhamVi " +
                         "FROM TAI_KHOAN TK " +
@@ -362,7 +362,8 @@ public class AccountDAO {
         try (Connection conn = getMyConnection();){ //Chỉ phục vụ đọc/lấy dữ liệu
         
             PreparedStatement ps = conn.prepareStatement(query);
-            ps.setInt(1, accountId);    
+            ps.setInt(1, accountId);  
+            ps.setInt(2, accountId);    
              
             ResultSet rs = ps.executeQuery();
             
@@ -391,7 +392,7 @@ public class AccountDAO {
                         "FROM TAI_KHOAN TK " +
                         "JOIN PHAN_QUYEN_TAI_KHOAN PQTK ON TK.MATAIKHOAN = PQTK.MATAIKHOAN " +
                         "JOIN PHAM_VI_QUYEN PVQ ON PVQ.MaPhamVi = PQTK.MaPhamVi " +
-                        "WHERE TK.MaTaiKhoan = 1 " +
+                        "WHERE TK.MaTaiKhoan = ? " +
                         "UNION " +
                         "SELECT PVQ.MaPhamVi, PVQ.TenPhamVi " +
                         "FROM TAI_KHOAN TK " +
@@ -405,7 +406,8 @@ public class AccountDAO {
         
             PreparedStatement ps = conn.prepareStatement(query);
             ps.setInt(1, accountId);    
-             
+            ps.setInt(2, accountId); 
+            
             ResultSet rs = ps.executeQuery();
             
             while(rs.next()){

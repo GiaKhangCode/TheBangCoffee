@@ -37,31 +37,21 @@ public class WarehouseReceiptService {
     
     public long calculateTotal(DefaultTableModel model){
         long total = 0;
-
         for (int i = 0; i < model.getRowCount(); i++) {
             try {
-                // Lấy giá trị ở ô Số lượng và Đơn giá
-                String strQuantity = model.getValueAt(i, 2).toString().trim();
-                String strPrice = model.getValueAt(i, 3).toString().trim();
-                
-                // Nếu rỗng thì bỏ qua
-                if (strQuantity.isEmpty() || strPrice.isEmpty()) continue;
-                
-                // Nhân lại và cộng dồn
-                int quantity = Integer.parseInt(strQuantity);
-                long price = Long.parseLong(strPrice);
-                total += (quantity * price);
-                
-            } catch (Exception ex) {
-                // Lỗi ép kiểu (gõ chữ cái vào ô số) thì bỏ qua
+                String strTotal = model.getValueAt(i, 5).toString().trim();
+                if (strTotal.isEmpty()) 
+                    continue;
+                total += Long.parseLong(strTotal);
+            } catch (Exception ex) { 
                 continue; 
             }
         }
         return total;
     }
     
-    public boolean deleteWarehouseReceipt(int warehouseReceiptID, int accountID, String reason) {
-        return warehouseReceiptDAO.deleteReceiptWithLog(warehouseReceiptID, accountID, reason);
+    public boolean deleteWarehouseReceipt(int maPhieuNhap, int maTaiKhoan, String lyDo) {
+        return warehouseReceiptDAO.deleteReceiptWithLog(maPhieuNhap, maTaiKhoan, lyDo);
     }
     
     public String getDetailReceipt(int receiptID){

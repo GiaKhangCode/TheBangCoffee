@@ -5,15 +5,16 @@ Controller\StockPanelController$1.class
 View\MenuPanel.class
 View\ProductDetailDialog$ProductActionListener.class
 View\RolePanel$RoleActionButtonRenderer.class
+Model\IngredientTypeModel.class
 View\LoginFrame$1.class
 View\StockPanel$3.class
 View\HeaderPanel.class
 View\ProductDetailDialog$8.class
 View\MenuPanel$2.class
+DatabaseAccessObject\IngredientTypeDAO.class
 Controller\RoleController$8.class
 Service\ProductCategoryService.class
 Controller\RoleController$5.class
-View\StockPanel$HistoryActionButtonRenderer.class
 View\StockPanel.class
 Service\OtpService$OtpDetails.class
 View\ProductDetailDialog$WrapLayout.class
@@ -24,7 +25,6 @@ Model\ProductListModel.class
 View\ProductEditDialog$2.class
 View\RolePanel$5.class
 View\ForgotPasswordFrame$3.class
-View\StockPanel$HistoryActionButtonEditor.class
 Controller\RoleController$2.class
 Controller\StockPanelController$4.class
 View\StockPanel$ActionPanel.class
@@ -54,6 +54,7 @@ Common\ValidationUtil.class
 View\ProductDetailDialog$6.class
 View\StockPanel$1.class
 com\is216\thebangcf\TheBangCF.class
+View\StockPanel$6.class
 Controller\RoleController$4.class
 View\ForgotPasswordFrame$1.class
 View\ProductDetailDialog$5.class
@@ -73,6 +74,7 @@ View\ProductDetailDialog.class
 Model\CategoryModel.class
 View\RolePanel$RoleActionListener.class
 View\ForgotPasswordFrame$2.class
+View\StockPanel$7.class
 Common\HashUtil.class
 Model\OptionModel.class
 View\ProductDetailDialog$4.class
@@ -95,7 +97,6 @@ Service\ProductService.class
 View\AppColor.class
 com\is216\thebangcf\TheBangCF$1.class
 View\RolePanel$4.class
-View\StockPanel$HistoryActionButtonListener.class
 DatabaseAccessObject\RoleDAO.class
 Model\WarehouseReceiptDetailModel.class
 View\RolePanel$DeleteActionListener.class
@@ -113,6 +114,7 @@ Controller\RoleController$9.class
 DatabaseAccessObject\AccountDAO.class
 Service\OtpService.class
 Controller\AccountController$1.class
+Service\IngredientTypeService.class
 View\RolePanel$2.class
 View\ContentBasePanel$RoundedCard.class
 View\ProductDetailDialog$ProductActionButtonRenderer.class
@@ -145,5 +147,4 @@ View\ProductDetailDialog$ProductActionButtonEditor.class
 Model\WarehouseReceiptListModel.class
 View\RolePanel$3.class
 View\RolePanel$RoleActionPanel.class
-View\StockPanel$HistoryActionPanel.class
 View\ProductDetailDialog$2.class

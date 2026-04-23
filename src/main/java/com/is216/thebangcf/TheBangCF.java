@@ -18,15 +18,8 @@ public class TheBangCF {
                 try {
                     // 1. XÂY NGÔI NHÀ CHUNG: Khởi tạo MainFrame duy nhất
                     MainFrame sharedMainFrame = new MainFrame();
-                    // 2. GIAO NHIỆM VỤ: Khởi tạo các Controller và truyền MainFrame vào
-                    // AccountController nhận MainFrame, tự động mở màn hình Login lên
-                    AccountController accountController = new AccountController(sharedMainFrame);
-                    // StockPanelController nhận MainFrame, âm thầm chuẩn bị sẵn dữ liệu Kho bên trong
-                    StockPanelController stockController = new StockPanelController(sharedMainFrame);
-                    RoleController roleController = new RoleController(sharedMainFrame);
-                    new ProductController(sharedMainFrame);
-                    // KẾT NỐI: Cấp cho AccountController quyền nói chuyện với RoleController
-                    accountController.setRoleController(roleController);
+                    new AccountController(sharedMainFrame);
+                    
                 } catch (SQLException ex) {
                     System.err.println("Lỗi kết nối cơ sở dữ liệu khi khởi động ứng dụng!");
                     ex.printStackTrace();

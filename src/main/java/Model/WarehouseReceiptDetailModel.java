@@ -1,42 +1,45 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Model;
 
 import java.time.LocalDate;
 
-/**
- *
- * @author SONY
- */
 public class WarehouseReceiptDetailModel {
     private Integer ingredientID;
-    private Integer ingredientTypeID;
+    private int ingredientTypeID;
+    private String ingredientType;
     private String ingredientName;
     private String unit;
-    private int quantity;
-    private long price;
+    private int totalCapacity; 
+    private int quantity;     
+    private long totalPrice;  
     private int threshold;
     private String providerName;
     private LocalDate importingDate;
+    private LocalDate expiryDate;
 
-    public WarehouseReceiptDetailModel(String ingredientName, String unit, int quantity, long price, int threshold, String providerName, LocalDate importingDate) {
+    public WarehouseReceiptDetailModel(int ingredientTypeID, String ingredientType, String ingredientName, String unit, int totalCapacity, int quantity, long totalPrice, int threshold, String providerName, LocalDate importingDate, LocalDate expiryDate) {
+        this.ingredientTypeID = ingredientTypeID;
+        this.ingredientType = ingredientType;
         this.ingredientName = ingredientName;
         this.unit = unit;
+        this.totalCapacity = totalCapacity;
         this.quantity = quantity;
-        this.price = price;
+        this.totalPrice = totalPrice;
         this.threshold = threshold;
         this.providerName = providerName;
         this.importingDate = importingDate;
+        this.expiryDate = expiryDate;
     }
 
     public Integer getIngredientID() {
         return ingredientID;
     }
 
-    public Integer getIngredientTypeID() {
+    public int getIngredientTypeID() {
         return ingredientTypeID;
+    }
+
+    public String getIngredientType() {
+        return ingredientType;
     }
 
     public String getIngredientName() {
@@ -47,12 +50,16 @@ public class WarehouseReceiptDetailModel {
         return unit;
     }
 
+    public int getTotalCapacity() {
+        return totalCapacity;
+    }
+
     public int getQuantity() {
         return quantity;
     }
 
-    public long getPrice() {
-        return price;
+    public long getTotalPrice() {
+        return totalPrice;
     }
 
     public int getThreshold() {
@@ -67,7 +74,9 @@ public class WarehouseReceiptDetailModel {
         return importingDate;
     }
 
+    public LocalDate getExpiryDate() {
+        return expiryDate;
+    }
+
     
 }
-
-

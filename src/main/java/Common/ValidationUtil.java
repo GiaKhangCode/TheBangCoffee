@@ -61,92 +61,49 @@ public class ValidationUtil {
     public static boolean validateAttributesOfWarehouseReceipt(DefaultTableModel itemModel, StockPanel stockPanelView){
         int rowCount = itemModel.getRowCount();
         if (rowCount == 0) {
-            JOptionPane.showMessageDialog(stockPanelView, "Phiếu nhập đang trống, vui lòng thêm nguyên liệu!");
-            return false;
+            JOptionPane.showMessageDialog(stockPanelView, "Phiếu nhập trống!"); return false;
         }
-
+ 
         for (int i = 0; i < rowCount; i++) {
-            String tenNguyenLieu = String.valueOf(itemModel.getValueAt(i, 0)).trim();
-            String donViTinh = String.valueOf(itemModel.getValueAt(i, 1)).trim();
-            String strSoLuong = String.valueOf(itemModel.getValueAt(i, 2)).trim();
-            String strDonGia = String.valueOf(itemModel.getValueAt(i, 3)).trim();
-            String strNguong = String.valueOf(itemModel.getValueAt(i, 4)).trim();
-            String nhaCungCap = String.valueOf(itemModel.getValueAt(i, 5)).trim();
-            String strNgayNhap = String.valueOf(itemModel.getValueAt(i, 6)).trim();
-
-            // --- A. KIỂM TRA RỖNG ---
-            if (!validateString(tenNguyenLieu)){
-                JOptionPane.showMessageDialog(stockPanelView, "Tên nguyên liệu ở dòng " + (i + 1) + " không được để trống!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-                return false; // Dừng lại và báo false
+            String category = String.valueOf(itemModel.getValueAt(i, 0)).trim();
+            String name = String.valueOf(itemModel.getValueAt(i, 1)).trim();
+            String unit = String.valueOf(itemModel.getValueAt(i, 2)).trim(); //
+            String strCapacity = String.valueOf(itemModel.getValueAt(i, 3)).trim();
+            String strQuantity = String.valueOf(itemModel.getValueAt(i, 4)).trim();
+            String strTotal = String.valueOf(itemModel.getValueAt(i, 5)).trim();
+            String strThres = String.valueOf(itemModel.getValueAt(i, 6)).trim();
+            String provider = String.valueOf(itemModel.getValueAt(i, 7)).trim();
+            String importingDate = String.valueOf(itemModel.getValueAt(i, 8)).trim();
+            String expiryDate = String.valueOf(itemModel.getValueAt(i, 9)).trim();
+ 
+            // <-- ĐÃ THÊM !validateString(unit) vào điều kiện kiểm tra rỗng
+            if (!validateString(category) || !validateString(name) || !validateString(unit) || !validateString(provider) || !validateString(importingDate) || !validateString(expiryDate)) {
+                JOptionPane.showMessageDialog(stockPanelView, "Vui lòng điền đủ thông tin chữ ở dòng " + (i+1), "Lỗi", JOptionPane.ERROR_MESSAGE); return false;
             }
-            if (!validateString(donViTinh)) {
-                JOptionPane.showMessageDialog(stockPanelView, "Đơn vị tính ở dòng " + (i + 1) + " không được để trống!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-                return false;
-            }
-            if (!validateString(nhaCungCap)) {
-                JOptionPane.showMessageDialog(stockPanelView, "Nhà cung cấp ở dòng " + (i + 1) + " không được để trống!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-                return false;
-            }
-            if (!validateString(strNgayNhap)) {
-                JOptionPane.showMessageDialog(stockPanelView, "Ngày nhập ở dòng " + (i + 1) + " không được để trống!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-                return false;
-            }
-            if (!validateString(strSoLuong)) {
-                JOptionPane.showMessageDialog(stockPanelView, "Số lượng ở dòng " + (i + 1) + " không được để trống!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-                return false;
-            }
-            if (!validateString(strDonGia)) {
-                JOptionPane.showMessageDialog(stockPanelView, "Đơn giá ở dòng " + (i + 1) + " không được để trống!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-                return false;
-            }
-            if (!validateString(strNguong)) {
-                JOptionPane.showMessageDialog(stockPanelView, "Ngưỡng cảnh báo ở dòng " + (i + 1) + " không được để trống!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
-                return false;
-            }
-
-            // --- B. KIỂM TRA ĐỊNH DẠNG SỐ ---
+ 
             try {
-                int soLuong = Integer.parseInt(strSoLuong);
-                if (soLuong <= 0) {
-                    JOptionPane.showMessageDialog(stockPanelView, "Số lượng ở dòng " + (i + 1) + " phải lớn hơn 0!", "Lỗi logic", JOptionPane.ERROR_MESSAGE);
-                    return false;
+                int capacity = Integer.parseInt(strCapacity);
+                int quantity = Integer.parseInt(strQuantity);
+                long totalPrice = Long.parseLong(strTotal);
+                int threshold = Integer.parseInt(strThres);
+ 
+                if (capacity <= 0 || quantity <= 0 || threshold < 0 || totalPrice < 0) {
+                    JOptionPane.showMessageDialog(stockPanelView, "Các số liệu ở dòng " + (i+1) + " phải hợp lệ (>0)!", "Lỗi logic", JOptionPane.ERROR_MESSAGE); return false;
                 }
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(stockPanelView, "Số lượng ở dòng " + (i + 1) + " phải là số nguyên!", "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
-                return false;
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(stockPanelView, "Dòng " + (i+1) + " chứa định dạng số không hợp lệ!", "Lỗi định dạng", JOptionPane.ERROR_MESSAGE); return false;
             }
-
-            try {
-                long donGia = Long.parseLong(strDonGia);
-                if (donGia < 0) { 
-                    JOptionPane.showMessageDialog(stockPanelView, "Đơn giá ở dòng " + (i + 1) + " không được âm!", "Lỗi logic", JOptionPane.ERROR_MESSAGE);
-                    return false;
-                }
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(stockPanelView, "Đơn giá ở dòng " + (i + 1) + " phải là một con số hợp lệ!", "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
-                return false;
-            }
-
-            try {
-                int nguong = Integer.parseInt(strNguong);
-                if (nguong <= 0) { // Sửa lại logic chỗ này của bạn (soLuong <= 0 thành nguong <= 0)
-                    JOptionPane.showMessageDialog(stockPanelView, "Ngưỡng ở dòng " + (i + 1) + " phải lớn hơn 0!", "Lỗi logic", JOptionPane.ERROR_MESSAGE);
-                    return false;
-                }
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(stockPanelView, "Ngưỡng ở dòng " + (i + 1) + " phải là số nguyên!", "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
-                return false;
-            }
-
-            try {
-                LocalDate.parse(strNgayNhap.trim());
+            try { 
+                LocalDate.parse(importingDate); 
             } catch (DateTimeParseException e) {
-                JOptionPane.showMessageDialog(stockPanelView, "Ngày nhập ở dòng " + (i + 1) + " sai định dạng yyyy-MM-dd!", "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
-                return false; 
+                JOptionPane.showMessageDialog(stockPanelView, "Ngày nhập ở dòng " + (i+1) + " phải là định dạng yyyy-MM-dd!", "Lỗi ngày", JOptionPane.ERROR_MESSAGE); return false;
+            }
+            try { 
+                LocalDate.parse(expiryDate); 
+            } catch (DateTimeParseException e) {
+                JOptionPane.showMessageDialog(stockPanelView, "Hạn sử dụng ở dòng " + (i+1) + " phải là định dạng yyyy-MM-dd!", "Lỗi ngày", JOptionPane.ERROR_MESSAGE); return false;
             }
         }
-
-        // Vượt qua vòng lặp mà không có lỗi nào -> Trả về true
         return true; 
     }
     
