@@ -9,6 +9,7 @@ import java.util.List;
 import Model.FunctionModel;
 import Model.RoleGroupModel;
 import Model.RoleModel;
+import Model.SessionManager;
 import Service.AccountService;
 import Service.RoleService;
 import View.MainFrame;
@@ -16,6 +17,7 @@ import View.RolePanel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
 
@@ -28,7 +30,6 @@ public class RoleController {
     private RolePanel rolePanelView;
     private RoleService roleService;
     private AccountService accountService;
-    
     private List<AccountModel> currentAccountList;
     private List<RoleModel> currentRolesList;
     private List<RoleGroupModel> currentRoleGroupsList;
@@ -38,7 +39,7 @@ public class RoleController {
         this.roleService = new RoleService();
         this.rolePanelView = mainFrame.getRolePanel();
         this.accountService = new AccountService();
-        
+
         initRoleListeners();
     }
     
@@ -88,6 +89,7 @@ public class RoleController {
                             reloadRolesComboBoxTab2();
                             reloadRolesComboBoxTab4();
                             
+                            hiddenButton();
                             JOptionPane.showMessageDialog(rolePanelView, "Đã thêm phạm vi quyền thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                         }
                         else {
@@ -134,6 +136,8 @@ public class RoleController {
                         reloadRolesComboBoxTab2();
                         reloadRolesTableTab4();
                         reloadRolesComboBoxTab4();
+                        
+                        hiddenButton();
                     } catch (SQLException ex) {
                         System.getLogger(RoleController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
                     }
@@ -158,6 +162,8 @@ public class RoleController {
                     try {
                         reloadRolesTableTab2();
                         reloadRolesComboBoxTab2();
+                        
+                        hiddenButton();
                     } catch (SQLException ex) {
                         System.getLogger(RoleController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
                     }
@@ -187,6 +193,8 @@ public class RoleController {
                         // Lấy danh sách nhóm quyền của tài khoản này từ DB
                         reloadRoleGroupsTableTab3();
                         reloadRoleGroupsComboBoxTab3();
+                        
+                        hiddenButton();
                         
                     } catch (SQLException ex) {
                         System.getLogger(RoleController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
@@ -226,6 +234,8 @@ public class RoleController {
                         reloadRoleGroupsComboBoxTab3();
                         reloadRolesTableTab4();
                         reloadRolesComboBoxTab4();
+                        
+                        hiddenButton();
                         JOptionPane.showMessageDialog(null, "Cấp vai trò cho tài khoản thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     } else {
                         JOptionPane.showMessageDialog(null, "Cấp vai trò thất bại! Có thể tài khoản này đã giữ vai trò này rồi.", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -263,6 +273,8 @@ public class RoleController {
                         rolePanelView.loadAssignedRolesToTab4Table(accountName, assignedRoles);
                         
                         reloadRolesComboBoxTab4();
+                        
+                        hiddenButton();
                         
                     } catch (SQLException ex) {
                         System.getLogger(RoleController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
@@ -303,6 +315,7 @@ public class RoleController {
                         rolePanelView.loadAssignedRolesToTab4Table(accountName, assignedRoles);
                         
                         reloadRolesComboBoxTab4();
+                        hiddenButton();
                         
                         JOptionPane.showMessageDialog(null, "Cấp quyền riêng cho tài khoản thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     } else {
@@ -345,6 +358,7 @@ public class RoleController {
                             reloadRolesTableTab1();
                             reloadRolesComboBoxTab2();
                             reloadRolesComboBoxTab4();
+                            hiddenButton();
 
                             JOptionPane.showMessageDialog(null, "Cập nhật phạm vi quyền thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                         } else {
@@ -373,7 +387,8 @@ public class RoleController {
                             reloadRolesTableTab1();
                             reloadRolesComboBoxTab2();
                             reloadRolesComboBoxTab4();
-
+                            
+                            hiddenButton();
                             JOptionPane.showMessageDialog(null, "Đã xóa thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                         } else {
                             JOptionPane.showMessageDialog(null, 
@@ -424,6 +439,7 @@ public class RoleController {
                         reloadRolesComboBoxTab2();
                         reloadRolesTableTab2();
                         
+                        hiddenButton();
                         JOptionPane.showMessageDialog(null, "Thu hồi quyền thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     } else {
                         JOptionPane.showMessageDialog(null, "Thu hồi thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -463,6 +479,8 @@ public class RoleController {
                         reloadRoleGroupsComboBoxTab3();
                         reloadRolesComboBoxTab4();
                         reloadRolesTableTab4();
+                        
+                        hiddenButton();
                         JOptionPane.showMessageDialog(null, "Thu hồi phạm vi quyền thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     } else {
                         JOptionPane.showMessageDialog(null, "Thu hồi phạm vi quyền thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -500,6 +518,8 @@ public class RoleController {
                         rolePanelView.loadAssignedRolesToTab4Table(accountName, newAssigned);
                         
                         reloadRolesComboBoxTab4();
+                        
+                        hiddenButton();
                         JOptionPane.showMessageDialog(null, "Thu hồi quyền riêng thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     } else {
                         JOptionPane.showMessageDialog(null, "Vai trò này có được do phân quyền nhóm, không thể xoá riêng!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -527,6 +547,7 @@ public class RoleController {
                             reloadRoleGroupsTableTab5();
                             reloadRoleGroupsComboBoxTab2();
                             reloadRoleGroupsComboBoxTab3();
+                            
                             JOptionPane.showMessageDialog(rolePanelView, "Đã thêm nhóm quyền thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                         } else {
                             JOptionPane.showMessageDialog(rolePanelView, "Đã xảy ra lỗi khi lưu nhóm quyền", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -702,4 +723,46 @@ public class RoleController {
         reloadAccountComboBoxTab3();
         reloadAccountComboBoxTab4();
     }
+    
+    public void hiddenButton() throws SQLException {
+        int currentAccountId = SessionManager.getAccountId();
+        int currentFunctionId = 5; // ID của chức năng Phân quyền
+        
+        // 1. Kiểm tra CẢ 4 QUYỀN (Thêm, Sửa, Xóa, XEM)
+        boolean hasViewPermission = roleService.isPermissed("Xem", currentAccountId, currentFunctionId);
+        boolean hasAddPermission = roleService.isPermissed("Them", currentAccountId, currentFunctionId);
+        boolean hasEditPermission = roleService.isPermissed("Sua", currentAccountId, currentFunctionId);
+        boolean hasDeletePermission = roleService.isPermissed("Xoa", currentAccountId, currentFunctionId);
+        
+        // --- XỬ LÝ QUYỀN XEM (ẨN/HIỆN ENTIRE MENU) ---
+        // Gọi hàm bên MainFrame để ẩn/hiện cục menu Phân Quyền trên Sidebar
+        if (mainFrame != null) {
+            mainFrame.setRoleMenuVisible(hasViewPermission);
+        }
+        
+        // Nếu không có quyền xem thì không cần tốn thời gian chạy mấy dòng dưới nữa, return luôn!
+        if (!hasViewPermission) {
+            return;
+        }
+        // ----------------------------------------------
+        
+        // 2. Lấy tất cả các nút Thêm/Gán độc lập từ View
+        JButton btnAddScope = rolePanelView.getAddScopeButton();
+        JButton btnAssignRole = rolePanelView.getAssignRoleButton();
+        JButton btnAssignRoleGroupToAccount = rolePanelView.getAssignRoleGroupToAccountButton();
+        JButton btnAssignScopeToAccount = rolePanelView.getAssignScopeToAccountButton();
+        JButton btnAddRoleGroupTab5 = rolePanelView.getAddRoleGroupTab5Button();
+        
+        // 3. Bật/Tắt các nút Thêm độc lập
+        if (btnAddScope != null) btnAddScope.setVisible(hasAddPermission);
+        if (btnAssignRole != null) btnAssignRole.setVisible(hasAddPermission);
+        if (btnAssignRoleGroupToAccount != null) btnAssignRoleGroupToAccount.setVisible(hasAddPermission);
+        if (btnAssignScopeToAccount != null) btnAssignScopeToAccount.setVisible(hasAddPermission);
+        if (btnAddRoleGroupTab5 != null) btnAddRoleGroupTab5.setVisible(hasAddPermission);
+        
+        // 4. Truyền lệnh Bật/Tắt các nút Sửa, Xóa bên trong các Bảng
+        rolePanelView.setActionPermissions(hasEditPermission, hasDeletePermission);
+    }
+    
+    
 }

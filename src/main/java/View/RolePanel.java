@@ -72,6 +72,16 @@ public class RolePanel extends JPanel {
     private RoleActionListener roleGroupTableListener; // Tái sử dụng lại Interface của Tab 1
     // --------------------------------------------------------
    
+    private boolean hasEditPermission = true;
+    private boolean hasDeletePermission = true;
+
+    // Hàm này để Controller gọi và truyền quyền vào
+    public void setActionPermissions(boolean canEdit, boolean canDelete) {
+        this.hasEditPermission = canEdit;
+        this.hasDeletePermission = canDelete;
+        this.repaint(); // Yêu cầu vẽ lại toàn bộ giao diện (bao gồm các bảng)
+    }
+    
     // ------------------------------------
     
     public RolePanel() {
@@ -911,6 +921,29 @@ public class RolePanel extends JPanel {
         return cbRoleTab4;
     }
     
+    // =========================================
+    // GETTERS CHO CÁC NÚT BẤM (DÙNG ĐỂ CHECK QUYỀN)
+    // =========================================
+    public JButton getAddScopeButton() {
+        return btnAddScope; // Nút thêm phạm vi quyền ở Tab 1
+    }
+    
+    public JButton getAssignRoleButton() {
+        return btnAssignRole; // Nút Gán quyền ở Tab 2
+    }
+    
+    public JButton getAssignRoleGroupToAccountButton() {
+        return btnAssignRoleGroupToAccount; // Nút Cập nhật vai trò ở Tab 3
+    }
+    
+    public JButton getAssignScopeToAccountButton() {
+        return btnAssignScopeToAccount; // Nút Cấp quyền riêng ở Tab 4
+    }
+    
+    public JButton getAddRoleGroupTab5Button() {
+        return btnAddRoleGroupTab5; // Nút thêm nhóm quyền ở Tab 5
+    }
+    
     public void setRoleTableListener(RoleActionListener listener) {
         this.roleTableListener = listener;
     }
@@ -1183,15 +1216,18 @@ public class RolePanel extends JPanel {
     }
 
     class RoleActionButtonRenderer implements TableCellRenderer {
-        protected JPanel panel;
+        protected RoleActionPanel panel; // Đổi JPanel thành RoleActionPanel
 
-        public RoleActionButtonRenderer(JPanel panel) {
+        public RoleActionButtonRenderer(RoleActionPanel panel) {
             this.panel = panel;
         }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
+            // CHECK QUYỀN VÀ ẨN HIỆN NÚT
+            panel.btnEdit.setVisible(hasEditPermission);
+            panel.btnDelete.setVisible(hasDeletePermission);
             return panel;
         }
     }
@@ -1214,6 +1250,9 @@ public class RolePanel extends JPanel {
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
             currentRow = row;
             panel.setBackground(table.getSelectionBackground());
+            // CHECK QUYỀN VÀ ẨN HIỆN NÚT
+            panel.btnEdit.setVisible(hasEditPermission);
+            panel.btnDelete.setVisible(hasDeletePermission);
             return panel;
         }
 
@@ -1247,11 +1286,13 @@ public class RolePanel extends JPanel {
     }
 
     class DeleteActionButtonRenderer implements TableCellRenderer {
-        protected JPanel panel;
-        public DeleteActionButtonRenderer(JPanel panel) { this.panel = panel; }
+        protected DeleteActionPanel panel; // Đổi JPanel thành DeleteActionPanel
+        public DeleteActionButtonRenderer(DeleteActionPanel panel) { this.panel = panel; }
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
+            // CHECK QUYỀN XÓA (Thu hồi)
+            panel.btnDelete.setVisible(hasDeletePermission);
             return panel;
         }
     }
@@ -1272,11 +1313,12 @@ public class RolePanel extends JPanel {
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
             currentRow = row;
             panel.setBackground(table.getSelectionBackground());
+            // CHECK QUYỀN XÓA (Thu hồi)
+            panel.btnDelete.setVisible(hasDeletePermission);
             return panel;
         }
         @Override public Object getCellEditorValue() { return ""; }
     }
-    
 }
 
 
