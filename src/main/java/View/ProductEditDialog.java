@@ -292,7 +292,7 @@ public class ProductEditDialog extends JDialog {
     }
 
     // Render các Checkbox Tùy Chọn động
-    public void loadOptionCheckboxes(HashMap<String, ArrayList<OptionModel>> optionsMap) {
+    public void loadOptionCheckboxes(HashMap<String, ArrayList<OptionModel>> optionsMap, ArrayList<OptionModel> optionSelected) {
         this.currentOptionGroups = optionsMap;
         optionsPanel.removeAll();
         optionCheckboxMap.clear();
@@ -316,7 +316,10 @@ public class ProductEditDialog extends JDialog {
             for (OptionModel item : entry.getValue()) {
                 JCheckBox cb = new JCheckBox(item.getLabel());
                 cb.setFont(new Font("Segoe UI", Font.PLAIN, 13)); cb.setOpaque(false);
-                cb.setSelected(false); // Mặc định không tick
+                if(optionSelected.stream().anyMatch(option -> option.getOptionName().equalsIgnoreCase(item.getOptionName()))){
+                    cb.setSelected(true); // Mặc định không tick
+                }
+                else cb.setSelected(false); // Mặc định không tick
                 optionCheckboxMap.put(item.getOptionID(), cb);
                 itemsPanel.add(cb);
             }

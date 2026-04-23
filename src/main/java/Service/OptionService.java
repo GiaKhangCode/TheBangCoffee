@@ -7,6 +7,7 @@ package Service;
 import Model.OptionGroupModel;
 import DatabaseAccessObject.OptionDAO;
 import Model.OptionModel;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -55,5 +56,9 @@ public class OptionService {
 
     public boolean updateOptionDetail(int optionId, int newGroupId, String newName, double newPrice, String status) {
         return optionDAO.updateOptionDetail(optionId, newGroupId, newName, newPrice, status);
+    }
+    
+    public ArrayList<OptionModel> getSelectedOptionByID(int productID) throws SQLException, ClassNotFoundException, ClassNotFoundException{
+        return optionDAO.getSelectedOptionByID(productID);
     }
 }

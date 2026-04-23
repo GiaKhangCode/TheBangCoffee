@@ -14,6 +14,7 @@ import View.ProductDetailDialog;
 import View.ProductEditDialog;
 import java.awt.GridLayout;
 import java.io.File;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.*;
@@ -58,7 +59,15 @@ public class ProductController {
             ProductEditDialog editDialog = new ProductEditDialog(mainFrame);
             List<String> categoryNames = categoryService.getAllCategory().getCategoryNames();
             editDialog.setCategoryList(categoryNames);
-            editDialog.loadOptionCheckboxes(optionService.getOption());
+            
+            try {
+                editDialog.loadOptionCheckboxes(optionService.getOption(), optionService.getSelectedOptionByID(product.getProductID()));
+            } catch (SQLException ex) {
+                System.getLogger(ProductController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            } catch (ClassNotFoundException ex) {
+                System.getLogger(ProductController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            }
+            
             editDialog.setProductData(
             product.getProductName(), 
             product.getCategoryName(), 

@@ -10,6 +10,7 @@ import Model.OptionGroupModel;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,6 +41,7 @@ public class OptionDAO {
         
         return optionHashMap;
     }
+    
     public boolean insertOption(int groupID, String optionName, double extraPrice, String optionStatus) {
         String sql = "INSERT INTO TUY_CHON (MaNhomTuyChon, TenTuyChon, GiaPhuThu, TrangThai) VALUES (?, ?, ?, ?)";
         
@@ -168,5 +170,29 @@ public class OptionDAO {
             e.printStackTrace();
             return false;
         }
+    }
+    
+    public ArrayList<OptionModel> getSelectedOptionByID(int productID) throws SQLException, ClassNotFoundException{
+        ArrayList<OptionModel> optionList = new ArrayList<>();
+        String sql = "SELECT TC.MaTuyChon, TenTuyChon, TrangThai, GiaPhuThu "
+                    + "FROM CHI_TIET_TUY_CHON_SAN_PHAM CTTCSP "
+                    + "JOIN TUY_CHON TC on CTTCSP.MaTuyChon = TC.MaTuyChon "
+                    + "WHERE MaSanPham = ? ";
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+                ps.setInt(1, productID);
+                try(ResultSet rs = ps.executeQuery();){
+                    while(rs.next()){
+                        OptionModel optionModel = new OptionModel(rs.getInt("MaTuyChon"), rs.getString("TenTuyChon"), rs.getDouble("GiaPhuThu"), rs.getString("TrangThai"));
+                        optionList.add(optionModel);
+                    }
+                }
+        }
+        catch (Exception e){
+            e.printStackTrace(); //In ra dấu vết bắt lỗi
+        }
+        
+        return optionList;
     }
 }
