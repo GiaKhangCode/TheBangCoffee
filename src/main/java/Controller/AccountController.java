@@ -71,9 +71,14 @@ public class AccountController {
                 
                 String token = sessionService.loginAndCreateToken(accountModel);
                 SessionManager.setSession(token, accountModel);
-                createController();
+                
                 loginFrame.setVisible(false);
-                mainFrame.setVisible(true);
+                try {
+                    openMainFrame();
+                } catch (SQLException ex) {
+                    System.getLogger(AccountController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+                }
+                
             }
             else {
                 JOptionPane optionPane = new JOptionPane("Đăng nhập thất bại", JOptionPane.ERROR_MESSAGE);
@@ -236,11 +241,6 @@ public class AccountController {
             loginFrame.setVisible(true);
         });
 
-        createController();
-        
-        this.mainFrame.setVisible(true);
-    }
-    private void createController() {
         try {
             new StockPanelController(mainFrame);
             roleController = new RoleController(this.mainFrame);
@@ -251,7 +251,10 @@ public class AccountController {
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
+        
+        this.mainFrame.setVisible(true);
     }
+    
     private void usingUnrevokedToken() throws SQLException{
         accountModel = accountService.getAccountFromToken();
         String token = accountService.getUnrevokedToken();
