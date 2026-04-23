@@ -16,9 +16,7 @@ public class TheBangCF {
             @Override
             public void run() {
                 try {
-                    // 1. XÂY NGÔI NHÀ CHUNG: Khởi tạo MainFrame duy nhất
-                    MainFrame sharedMainFrame = new MainFrame();
-                    new AccountController(sharedMainFrame);
+                    new AccountController();
                     
                 } catch (SQLException ex) {
                     System.err.println("Lỗi kết nối cơ sở dữ liệu khi khởi động ứng dụng!");

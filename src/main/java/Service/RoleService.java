@@ -76,6 +76,10 @@ public class RoleService {
         return roleDAO.getRoleGroupList();
     }
     
+    public boolean isPermissed(String operationName, int accountId, int functionId) throws SQLException{
+        return roleDAO.isPermissed(operationName, accountId, functionId) > 0;
+    }
+    
     
     
     

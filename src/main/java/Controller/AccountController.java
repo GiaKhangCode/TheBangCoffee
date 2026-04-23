@@ -44,8 +44,8 @@ public class AccountController {
     }
     // ----------------------------------------------------------
     
-    public AccountController(MainFrame sharedMainFrame) throws SQLException {
-        this.mainFrame = sharedMainFrame;
+    public AccountController() throws SQLException {
+        this.mainFrame = new MainFrame();
         
         accountModel = new AccountModel();
         loginFrame = new LoginFrame();
@@ -81,6 +81,8 @@ public class AccountController {
                 RoleController roleController = null;
                 try {
                     roleController = new RoleController(this.mainFrame);
+                    // ẩn các nút không có quyền
+                    roleController.hiddenButton();
                 } catch (SQLException ex) {
                     System.getLogger(AccountController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
                 }
@@ -244,7 +246,11 @@ public class AccountController {
             sessionService.logout(SessionManager.getToken());
             SessionManager.clear();
             
+            // 1. Tắt và HỦY (dispose) hoàn toàn MainFrame cũ khỏi bộ nhớ
             mainFrame.setVisible(false);
+            mainFrame.dispose(); 
+            
+            // 2. Bật lại màn hình Login
             loginFrame.setVisible(true);
         });
     }

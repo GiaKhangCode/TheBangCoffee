@@ -160,7 +160,8 @@ CREATE TABLE CHI_TIET_PHIEU_NHAP
     MaPhieuNhap  NUMBER,
     MaNguyenLieu NUMBER,
     SoLuong      NUMBER NOT NULL CHECK (SoLuong > 0),
-    DonGia       NUMBER NOT NULL CHECK (DonGia >= 0),
+    ThanhTien    NUMBER NOT NULL CHECK (ThanhTien >= 0),
+    TongDinhLuong NUMBER DEFAULT 0 CHECK (TongDinhLuong >= 0),
     PRIMARY KEY (MaPhieuNhap, MaNguyenLieu),
     FOREIGN KEY (MaPhieuNhap) REFERENCES PHIEU_NHAP_KHO (MaPhieuNhap),
     FOREIGN KEY (MaNguyenLieu) REFERENCES NGUYEN_LIEU (MaNguyenLieu)

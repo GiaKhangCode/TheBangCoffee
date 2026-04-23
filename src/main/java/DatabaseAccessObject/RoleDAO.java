@@ -393,6 +393,47 @@ public class RoleDAO {
         return roleList;
     }
     
-    
+    public int isPermissed(String operationName, int accountId, int functionId) throws SQLException {
+        // 1. Chốt chặn an toàn (Chống SQL Injection do cộng chuỗi tên cột)
+        if (!operationName.matches("^(Them|Sua|Xoa|Xem|XuatFile)$")) {
+            System.err.println("Tên quyền không hợp lệ: " + operationName);
+            return 0;
+        }
+
+        // 2. Cộng chuỗi tên cột vào thẳng câu SQL
+        String query = "SELECT MAX(" + operationName + ") AS ISPERMISSED\n" +
+                       "FROM (\n" +
+                       "    SELECT PVQ." + operationName + "\n" +
+                       "    FROM PHAN_QUYEN_TAI_KHOAN PQTK\n" +
+                       "    JOIN PHAM_VI_QUYEN PVQ ON PVQ.MaPhamVi = PQTK.MaPhamVi\n" +
+                       "    WHERE PQTK.MaTaiKhoan = ? AND PVQ.MaChucNang = ?\n" +
+                       "    UNION\n" +
+                       "    SELECT PVQ." + operationName + "\n" +
+                       "    FROM PHAN_QUYEN_NHOM PQN\n" +
+                       "    JOIN CAU_HINH_NHOM_QUYEN CH ON CH.MaNhomQuyen = PQN.MaNhomQuyen\n" +
+                       "    JOIN PHAM_VI_QUYEN PVQ ON PVQ.MaPhamVi = CH.MaPhamVi\n" +
+                       "    WHERE PQN.MaTaiKhoan = ? AND PVQ.MaChucNang = ?\n" +
+                       ")";
+        
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+         
+            // Bây giờ chỉ còn 4 dấu ? cho Giá Trị (AccountID và FunctionID)
+            ps.setInt(1, accountId);
+            ps.setInt(2, functionId);
+            ps.setInt(3, accountId);
+            ps.setInt(4, functionId);
+           
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("ISPERMISSED");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace(); 
+        }
+        
+        return 0;
+    }
     
 }

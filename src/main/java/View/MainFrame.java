@@ -29,6 +29,7 @@ public class MainFrame extends JFrame {
     private Map<String, NavButton> navButtons;
     private NavButton activeButton;
     private RolePanel rolePanel;
+    private EmployeeSchedulePanel staffPanel;
     
     public MainFrame() throws SQLException {
         initComponents();
@@ -109,7 +110,8 @@ public class MainFrame extends JFrame {
 //            this.stockPanel.displayPhieuNhapKhoData(lsPhieu);
         
         //------------------------------------------------------------------------
-        contentArea.add(new ContentBasePanel("Đội ngũ Nhân viên", "Quản lý thông tin và lịch làm việc."), "Staff");
+        this.staffPanel = new EmployeeSchedulePanel();
+        contentArea.add(this.staffPanel, "Staff");
         contentArea.add(this.rolePanel, "Role"); // Giao diện Phân quyền
         contentArea.add(new ContentBasePanel("Cài đặt Hệ thống", "Tùy chỉnh các tham số vận hành."), "Settings");
 
@@ -145,7 +147,7 @@ public class MainFrame extends JFrame {
         if (!cardName.equals("Logout") && SessionManager.isLoggedIn() && !ValidationUtil.validateSession()) {
             SessionManager.clear();
             this.setVisible(false);
-            new AccountController(this);
+            new AccountController();
             return;
         }
         
@@ -192,5 +194,20 @@ public class MainFrame extends JFrame {
     }
     public RolePanel getRolePanel(){
         return rolePanel;
+    }
+    
+    public EmployeeSchedulePanel getStaffPanel(){
+        return staffPanel;
+    }
+    
+    public void setRoleMenuVisible(boolean isVisible) {
+        if (navButtons != null && navButtons.containsKey("Role")) {
+            NavButton roleBtn = navButtons.get("Role");
+            roleBtn.setVisible(isVisible);
+            
+            // Ép sidebar vẽ lại để cập nhật các khoảng trống nếu nút bị ẩn
+            sidebar.revalidate();
+            sidebar.repaint();
+        }
     }
 }
