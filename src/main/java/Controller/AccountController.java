@@ -36,27 +36,25 @@ public class AccountController {
     private AccountService accountService;
     private OtpDialog otpDialog;
     private SessionService sessionService;
-    
-    // THÊM 2 DÒNG NÀY ĐỂ NHẬN ROLE CONTROLLER TỪ BÊN NGOÀI VÀO
     private RoleController roleController;
+    
     public void setRoleController(RoleController roleController) {
         this.roleController = roleController;
     }
     // ----------------------------------------------------------
     
-    public AccountController() throws SQLException {
-        this.mainFrame = new MainFrame();
-        
+    public AccountController() throws SQLException{
         accountModel = new AccountModel();
+        accountService = new AccountService();
+        sessionService = new SessionService();
+        
         loginFrame = new LoginFrame();
         registerFrame = new RegisterFrame();
         forgotPasswordFrame = new ForgotPasswordFrame();
-        accountService = new AccountService();
         otpDialog = new OtpDialog(registerFrame);
-        sessionService = new SessionService();
         
         initListeners();
-        loginFrame.setVisible(true);
+        usingUnrevokedToken();
     }
     
     private void initListeners() {
@@ -73,23 +71,7 @@ public class AccountController {
                 
                 String token = sessionService.loginAndCreateToken(accountModel);
                 SessionManager.setSession(token, accountModel);
-                try {
-                    new StockPanelController(mainFrame);
-                } catch (SQLException ex) {
-                    System.getLogger(AccountController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
-                }
-                RoleController roleController = null;
-                try {
-                    roleController = new RoleController(this.mainFrame);
-                    // ẩn các nút không có quyền
-                    roleController.hiddenButton();
-                } catch (SQLException ex) {
-                    System.getLogger(AccountController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
-                }
-                
-                new ProductController(mainFrame);
-                    // KẾT NỐI: Cấp cho AccountController quyền nói chuyện với RoleController
-                this.setRoleController(roleController);
+                createController();
                 loginFrame.setVisible(false);
                 mainFrame.setVisible(true);
             }
@@ -241,17 +223,45 @@ public class AccountController {
             forgotPasswordFrame.setVisible(false);
             loginFrame.setVisible(true);
         });
+    }
+    private void openMainFrame() throws SQLException {
+        this.mainFrame = new MainFrame();
         
         this.mainFrame.addLogoutListener(e -> {
             sessionService.logout(SessionManager.getToken());
             SessionManager.clear();
-            
-            // 1. Tắt và HỦY (dispose) hoàn toàn MainFrame cũ khỏi bộ nhớ
             mainFrame.setVisible(false);
-            mainFrame.dispose(); 
-            
-            // 2. Bật lại màn hình Login
+            mainFrame.dispose();
+            this.mainFrame = null;
             loginFrame.setVisible(true);
         });
+
+        createController();
+        
+        this.mainFrame.setVisible(true);
+    }
+    private void createController() {
+        try {
+            new StockPanelController(mainFrame);
+            roleController = new RoleController(this.mainFrame);
+            roleController.hiddenButton();
+            new ProductController(mainFrame);
+            
+            this.setRoleController(roleController);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+    private void usingUnrevokedToken() throws SQLException{
+        accountModel = accountService.getAccountFromToken();
+        String token = accountService.getUnrevokedToken();
+        SessionManager.setSession(token, accountModel);
+
+        if(accountModel != null){
+            openMainFrame();
+        }
+        else{
+            loginFrame.setVisible(true);
+        }
     }
 }

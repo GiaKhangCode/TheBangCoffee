@@ -18,7 +18,7 @@ import java.util.Map;
 public class ProductDetailDialog extends JDialog {
 
     private JTabbedPane tabbedPane;
-    private JPanel tabInfo, tabRecipe, tabCategory, tabOptionGroup, tabOption;
+    private JPanel tabInfo, tabCategory, tabOptionGroup, tabOption;
 
     private Color PRIMARY_COLOR = AppColor.PRIMARY;
     private Color TEXT_DARK = AppColor.TEXT_DARK;
@@ -37,8 +37,8 @@ public class ProductDetailDialog extends JDialog {
     private JComboBox<String> cbIngredient;
     private JTextField txtUnit, txtQuantitative;
     
-    private JTable recipeTable, categoryTable, optionGroupTable, optionTable;
-    private DefaultTableModel recipeModel, categoryModel, optionGroupModel, optionModel;
+    private JTable categoryTable, optionGroupTable, optionTable;
+    private DefaultTableModel categoryModel, optionGroupModel, optionModel;
     private JLabel lblTotalCost;
     
     // Đã bỏ các nút Sửa/Xóa ở header, chỉ giữ lại nút Thêm
@@ -76,13 +76,11 @@ public class ProductDetailDialog extends JDialog {
         tabbedPane.setBackground(Color.WHITE);
         
         initTabInfo();
-        initTabRecipe();
         initTabCategory();
         initTabOptionGroup();
         initTabOption();
 
         tabbedPane.addTab("Thông tin chung", tabInfo);
-        tabbedPane.addTab("Công thức", tabRecipe);
         tabbedPane.addTab("Quản lý Loại SP", tabCategory);
         tabbedPane.addTab("Quản lý Nhóm Tùy Chọn", tabOptionGroup);
         tabbedPane.addTab("Quản lý Tùy Chọn", tabOption);
@@ -198,57 +196,6 @@ public class ProductDetailDialog extends JDialog {
 
         tabInfo.add(leftPanel, BorderLayout.WEST);
         tabInfo.add(rightContainer, BorderLayout.CENTER);
-    }
-
-    private void initTabRecipe() {
-        tabRecipe = new JPanel(new BorderLayout(0, 20));
-        tabRecipe.setBackground(Color.WHITE);
-        tabRecipe.setBorder(new EmptyBorder(20, 20, 20, 20));
-
-        JPanel recipeHeader = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        recipeHeader.setOpaque(false);
-        JLabel lblTarget = new JLabel("Thiết lập định lượng");
-        lblTarget.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        recipeHeader.add(lblTarget);
-
-        JPanel inputPanel = new JPanel(new GridBagLayout());
-        inputPanel.setBackground(new Color(248, 249, 250));
-        inputPanel.setBorder(new CompoundBorder(new LineBorder(new Color(230, 230, 230)), new EmptyBorder(15, 15, 15, 15)));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 10, 5, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
-        cbIngredient = new JComboBox<>();
-        txtUnit = createStyledTextField(""); txtUnit.setEditable(false);
-        txtQuantitative = createStyledTextField("");
-        JButton btnAdd = createModernButton(" ➕ Thêm", PRIMARY_COLOR, Color.WHITE);
-
-        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.4; inputPanel.add(new JLabel("Nguyên liệu:"), gbc);
-        gbc.gridx = 0; gbc.gridy = 1; inputPanel.add(cbIngredient, gbc);
-        
-        gbc.gridx = 1; gbc.gridy = 0; gbc.weightx = 0.2; inputPanel.add(new JLabel("Đơn vị:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 1; inputPanel.add(txtUnit, gbc);
-        
-        gbc.gridx = 2; gbc.gridy = 0; gbc.weightx = 0.2; inputPanel.add(new JLabel("Định lượng:"), gbc);
-        gbc.gridx = 2; gbc.gridy = 1; inputPanel.add(txtQuantitative, gbc);
-        
-        gbc.gridx = 3; gbc.gridy = 1; gbc.weightx = 0.2; inputPanel.add(btnAdd, gbc);
-
-        String[] cols = {"STT", "Mã NL", "Tên Nguyên Liệu", "Đơn vị", "Định lượng", "Thành tiền"};
-        recipeModel = new DefaultTableModel(cols, 0) { @Override public boolean isCellEditable(int r, int c) { return false; } };
-        recipeTable = new JTable(recipeModel); styleTable(recipeTable);
-        
-        JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT)); summaryPanel.setOpaque(false);
-        lblTotalCost = new JLabel("Tổng giá vốn: 0 VND"); lblTotalCost.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        lblTotalCost.setForeground(PRIMARY_COLOR); summaryPanel.add(lblTotalCost);
-
-        JPanel centerPanel = new JPanel(new BorderLayout(0, 15)); centerPanel.setOpaque(false);
-        centerPanel.add(inputPanel, BorderLayout.NORTH);
-        centerPanel.add(new JScrollPane(recipeTable), BorderLayout.CENTER);
-        centerPanel.add(summaryPanel, BorderLayout.SOUTH);
-        
-        tabRecipe.add(recipeHeader, BorderLayout.NORTH);
-        tabRecipe.add(centerPanel, BorderLayout.CENTER);
     }
 
     // =====================================================================
@@ -570,6 +517,10 @@ public class ProductDetailDialog extends JDialog {
         if (rbOutOfStock.isSelected()) return "Tạm hết";
         return "Ngừng bán";
     }
+    
+    public String getDescription (){
+        return txtDescription.getText().trim();
+    }
 
     // Lấy ID khi bấm vào dòng của Bảng để Sửa/Xóa
     public int getCategoryIdAt(int row) { return (int) categoryModel.getValueAt(row, 0); }
@@ -580,7 +531,7 @@ public class ProductDetailDialog extends JDialog {
     
     public int getOptionIdAt(int row) { return (int) optionModel.getValueAt(row, 0); }
     public String getOptionNameAt(int row) { return (String) optionModel.getValueAt(row, 2); }
-
+    
     public void clearForm() {
         if(txtProductName == null) return;
         txtProductName.setText(""); txtPrice.setText(""); txtDescription.setText("");
@@ -588,7 +539,6 @@ public class ProductDetailDialog extends JDialog {
         rbOnSale.setSelected(true);
         lblImagePlaceholder.setIcon(null); lblImagePlaceholder.setText("Hình ảnh mẫu");
         for (JCheckBox cb : optionCheckboxMap.values()) cb.setSelected(false);
-        recipeModel.setRowCount(0); lblTotalCost.setText("Tổng giá vốn ước tính: 0 VND");
     }
     
     // =====================================================================

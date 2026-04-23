@@ -9,7 +9,6 @@ Model\IngredientTypeModel.class
 View\LoginFrame$1.class
 View\StockPanel$3.class
 View\HeaderPanel.class
-View\ProductDetailDialog$8.class
 View\MenuPanel$2.class
 DatabaseAccessObject\IngredientTypeDAO.class
 Controller\RoleController$8.class

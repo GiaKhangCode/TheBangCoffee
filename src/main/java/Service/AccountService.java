@@ -87,4 +87,12 @@ public class AccountService {
     public List<RoleModel> getAssignedRolesByAccountId(int accountId) throws SQLException{
         return dao.getAssignedRolesByAccountId(accountId);
     }
+    
+    public AccountModel getAccountFromToken(){
+        return dao.getAccountFromToken();
+    }
+    
+    public String getUnrevokedToken(){
+        return dao.getUnrevokedToken();
+    }
 }

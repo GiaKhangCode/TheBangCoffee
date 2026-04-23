@@ -457,4 +457,49 @@ public class AccountDAO {
         
         return roleGroupList;
     }
+    
+    public String getUnrevokedToken(){
+        String token = null;
+        String sql = "SELECT GiaTriToken FROM TOKEN_TAI_KHOAN WHERE DaThuHoi = 0";
+        try(Connection conn = ConnectionUtils.getMyConnection();
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);){
+                if (rs.next()) {
+                    token = rs.getString("GiaTriToken");
+                }
+        }
+        catch (Exception ex) {
+            System.out.println(ex);
+        }
+        return token;
+    }
+    
+    public AccountModel getAccountFromToken(){
+        try(Connection conn = ConnectionUtils.getMyConnection()){
+            String sql = "SELECT TK.MaTaiKhoan, TenDangNhap, MatKhauDaMaHoa, HoTen, SoDienThoai, Email "
+                    + "FROM TAI_KHOAN TK "
+                    + "JOIN NGUOI_DUNG ND ON TK.MaNguoiDung = ND.MaNguoiDung "
+                    + "JOIN TOKEN_TAI_KHOAN T ON T. MaTaiKhoan = TK.MaTaiKhoan "
+                    + "WHERE DaThuHoi = 0 ";
+
+            try(Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(sql);){
+                if(rs.next()){
+                    AccountModel account = new AccountModel();
+                    account.setAccountID(rs.getInt("MaTaiKhoan"));
+                    account.setUsername(rs.getString("TenDangNhap"));
+                    account.setPassword(rs.getString("MatKhauDaMaHoa"));
+                    account.setFullName(rs.getString("HoTen"));
+                    account.setPhoneNumber(rs.getString("SoDienThoai"));
+                    account.setEmail(rs.getString("Email"));
+
+                    return account;
+                }
+            }
+        }
+        catch (Exception ex) {
+            System.out.println(ex);
+        }
+        return null;
+    }
 }

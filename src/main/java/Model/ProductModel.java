@@ -12,11 +12,11 @@ import javax.swing.ImageIcon;
  */
 public class ProductModel {
     private int productID;
-    private String productName, imageName, imageType, productStatus, categoryName, categoryStatus;
+    private String productName, imageName, imageType, productStatus, categoryName, categoryStatus, description;
     private double basicPrice;
     private ImageIcon imageData;
 
-    public ProductModel(int productID, String productName, String imageName, String imageType, String productStatus, String categoryName, String categoryStatus, double basicPrice, ImageIcon imageData) {
+    public ProductModel(int productID, String productName, String imageName, String imageType, String productStatus, String categoryName, String categoryStatus, double basicPrice, ImageIcon imageData, String description) {
         this.productID = productID;
         this.productName = productName;
         this.imageName = imageName;
@@ -26,11 +26,12 @@ public class ProductModel {
         this.categoryStatus = categoryStatus;
         this.basicPrice = basicPrice;
         this.imageData = imageData;
+        this.description = description;
     }
 
     public ProductModel() {
         this.productID = 0;
-        this.productName = this.imageName = this.imageType = this.productStatus = this.categoryName = this.categoryStatus = "";
+        this.productName = this.imageName = this.imageType = this.productStatus = this.categoryName = this.categoryStatus = this.description = "";
         this.basicPrice = 0.0;
         this.imageData = null;
     }
@@ -106,4 +107,13 @@ public class ProductModel {
     public void setImageData(ImageIcon imageData) {
         this.imageData = imageData;
     }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    
 }

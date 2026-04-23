@@ -55,7 +55,6 @@ public class ProductController {
 
         // Click vào card sản phẩm
         menuPanel.setProductClickListener(product -> {
-            //CÒN BUG
             ProductEditDialog editDialog = new ProductEditDialog(mainFrame);
             List<String> categoryNames = categoryService.getAllCategory().getCategoryNames();
             editDialog.setCategoryList(categoryNames);
@@ -68,21 +67,50 @@ public class ProductController {
                 System.getLogger(ProductController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
             }
             
-            editDialog.setProductData(
-            product.getProductName(), 
-            product.getCategoryName(), 
-            product.getBasicPrice(), 
-            product.getProductStatus(), 
-            "", // Truyền description nếu bạn có lấy từ DB lên
-            product.getImageData()
-            );
+            editDialog.setProductData(product.getProductName(), product.getCategoryName(), product.getBasicPrice(), product.getProductStatus(), product.getDescription(),product.getImageData());
+            
+            editDialog.addChooseImageListener(ev -> {
+                selectedFile = productService.chooseImageFile();
+                if (selectedFile != null) {
+                    editDialog.setImage(new ImageIcon(selectedFile.getAbsolutePath()));
+                }
+            });
+            
             editDialog.addUpdateListener(ev -> {
-            // Logic lấy data từ editDialog.getProductName()... và update DB
+                String productName = editDialog.getProductName();
+                double price = editDialog.getPrice();
+                String category = editDialog.getCategory();
+                String status = editDialog.getStatus();
+                String description = editDialog.getDescription();
+                HashMap<String, List<String>> selectedOptions = editDialog.getSelectedOptionNamesByGroup();
+
+                String validateMsg = ValidationUtil.validateProductDetail(productName, price, category, status);
+                if (!validateMsg.equalsIgnoreCase("Hợp lệ")) {
+                    JOptionPane.showMessageDialog(editDialog, validateMsg, "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                
+                productService.updateProduct(product.getProductID(),category, productName, price, selectedFile, status, description, selectedOptions);
+                JOptionPane.showMessageDialog(editDialog, "Cập nhật sản phẩm thành công!");
+                editDialog.dispose();
+                loadMainMenuData();
             });
 
-            // Bắt sự kiện Xóa
             editDialog.addDeleteListener(ev -> {
-                // Logic hỏi xác nhận và xóa DB
+                int confirm = JOptionPane.showConfirmDialog(editDialog, "Bạn có chắc chắn muốn xóa sản phẩm [" + product.getProductName() + "]?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                
+                if (confirm == JOptionPane.YES_OPTION) {
+                    try {
+                        productService.deleteProduct(product.getProductID());
+                    } catch (SQLException ex) {
+                        System.getLogger(ProductController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+                    } catch (ClassNotFoundException ex) {
+                        System.getLogger(ProductController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+                    }
+                    JOptionPane.showMessageDialog(editDialog, "Xóa sản phẩm thành công!");
+                    editDialog.dispose();
+                    loadMainMenuData();
+                }
             });
 
             editDialog.setVisible(true);
@@ -102,13 +130,13 @@ public class ProductController {
             String category = productDetailDialogFrame.getCategory();
             String status = productDetailDialogFrame.getStatus();
             HashMap<String, List<String>> selectedOptions = productDetailDialogFrame.getSelectedOptionNamesByGroup();
-            
+            String description = productDetailDialogFrame.getDescription();
             String validateProductDetail = ValidationUtil.validateProductDetail(productName, basicPrice, category, status);
             if (!(validateProductDetail.equalsIgnoreCase("Hợp lệ"))) {
                 JOptionPane.showMessageDialog(productDetailDialogFrame, validateProductDetail);
                 return;
             }
-            productService.insertProduct(category, productName, basicPrice, selectedFile, status, selectedOptions);
+            productService.insertProduct(category, productName, basicPrice, selectedFile, status, selectedOptions, description);
             JOptionPane.showMessageDialog(productDetailDialogFrame, "Lưu thành công");
             loadMainMenuData();
         });
@@ -127,7 +155,7 @@ public class ProductController {
                 
                 if (isSuccess) {
                     JOptionPane.showMessageDialog(productDetailDialogFrame, "Thêm loại sản phẩm thành công!"); 
-                    loadDialogData(); // Refresh lại View
+                    loadDialogData();
                 } 
                 else {
                     JOptionPane.showMessageDialog(productDetailDialogFrame, "Thêm thất bại. Có thể do lỗi kết nối CSDL.", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -150,7 +178,7 @@ public class ProductController {
                 boolean isSuccess = optionService.addOptionGroup(newGroupName.trim());
                 if (isSuccess) {
                     JOptionPane.showMessageDialog(productDetailDialogFrame, "Thêm nhóm tùy chọn thành công!");
-                    loadDialogData(); // Refresh lại View
+                    loadDialogData();
                 } 
                 else {
                     JOptionPane.showMessageDialog(productDetailDialogFrame, "Thêm thất bại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -213,7 +241,7 @@ public class ProductController {
                 boolean isSuccess = optionService.addOption(maNhom, tenTuyChon, phuThu, "Đang sử dụng");
                 if (isSuccess) {
                     JOptionPane.showMessageDialog(productDetailDialogFrame, "Thêm Tùy chọn thành công!");
-                    loadDialogData(); // Refresh lại View
+                    loadDialogData();
                 } else {
                     JOptionPane.showMessageDialog(productDetailDialogFrame, "Thêm thất bại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
@@ -243,7 +271,7 @@ public class ProductController {
                     boolean isSuccess = categoryService.updateCategory(selectedId, newName, (String) cbStatus.getSelectedItem());
                     if (isSuccess) {
                         JOptionPane.showMessageDialog(productDetailDialogFrame, "Cập nhật thành công!");
-                        loadDialogData(); // Refresh UI
+                        loadDialogData();
                         loadMainMenuData();
                     } else {
                         JOptionPane.showMessageDialog(productDetailDialogFrame, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -270,7 +298,7 @@ public class ProductController {
                         boolean isSuccess = categoryService.deleteCategory(selectedId);
                         if (isSuccess) {
                             JOptionPane.showMessageDialog(productDetailDialogFrame, "Xóa thành công!");
-                            loadDialogData(); // Refresh toàn bộ View
+                            loadDialogData();
                         } else {
                             JOptionPane.showMessageDialog(productDetailDialogFrame, "Xóa thất bại! Danh mục này đang được sử dụng cho các sản phẩm hiện có.", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
                         }
@@ -317,7 +345,7 @@ public class ProductController {
                         boolean isSuccess = optionService.deleteOptionGroup(selectedId);
                         if (isSuccess) {
                             JOptionPane.showMessageDialog(productDetailDialogFrame, "Xóa thành công!");
-                            loadDialogData(); // Refresh toàn bộ View
+                            loadDialogData();
                         } else {
                             JOptionPane.showMessageDialog(productDetailDialogFrame, "Xóa thất bại! Danh mục này đang được sử dụng cho các sản phẩm hiện có.", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
                         }
@@ -394,7 +422,7 @@ public class ProductController {
                         boolean isSuccess = optionService.deleteOptionDetail(selectedId);
                         if (isSuccess) {
                             JOptionPane.showMessageDialog(productDetailDialogFrame, "Xóa thành công!");
-                            loadDialogData(); // Refresh toàn bộ View
+                            loadDialogData();
                         } else {
                             JOptionPane.showMessageDialog(productDetailDialogFrame, "Xóa thất bại! Danh mục này đang được sử dụng cho các sản phẩm hiện có.", "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
                         }
@@ -406,13 +434,13 @@ public class ProductController {
         });
     }
 
-    // Tách riêng hàm load UI ngoài màn hình chính
+
     private void loadMainMenuData() {
         productList = productService.getProductList();
         menuPanel.displayProductList(productList);
     }
     
-    // Đẩy TOÀN BỘ dữ liệu nguyên bản (Model) sang cho View tự xử lý hiển thị
+
     private void loadDialogData() {
         this.selectedFile = null;
         ProductCategoryListModel fullCategories = categoryService.getAllCategory();

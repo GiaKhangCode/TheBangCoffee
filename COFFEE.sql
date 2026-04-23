@@ -621,6 +621,7 @@ CREATE OR REPLACE PROCEDURE SP_INSERT_SAN_PHAM(
     p_DuLieuAnh IN BLOB,
     p_TrangThai IN SAN_PHAM.TrangThai%TYPE,
     p_TenLoaiSanPham IN LOAI_SAN_PHAM.TenLoaiSanPham%type,
+    p_MoTaSanPham   IN SAN_PHAM.MoTa%type,
     p_MaSanPham_OUT OUT SAN_PHAM.MaSanPham%TYPE
 )
 AS
@@ -632,10 +633,10 @@ BEGIN
     WHERE TenLoaiSanPham = p_TenLoaiSanPham;
 
     INSERT INTO SAN_PHAM (MaLoaiSanPham, TenSanPham, GiaCoBan, TenAnhSanPham,
-                          KieuDuLieuAnh, DuLieuAnh, TrangThai)
+                          KieuDuLieuAnh, DuLieuAnh, TrangThai, MoTa)
     VALUES (v_MaLoaiSanPham, p_TenSanPham, p_GiaCoBan, p_TenAnhSanPham,
-            p_KieuDuLieuAnh, p_DuLieuAnh, p_TrangThai)
-    RETURNING MaSanPham INTO p_MaSanPham_OUT; -- Lấy ID vừa insert
+            p_KieuDuLieuAnh, p_DuLieuAnh, p_TrangThai, p_MoTaSanPham)
+    RETURNING MaSanPham INTO p_MaSanPham_OUT;
 
     COMMIT;
 END;
@@ -649,7 +650,6 @@ CREATE OR REPLACE PROCEDURE SP_INSERT_CT_TUY_CHON(
 AS
     v_MaTuyChon NUMBER;
 BEGIN
-    -- Tìm mã tùy chọn dựa trên Tên tùy chọn và Tên nhóm
     BEGIN
         SELECT T.MaTuyChon
         INTO v_MaTuyChon
@@ -659,10 +659,9 @@ BEGIN
           AND N.TenNhomTuyChon = p_TenNhomTuyChon;
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
-            v_MaTuyChon := NULL; -- Nếu không có thì gán NULL
+            v_MaTuyChon := NULL;
     END;
 
-    -- Chỉ Insert nếu tìm thấy mã hợp lệ
     IF v_MaTuyChon IS NOT NULL THEN
         INSERT INTO CHI_TIET_TUY_CHON_SAN_PHAM (MaSanPham, MaTuyChon)
         VALUES (p_MaSanPham, v_MaTuyChon);
@@ -672,10 +671,77 @@ BEGIN
 END;
 /
 
-INSERT INTO CHUC_NANG (TenChucNang) VALUES ('Sản phẩm');
-COMMIT ;
+CREATE OR REPLACE PROCEDURE SP_UPDATE_SAN_PHAM(
+    p_MaSanPham      IN SAN_PHAM.MaSanPham%TYPE,
+    p_TenSanPham     IN SAN_PHAM.TenSanPham%TYPE,
+    p_GiaCoBan       IN SAN_PHAM.GiaCoBan%TYPE,
+    p_TenAnhSanPham  IN SAN_PHAM.TenAnhSanPham%TYPE,
+    p_KieuDuLieuAnh  IN SAN_PHAM.KieuDuLieuAnh%TYPE,
+    p_DuLieuAnh      IN BLOB,
+    p_TrangThai      IN SAN_PHAM.TrangThai%TYPE,
+    p_TenLoaiSanPham IN LOAI_SAN_PHAM.TenLoaiSanPham%TYPE,
+    p_MoTaSanPham    IN SAN_PHAM.MoTa%TYPE
+)
+AS
+    v_MaLoaiSanPham LOAI_SAN_PHAM.MaLoaiSanPham%TYPE;
+BEGIN
+    SELECT MaLoaiSanPham INTO v_MaLoaiSanPham
+    FROM LOAI_SAN_PHAM
+    WHERE TenLoaiSanPham = p_TenLoaiSanPham;
+
+    IF p_DuLieuAnh IS NOT NULL THEN
+        UPDATE SAN_PHAM
+        SET MaLoaiSanPham = v_MaLoaiSanPham,
+            TenSanPham = p_TenSanPham,
+            GiaCoBan = p_GiaCoBan,
+            TenAnhSanPham = p_TenAnhSanPham,
+            KieuDuLieuAnh = p_KieuDuLieuAnh,
+            DuLieuAnh = p_DuLieuAnh,
+            TrangThai = p_TrangThai,
+            MoTa = p_MoTaSanPham
+        WHERE MaSanPham = p_MaSanPham;
+    ELSE
+        UPDATE SAN_PHAM
+        SET MaLoaiSanPham = v_MaLoaiSanPham,
+            TenSanPham = p_TenSanPham,
+            GiaCoBan = p_GiaCoBan,
+            TrangThai = p_TrangThai,
+            MoTa = p_MoTaSanPham
+        WHERE MaSanPham = p_MaSanPham;
+    END IF;
+
+    COMMIT;
+END;
+/
+
+INSERT INTO CHUC_NANG (TenChucNang) VALUES ('Bán hàng');
+INSERT INTO CHUC_NANG (TenChucNang) VALUES ('Đồ uống');
+INSERT INTO CHUC_NANG (TenChucNang) VALUES ('Kho');
+INSERT INTO CHUC_NANG (TenChucNang) VALUES ('Nhân viên');
+INSERT INTO CHUC_NANG (TenChucNang) VALUES ('Phân quyền');
+INSERT INTO CHUC_NANG (TenChucNang) VALUES ('Báo cáo và thống kê');
+
+INSERT INTO PHAM_VI_QUYEN (TenPhamVi, MaChucNang, Them, Sua, Xoa, Xem, XuatFile) VALUES ('Quản lý phân quyền', 5, 1,1,1,1,1);
+
+INSERT INTO PHAN_QUYEN_TAI_KHOAN (MaTaiKhoan, MaPhamVi) VALUES (1, 1);
+
+COMMIT;
+
 SELECT * FROM PHAN_QUYEN_TAI_KHOAN;
-DELETE FROM PHAN_QUYEN_TAI_KHOAN
-WHERE MATAIKHOAN = 2;
+
+SELECT *
+FROM SAN_PHAM SP
+JOIN LOAI_SAN_PHAM LSP on SP.MaLoaiSanPham = LSP.MaLoaiSanPham;
 
 SELECT * FROM TOKEN_TAI_KHOAN;
+
+SELECT TK.MaTaiKhoan, TenDangNhap, MatKhauDaMaHoa, HoTen, SoDienThoai, Email
+                    FROM TAI_KHOAN TK
+                    JOIN NGUOI_DUNG ND ON TK.MaNguoiDung = ND.MaNguoiDung
+                    JOIN TOKEN_TAI_KHOAN T ON T. MaTaiKhoan = TK.MaTaiKhoan
+                    WHERE DaThuHoi = 0;
+
+SELECT * FROM CHUC_NANG;
+
+
+

@@ -7,6 +7,7 @@ package Service;
 import DatabaseAccessObject.ProductDAO;
 import Model.ProductListModel;
 import java.io.File;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.JFileChooser;
@@ -29,7 +30,6 @@ public class ProductService {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Chọn ảnh để lưu vào Database");
 
-        // Chỉ cho phép chọn các định dạng ảnh phổ biến
         FileNameExtensionFilter filter = new FileNameExtensionFilter("Image Files", "jpg", "png", "jpeg");
         fileChooser.setFileFilter(filter);
 
@@ -38,10 +38,18 @@ public class ProductService {
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             return fileChooser.getSelectedFile();
         }
-        return null; // Người dùng hủy chọn
+        return null;
     }
     
-    public void insertProduct(String categoryName, String productName, double basicPrice, File imageFile, String status, HashMap<String, List<String>> selectedOptions){
-        productDAO.insertProduct(categoryName, productName, basicPrice, imageFile, status, selectedOptions);
+    public void insertProduct(String categoryName, String productName, double basicPrice, File imageFile, String status, HashMap<String, List<String>> selectedOptions, String description){
+        productDAO.insertProduct(categoryName, productName, basicPrice, imageFile, status, selectedOptions, description);
+    }
+    
+    public void updateProduct(int productId, String categoryName, String productName, double basicPrice, File imageFile, String status, String description, HashMap<String, List<String>> selectedOptions){
+        productDAO.updateProduct(productId, categoryName, productName, basicPrice, imageFile, status, description, selectedOptions);
+    }
+    
+    public void deleteProduct(int id) throws SQLException, ClassNotFoundException{
+        productDAO.deleteProduct(id);
     }
 }
