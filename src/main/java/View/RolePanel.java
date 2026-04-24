@@ -75,6 +75,18 @@ public class RolePanel extends JPanel {
     private boolean hasEditPermission = true;
     private boolean hasDeletePermission = true;
 
+    // --- DIMENSION SCALING VARIABLES ---
+    private int screenW = java.awt.Toolkit.getDefaultToolkit().getScreenSize().width;
+    private int screenH = java.awt.Toolkit.getDefaultToolkit().getScreenSize().height;
+    private int titleFont = Math.max(18, (int) (screenW * 0.014));
+    private int labelFont = Math.max(14, (int) (screenW * 0.010));
+    private int normalFont = Math.max(12, (int) (screenW * 0.009));
+    private int cbWidth = (int) (screenW * 0.195); // 300
+    private int cbHeight = (int) (screenH * 0.040); // 35
+    private int btnWidth = (int) (screenW * 0.104); // 160
+    private int btnHeight = cbHeight;
+
+
     // Hàm này để Controller gọi và truyền quyền vào
     public void setActionPermissions(boolean canEdit, boolean canDelete) {
         this.hasEditPermission = canEdit;
@@ -90,14 +102,14 @@ public class RolePanel extends JPanel {
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
         JLabel titleLabel = new JLabel("PHÂN QUYỀN TRUY CẬP");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, titleFont + 2));
         titleLabel.setForeground(TEXT_DARK);
         titleLabel.setBorder(new EmptyBorder(10, 15, 20, 10));
         add(titleLabel, BorderLayout.NORTH);
 
         tabbedPane = new JTabbedPane();
         tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-        tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
 
         tabbedPane.addTab("Quản lý phạm vi quyền", createScopeTab());
         tabbedPane.addTab("Thiết lập nhóm quyền", createRoleAssignmentTab());
@@ -121,7 +133,7 @@ public class RolePanel extends JPanel {
         rightPanel.setOpaque(false);
         
         JLabel lblTarget = new JLabel("Các phạm vi quyền hiện tại");
-        lblTarget.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblTarget.setFont(new Font("Segoe UI", Font.BOLD, labelFont));
         lblTarget.setForeground(PRIMARY_COLOR);
         
         // 1. Thêm "Hành động" vào mảng cột
@@ -166,7 +178,7 @@ public class RolePanel extends JPanel {
         columnModel.getColumn(7).setPreferredWidth(140);
         
         // --- SỬA LẠI ĐOẠN CODE GẮN SỰ KIỆN CHO CỘT HÀNH ĐỘNG ---
-        table.setRowHeight(45); 
+        table.setRowHeight((int)(screenH * 0.052)); 
 
         // TÌM TỰ ĐỘNG CỘT "Hành động" DỰA VÀO TÊN TIÊU ĐỀ
         int actionColumnIndex = -1;
@@ -205,7 +217,7 @@ public class RolePanel extends JPanel {
         rightPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 
         this.btnAddScope = ComponentUI.createModernButton("Thêm phạm vi quyền", PRIMARY_COLOR, Color.WHITE);
-        this.btnAddScope.setPreferredSize(new Dimension(200, 40));
+        this.btnAddScope.setPreferredSize(new Dimension((int)(screenW * 0.13), (int)(screenH * 0.046)));
         
         JPanel rightFooter = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         rightFooter.setOpaque(false);
@@ -227,7 +239,7 @@ public class RolePanel extends JPanel {
 
         // 1. TIÊU ĐỀ
         JLabel lblTitle = new JLabel("Thiết Lập Và Gán Phạm Vi Quyền Cho Nhóm");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, titleFont));
         lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
         lblTitle.setForeground(PRIMARY_COLOR);
         panel.add(lblTitle, BorderLayout.NORTH);
@@ -244,7 +256,7 @@ public class RolePanel extends JPanel {
                 BorderFactory.createLineBorder(Color.LIGHT_GRAY), 
                 "Bảng điều khiển", 
                 0, 0, 
-                new Font("Segoe UI", Font.BOLD, 14), 
+                new Font("Segoe UI", Font.BOLD, normalFont), 
                 TEXT_DARK));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -254,26 +266,26 @@ public class RolePanel extends JPanel {
 
         // Dòng 1: Chọn Nhóm Quyền + Nút Thêm Mới
         JLabel lblRoleGroup = new JLabel("Chọn Nhóm Quyền:");
-        lblRoleGroup.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblRoleGroup.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
         this.cbRoleGroup = new JComboBox<>();
-        cbRoleGroup.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cbRoleGroup.setPreferredSize(new Dimension(300, 35)); // Giảm chiều cao xuống 35
+        cbRoleGroup.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
+        cbRoleGroup.setPreferredSize(new Dimension(cbWidth, cbHeight)); // Giảm chiều cao xuống 35
 
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0; topControlsPanel.add(lblRoleGroup, gbc);
         gbc.gridx = 1; gbc.gridy = 0; gbc.weightx = 0.8; topControlsPanel.add(cbRoleGroup, gbc);
         // Thay nút bấm bằng một khoảng trống để giao diện đồng bộ với các Tab khác
-        gbc.gridx = 2; gbc.gridy = 0; gbc.weightx = 0; topControlsPanel.add(Box.createRigidArea(new Dimension(160, 35)), gbc);
+        gbc.gridx = 2; gbc.gridy = 0; gbc.weightx = 0; topControlsPanel.add(Box.createRigidArea(new Dimension(btnWidth, btnHeight)), gbc);
         // Dòng 2: Gán Phạm Vi Quyền + Nút Gán
         JLabel lblScope = new JLabel("Gán Phạm Vi Quyền:");
-        lblScope.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblScope.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
         this.cbRole = new JComboBox<>();
-        cbRole.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cbRole.setPreferredSize(new Dimension(300, 35)); // Giảm chiều cao xuống 35
+        cbRole.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
+        cbRole.setPreferredSize(new Dimension(cbWidth, cbHeight)); // Giảm chiều cao xuống 35
 
         this.btnAssignRole = ComponentUI.createModernButton("Gán Quyền", PRIMARY_COLOR, Color.WHITE);
-        this.btnAssignRole.setPreferredSize(new Dimension(160, 35));
+        this.btnAssignRole.setPreferredSize(new Dimension(btnWidth, btnHeight));
 
         gbc.gridx = 0; gbc.gridy = 1; topControlsPanel.add(lblScope, gbc);
         gbc.gridx = 1; gbc.gridy = 1; topControlsPanel.add(cbRole, gbc);
@@ -291,7 +303,7 @@ public class RolePanel extends JPanel {
         tablePanel.setOpaque(false);
 
         this.lblAssignedRolesTitle = new JLabel("Danh sách quyền hiện tại của nhóm: (Chưa chọn)");
-        this.lblAssignedRolesTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        this.lblAssignedRolesTitle.setFont(new Font("Segoe UI", Font.BOLD, labelFont));
         this.lblAssignedRolesTitle.setForeground(PRIMARY_COLOR);
 
         String[] cols = {"STT", "Tên phạm vi quyền đã gán", "Hành động"};
@@ -303,7 +315,7 @@ public class RolePanel extends JPanel {
         
         this.assignedRolesTable.getColumnModel().getColumn(0).setPreferredWidth(50);
         this.assignedRolesTable.getColumnModel().getColumn(1).setPreferredWidth(600);
-        this.assignedRolesTable.setRowHeight(35); // Thu nhỏ chiều cao từng dòng để hiển thị được nhiều hơn
+        this.assignedRolesTable.setRowHeight((int)(screenH * 0.040)); // Thu nhỏ chiều cao từng dòng để hiển thị được nhiều hơn
 
         this.assignedRolesTable.getColumnModel().getColumn(0).setPreferredWidth(50);
         this.assignedRolesTable.getColumnModel().getColumn(1).setPreferredWidth(450);
@@ -335,7 +347,7 @@ public class RolePanel extends JPanel {
 
         // 1. TIÊU ĐỀ
         JLabel lblTitle = new JLabel("Thiết Lập Nhóm Quyền Cho Tài Khoản");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, titleFont));
         lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
         lblTitle.setForeground(PRIMARY_COLOR);
         panel.add(lblTitle, BorderLayout.NORTH);
@@ -351,7 +363,7 @@ public class RolePanel extends JPanel {
                 BorderFactory.createLineBorder(Color.LIGHT_GRAY), 
                 "Bảng điều khiển", 
                 0, 0, 
-                new Font("Segoe UI", Font.BOLD, 14), 
+                new Font("Segoe UI", Font.BOLD, normalFont), 
                 TEXT_DARK));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -361,35 +373,35 @@ public class RolePanel extends JPanel {
 
         // Dòng 1: Chọn Tài Khoản (Không có nút "Thêm mới" vì tài khoản lấy từ module Nhân sự/User)
         JLabel lblAcc = new JLabel("Chọn Tài Khoản:");
-        lblAcc.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblAcc.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
         this.cbAccount = new JComboBox<>(new String[]{
             "1 - Lê Quốc Kiệt", 
             "2 - Bành Xuân Phúc", 
             "3 - Lâm Nguyên Phát"
         });
-        cbAccount.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cbAccount.setPreferredSize(new Dimension(300, 35)); 
+        cbAccount.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
+        cbAccount.setPreferredSize(new Dimension(cbWidth, cbHeight)); 
 
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0; topControlsPanel.add(lblAcc, gbc);
         gbc.gridx = 1; gbc.gridy = 0; gbc.weightx = 0.8; topControlsPanel.add(cbAccount, gbc);
         // Cột 3 để trống cho cân đối với dòng dưới
-        gbc.gridx = 2; gbc.gridy = 0; gbc.weightx = 0; topControlsPanel.add(Box.createRigidArea(new Dimension(160, 35)), gbc); 
+        gbc.gridx = 2; gbc.gridy = 0; gbc.weightx = 0; topControlsPanel.add(Box.createRigidArea(new Dimension(btnWidth, btnHeight)), gbc); 
 
         // Dòng 2: Chọn Nhóm Quyền Cần Gán + Nút Gán
         JLabel lblRole = new JLabel("Gán Nhóm Quyền:");
-        lblRole.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblRole.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
         this.cbAccountRoleGroup = new JComboBox<>(new String[]{
             "1 - Quản lý", 
             "2 - Nhân viên Bán hàng", 
             "3 - Quản lý kho"
         });
-        cbAccountRoleGroup.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cbAccountRoleGroup.setPreferredSize(new Dimension(300, 35)); 
+        cbAccountRoleGroup.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
+        cbAccountRoleGroup.setPreferredSize(new Dimension(cbWidth, cbHeight)); 
 
         this.btnAssignRoleGroupToAccount = ComponentUI.createModernButton("Cập Nhật Vai Trò", PRIMARY_COLOR, Color.WHITE);
-        this.btnAssignRoleGroupToAccount.setPreferredSize(new Dimension(160, 35));
+        this.btnAssignRoleGroupToAccount.setPreferredSize(new Dimension(btnWidth, btnHeight));
 
         gbc.gridx = 0; gbc.gridy = 1; topControlsPanel.add(lblRole, gbc);
         gbc.gridx = 1; gbc.gridy = 1; topControlsPanel.add(cbAccountRoleGroup, gbc);
@@ -407,7 +419,7 @@ public class RolePanel extends JPanel {
         tablePanel.setOpaque(false);
 
         this.lblAssignedAccountRolesTitle = new JLabel("Nhóm quyền hiện tại của tài khoản: (Chưa chọn)");
-        this.lblAssignedAccountRolesTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        this.lblAssignedAccountRolesTitle.setFont(new Font("Segoe UI", Font.BOLD, labelFont));
         this.lblAssignedAccountRolesTitle.setForeground(PRIMARY_COLOR);
 
         String[] cols = {"STT", "Tên nhóm quyền đang giữ", "Hành động"};
@@ -419,7 +431,7 @@ public class RolePanel extends JPanel {
         
         this.assignedAccountRolesTable.getColumnModel().getColumn(0).setPreferredWidth(50);
         this.assignedAccountRolesTable.getColumnModel().getColumn(1).setPreferredWidth(600);
-        this.assignedAccountRolesTable.setRowHeight(35); 
+        this.assignedAccountRolesTable.setRowHeight((int)(screenH * 0.040)); 
 
         this.assignedAccountRolesTable.getColumnModel().getColumn(0).setPreferredWidth(50);
         this.assignedAccountRolesTable.getColumnModel().getColumn(1).setPreferredWidth(450);
@@ -460,7 +472,7 @@ public class RolePanel extends JPanel {
 
         // 1. TIÊU ĐỀ
         JLabel lblTitle = new JLabel("Cấp Thêm Phạm Vi Quyền Riêng Cho Tài Khoản");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, titleFont));
         lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
         lblTitle.setForeground(PRIMARY_COLOR);
         panel.add(lblTitle, BorderLayout.NORTH);
@@ -476,7 +488,7 @@ public class RolePanel extends JPanel {
                 BorderFactory.createLineBorder(Color.LIGHT_GRAY), 
                 "Bảng điều khiển", 
                 0, 0, 
-                new Font("Segoe UI", Font.BOLD, 14), 
+                new Font("Segoe UI", Font.BOLD, normalFont), 
                 TEXT_DARK));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -486,26 +498,26 @@ public class RolePanel extends JPanel {
 
         // Dòng 1: Chọn Tài Khoản
         JLabel lblAcc = new JLabel("Chọn Tài Khoản:");
-        lblAcc.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblAcc.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
         this.cbAccountTab4 = new JComboBox<>();
-        cbAccountTab4.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cbAccountTab4.setPreferredSize(new Dimension(300, 35)); 
+        cbAccountTab4.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
+        cbAccountTab4.setPreferredSize(new Dimension(cbWidth, cbHeight)); 
 
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0; topControlsPanel.add(lblAcc, gbc);
         gbc.gridx = 1; gbc.gridy = 0; gbc.weightx = 0.8; topControlsPanel.add(cbAccountTab4, gbc);
-        gbc.gridx = 2; gbc.gridy = 0; gbc.weightx = 0; topControlsPanel.add(Box.createRigidArea(new Dimension(160, 35)), gbc); 
+        gbc.gridx = 2; gbc.gridy = 0; gbc.weightx = 0; topControlsPanel.add(Box.createRigidArea(new Dimension(btnWidth, btnHeight)), gbc); 
 
         // Dòng 2: Chọn Phạm Vi Quyền (Role)
         JLabel lblScope = new JLabel("Cấp Quyền Riêng:");
-        lblScope.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblScope.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
         this.cbRoleTab4 = new JComboBox<>();
-        cbRoleTab4.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        cbRoleTab4.setPreferredSize(new Dimension(300, 35)); 
+        cbRoleTab4.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
+        cbRoleTab4.setPreferredSize(new Dimension(cbWidth, cbHeight)); 
 
         this.btnAssignScopeToAccount = ComponentUI.createModernButton("Cấp Quyền", PRIMARY_COLOR, Color.WHITE);
-        this.btnAssignScopeToAccount.setPreferredSize(new Dimension(160, 35));
+        this.btnAssignScopeToAccount.setPreferredSize(new Dimension(btnWidth, btnHeight));
 
         gbc.gridx = 0; gbc.gridy = 1; topControlsPanel.add(lblScope, gbc);
         gbc.gridx = 1; gbc.gridy = 1; topControlsPanel.add(cbRoleTab4, gbc);
@@ -524,7 +536,7 @@ public class RolePanel extends JPanel {
 
 
         this.lblAssignedAccountScopesTitle = new JLabel("Danh sách quyền riêng của tài khoản: (Chưa chọn)");
-        this.lblAssignedAccountScopesTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        this.lblAssignedAccountScopesTitle.setFont(new Font("Segoe UI", Font.BOLD, labelFont));
         this.lblAssignedAccountScopesTitle.setForeground(PRIMARY_COLOR);
 
         JPanel titlePanel = new JPanel(new BorderLayout(0, 5));
@@ -540,7 +552,7 @@ public class RolePanel extends JPanel {
         
         this.assignedAccountScopesTable.getColumnModel().getColumn(0).setPreferredWidth(50);
         this.assignedAccountScopesTable.getColumnModel().getColumn(1).setPreferredWidth(600);
-        this.assignedAccountScopesTable.setRowHeight(35); 
+        this.assignedAccountScopesTable.setRowHeight((int)(screenH * 0.040)); 
 
         this.assignedAccountScopesTable.getColumnModel().getColumn(0).setPreferredWidth(50);
         this.assignedAccountScopesTable.getColumnModel().getColumn(1).setPreferredWidth(450);
@@ -582,7 +594,7 @@ public class RolePanel extends JPanel {
         centerPanel.setOpaque(false);
 
         JLabel lblTarget = new JLabel("Danh sách các Nhóm quyền hiện tại");
-        lblTarget.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblTarget.setFont(new Font("Segoe UI", Font.BOLD, labelFont));
         lblTarget.setForeground(PRIMARY_COLOR);
 
         // Bảng chỉ có Tên nhóm và Hành động
@@ -596,7 +608,7 @@ public class RolePanel extends JPanel {
 
         this.roleGroupTable = new JTable(this.roleGroupTableModel);
         ComponentUI.styleTable(this.roleGroupTable, TEXT_DARK, TEXT_DARK, PRIMARY_COLOR);
-        this.roleGroupTable.setRowHeight(45);
+        this.roleGroupTable.setRowHeight((int)(screenH * 0.052));
 
         this.roleGroupTable.getColumnModel().getColumn(0).setPreferredWidth(50);
         this.roleGroupTable.getColumnModel().getColumn(1).setPreferredWidth(500);
@@ -619,7 +631,7 @@ public class RolePanel extends JPanel {
         centerPanel.add(new JScrollPane(this.roleGroupTable), BorderLayout.CENTER);
 
         this.btnAddRoleGroupTab5 = ComponentUI.createModernButton("Thêm nhóm quyền", PRIMARY_COLOR, Color.WHITE);
-        this.btnAddRoleGroupTab5.setPreferredSize(new Dimension(200, 40));
+        this.btnAddRoleGroupTab5.setPreferredSize(new Dimension((int)(screenW * 0.13), (int)(screenH * 0.046)));
 
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         footer.setOpaque(false);
@@ -635,7 +647,7 @@ public class RolePanel extends JPanel {
     // ==========================================================
     private void styleTable(JTable table) {
         table.setRowHeight(40);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        table.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
         table.setSelectionBackground(new Color(240, 240, 240));
         table.setSelectionForeground(TEXT_DARK);
         table.setShowVerticalLines(false);
@@ -643,7 +655,7 @@ public class RolePanel extends JPanel {
         table.setGridColor(new Color(230, 230, 230));
 
         JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        header.setFont(new Font("Segoe UI", Font.BOLD, labelFont));
         header.setBackground(new Color(245, 245, 245));
         header.setForeground(TEXT_DARK);
         header.setPreferredSize(new Dimension(100, 45));
@@ -656,7 +668,7 @@ public class RolePanel extends JPanel {
 
     private JButton createSaveButton(String text) {
         JButton btnSave = Common.ComponentUI.createModernButton(text, PRIMARY_COLOR, Color.WHITE);
-        btnSave.setPreferredSize(new Dimension(200, 40));
+        btnSave.setPreferredSize(new Dimension((int)(screenW * 0.13), (int)(screenH * 0.046)));
         btnSave.addActionListener(e -> JOptionPane.showMessageDialog(this, "Đã lưu thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE));
         return btnSave;
     }
@@ -1196,10 +1208,10 @@ public class RolePanel extends JPanel {
         protected JButton btnDelete = new JButton("Xóa");
 
         public RoleActionPanel() {
-            setLayout(new FlowLayout(FlowLayout.CENTER, 5, 8));
+            setLayout(new FlowLayout(FlowLayout.CENTER, 4, 4)); // Giảm gap
             setOpaque(true);
-            styleButton(btnEdit, new Color(0, 122, 255), 60, 30);
-            styleButton(btnDelete, new Color(255, 59, 48), 60, 30);
+            styleButton(btnEdit, new Color(0, 122, 255), 50, 26); // Kích thước nhỏ hơn
+            styleButton(btnDelete, new Color(255, 59, 48), 50, 26); // Kích thước nhỏ hơn
             add(btnEdit);
             add(btnDelete);
         }
@@ -1273,12 +1285,12 @@ public class RolePanel extends JPanel {
             setLayout(new FlowLayout(FlowLayout.CENTER, 0, 4));
             setOpaque(true);
             
-            btnDelete.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            btnDelete.setFont(new Font("Segoe UI", Font.BOLD, 11)); // Font nhỏ hơn xíu
             btnDelete.setForeground(new Color(255, 59, 48));
             btnDelete.setBackground(Color.WHITE);
             btnDelete.setBorder(BorderFactory.createLineBorder(new Color(255, 59, 48), 1));
             btnDelete.setFocusPainted(false);
-            btnDelete.setPreferredSize(new Dimension(80, 26));
+            btnDelete.setPreferredSize(new Dimension(70, 26)); // Kích thước nhỏ hơn
             btnDelete.setCursor(new Cursor(Cursor.HAND_CURSOR));
             
             add(btnDelete);

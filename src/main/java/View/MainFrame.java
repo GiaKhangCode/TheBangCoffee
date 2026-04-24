@@ -39,7 +39,12 @@ public class MainFrame extends JFrame {
         setTitle("Quản Lý Hệ Thống - The Bang Coffee");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setSize(1350, 900);
+        
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int screenWidth = screenSize.width;
+        int screenHeight = screenSize.height;
+        
+        setSize(screenWidth, screenHeight);
         setLocationRelativeTo(null);
 
         // Nền chính
@@ -48,13 +53,19 @@ public class MainFrame extends JFrame {
 
         // 1. Sidebar Panel (Light Minimalist)
         sidebar = new SidebarPanel();
-        sidebar.setPreferredSize(new Dimension(280, getHeight())); 
+        int sidebarWidth = (int) (screenWidth * 0.18); // Khoảng 280px
+        sidebar.setPreferredSize(new Dimension(sidebarWidth, screenHeight)); 
         
         // Logo Section
         JLabel logoTitle = new JLabel("The Bang Coffee");
-        logoTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        int logoFontSize = Math.max(18, (int) (screenWidth * 0.014)); // Khoảng 22px
+        logoTitle.setFont(new Font("Segoe UI", Font.BOLD, logoFontSize));
         logoTitle.setForeground(AppColor.TEXT_DARK);
-        logoTitle.setBorder(new EmptyBorder(40, 25, 30, 0)); 
+        
+        int logoPaddingTop = (int) (screenHeight * 0.046); // Khoảng 40px
+        int logoPaddingLeft = (int) (screenWidth * 0.016); // Khoảng 25px
+        int logoPaddingBottom = (int) (screenHeight * 0.035); // Khoảng 30px
+        logoTitle.setBorder(new EmptyBorder(logoPaddingTop, logoPaddingLeft, logoPaddingBottom, 0)); 
         logoTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         
         sidebar.add(logoTitle);
@@ -71,12 +82,18 @@ public class MainFrame extends JFrame {
         
         sidebar.add(Box.createVerticalGlue());
         addMenuButton("Đăng xuất", "EXIT", "Logout");
-        sidebar.add(Box.createRigidArea(new Dimension(0, 25)));
+        
+        int bottomGap = (int) (screenHeight * 0.029); // Khoảng 25px
+        sidebar.add(Box.createRigidArea(new Dimension(0, bottomGap)));
 
         // 2. Main Container
         mainContainer = new JPanel(new BorderLayout());
         mainContainer.setOpaque(false);
-        mainContainer.setBorder(new EmptyBorder(20, 30, 30, 30));
+        
+        int mainPaddingTop = (int) (screenHeight * 0.023); // Khoảng 20px
+        int mainPaddingSide = (int) (screenWidth * 0.020); // Khoảng 30px
+        int mainPaddingBottom = (int) (screenHeight * 0.035); // Khoảng 30px
+        mainContainer.setBorder(new EmptyBorder(mainPaddingTop, mainPaddingSide, mainPaddingBottom, mainPaddingSide));
 
         // Header
         header = new HeaderPanel("Tổng quan hôm nay");
@@ -130,7 +147,9 @@ public class MainFrame extends JFrame {
         btn.setAlignmentX(Component.LEFT_ALIGNMENT); 
         navButtons.put(cardName, btn);
         sidebar.add(btn);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 5)));
+        
+        int gapSmall = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.006); // Khoảng 5px
+        sidebar.add(Box.createRigidArea(new Dimension(0, gapSmall)));
         
         if (!cardName.equals("Logout")) {
             btn.addActionListener(e -> {
