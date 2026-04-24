@@ -14,23 +14,34 @@ public class NavButton extends JButton {
     public NavButton(String text, String icon, String cardName) {
         this.cardName = cardName;
         setText(text);
-        setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int screenWidth = screenSize.width;
+        int screenHeight = screenSize.height;
+        int btnWidth = (int) (screenWidth * 0.16); // Khoảng 250px
+        int btnHeight = (int) (screenHeight * 0.052); // Khoảng 45px
+        int fontSize = Math.max(14, (int) (screenWidth * 0.010)); // Khoảng 15px
+        int paddingLeft = (int) (screenWidth * 0.016); // Khoảng 25px
+        
+        setFont(new Font("Segoe UI", Font.PLAIN, fontSize));
         setForeground(AppColor.TEXT_MUTED);
         setContentAreaFilled(false);
         setBorderPainted(false);
         setFocusPainted(false);
         setCursor(new Cursor(Cursor.HAND_CURSOR));
         setHorizontalAlignment(SwingConstants.LEFT);
-        setPreferredSize(new Dimension(250, 45));
-        setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
-        setBorder(new EmptyBorder(0, 25, 0, 0));
+        setPreferredSize(new Dimension(btnWidth, btnHeight));
+        setMaximumSize(new Dimension(Integer.MAX_VALUE, btnHeight));
+        setBorder(new EmptyBorder(0, paddingLeft, 0, 0));
         setAlignmentX(Component.LEFT_ALIGNMENT);
     }
 
     public void setActive(boolean active) {
         this.isActive = active;
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int fontSize = Math.max(14, (int) (screenSize.width * 0.010));
         setForeground(active ? AppColor.PRIMARY : AppColor.TEXT_MUTED);
-        setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, 15));
+        setFont(new Font("Segoe UI", active ? Font.BOLD : Font.PLAIN, fontSize));
         repaint();
     }
 

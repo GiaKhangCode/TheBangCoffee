@@ -34,25 +34,41 @@ public class ComponentUI {
                 super.paintComponent(g);
             }
         };
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
+        int btnFontSize = Math.max(12, (int) (screenSize.width * 0.009));
+        int paddingTopBottom = Math.max(5, (int) (screenSize.height * 0.012));
+        int paddingLeftRight = Math.max(10, (int) (screenSize.width * 0.013));
+        
+        btn.setFont(new Font("Segoe UI", Font.BOLD, btnFontSize));
         btn.setBackground(bg);
         btn.setForeground(fg);
         btn.setFocusPainted(false);
-        btn.setBorder(new EmptyBorder(10, 20, 10, 20));
+        btn.setBorder(new EmptyBorder(paddingTopBottom, paddingLeftRight, paddingTopBottom, paddingLeftRight));
         btn.setContentAreaFilled(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
     }
     
     public static void styleTable(JTable table, Color foreground, Color selectionForeground, Color selectionBackground) {
-        table.setRowHeight(50);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
+        int rowHeight = Math.max(30, (int) (screenSize.height * 0.057));
+        int tableFontSize = Math.max(12, (int) (screenSize.width * 0.009));
+
+        table.setRowHeight(rowHeight);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, tableFontSize));
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, tableFontSize));
         table.getTableHeader().setBackground(new Color(242, 242, 242));
         table.getTableHeader().setForeground(foreground);
         table.setShowGrid(false);
         table.setIntercellSpacing(new Dimension(0, 0));
-        table.setSelectionBackground(new Color(selectionBackground.getRed(), selectionBackground.getGreen(), selectionBackground.getBlue(), 30));
+        
+        // Pha màu đục (opaque) bằng cách mix 15% màu được truyền vào với 85% màu trắng
+        // Để tránh lỗi khác màu giữa các loại cell renderer (Boolean vs String vs JPanel) khi dùng Alpha
+        int r = (int) (selectionBackground.getRed() * 0.15 + 255 * 0.85);
+        int g = (int) (selectionBackground.getGreen() * 0.15 + 255 * 0.85);
+        int b = (int) (selectionBackground.getBlue() * 0.15 + 255 * 0.85);
+        table.setSelectionBackground(new Color(r, g, b));
+        
         table.setSelectionForeground(selectionForeground);
     }
 }
