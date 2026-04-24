@@ -25,8 +25,38 @@ public class LoginFrame extends JFrame {
     public LoginFrame() {
         setTitle("Quản Lý Cửa Hàng Đồ Uống - The Bang Coffee");
         setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setSize(1000, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        // Lấy kích thước màn hình
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int screenWidth = screenSize.width;
+        int screenHeight = screenSize.height;
+
+        // Tính toán tỉ lệ chuẩn (giả sử màn hình thiết kế là 1536x864)
+        int panelWidth = (int) (screenWidth * 0.28); // Tăng độ rộng form lên 28% màn hình
+        int panelHeight = (int) (screenHeight * 0.72); // Tăng chiều cao form lên 72%
+        int rightInset = (int) (screenWidth * 0.13); // Tăng lề phải (15%) để đẩy form vào gần giữa hơn
+        int fieldHeight = (int) (screenHeight * 0.06); // Tăng chiều cao ô nhập liệu
+        int btnHeight = (int) (screenHeight * 0.065); // Tăng chiều cao nút bấm
+        
+        // Cỡ chữ theo tỉ lệ
+        int titleFontSize = Math.max(28, (int) (screenWidth * 0.026)); 
+        int buttonFontSize = Math.max(16, (int) (screenWidth * 0.012)); 
+        int labelFontSize = Math.max(14, (int) (screenWidth * 0.011)); 
+        int fieldFontSize = Math.max(14, (int) (screenWidth * 0.011));
+        
+        // Khoảng cách theo tỉ lệ
+        int padding = (int) (screenWidth * 0.03); // Tăng padding viền
+        int gapLarge = (int) (screenHeight * 0.05); // Khoảng cách tiêu đề
+        int gapMedium = (int) (screenHeight * 0.04); // Khoảng cách giữa pass và nút
+        int gapSmall = (int) (screenHeight * 0.025); // Khoảng cách các textfield
+        
+        Font titleFont = new Font("Segoe UI", Font.BOLD, titleFontSize);
+        Font btnFont = new Font("Segoe UI", Font.BOLD, buttonFontSize);
+        Font fieldFont = new Font("Segoe UI", Font.PLAIN, fieldFontSize);
+        Font linkFont = new Font("Segoe UI", Font.PLAIN, labelFontSize);
+
+        setSize(screenWidth, screenHeight);
         setLocationRelativeTo(null); // Căn giữa màn hình
 
         // 1. Tạo Background Panel
@@ -54,88 +84,84 @@ public class LoginFrame extends JFrame {
             }
         };
         glassPanel.setOpaque(false);
-        glassPanel.setPreferredSize(new Dimension(350, 550));
+        glassPanel.setPreferredSize(new Dimension(panelWidth, panelHeight));
         glassPanel.setLayout(new BoxLayout(glassPanel, BoxLayout.Y_AXIS));
-        glassPanel.setBorder(new EmptyBorder(40, 40, 40, 40));
+        glassPanel.setBorder(new EmptyBorder(padding, padding, padding, padding));
 
         // 3. Thêm các thành phần vào Form
         // Tiêu đề
         JLabel titleLabel = new JLabel("ĐĂNG NHẬP");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 36));
+        titleLabel.setFont(titleFont);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         // Trường nhập liệu Username
         userField = new JTextField();
-        userField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        userField.setBorder(BorderFactory.createTitledBorder("Tên đăng nhập"));
+        userField.setMaximumSize(new Dimension(Integer.MAX_VALUE, fieldHeight));
+        userField.setFont(fieldFont);
+        javax.swing.border.TitledBorder userBorder = BorderFactory.createTitledBorder("Tên đăng nhập");
+        userBorder.setTitleFont(linkFont);
+        userField.setBorder(userBorder);
 
         // Trường nhập liệu Password
         passField = new JPasswordField();
-        passField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        passField.setBorder(BorderFactory.createTitledBorder("Mật khẩu"));
+        passField.setMaximumSize(new Dimension(Integer.MAX_VALUE, fieldHeight));
+        passField.setFont(fieldFont);
+        javax.swing.border.TitledBorder passBorder = BorderFactory.createTitledBorder("Mật khẩu");
+        passBorder.setTitleFont(linkFont);
+        passField.setBorder(passBorder);
 
         // Nút Đăng nhập (Custom để có màu xanh như thiết kế)
         loginBtn = createModernButton("ĐĂNG NHẬP", PRIMARY_COLOR, Color.WHITE);
-        loginBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
+        loginBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, btnHeight));
         loginBtn.setBackground(new Color(67, 142, 104)); // Màu xanh lá
         loginBtn.setForeground(Color.WHITE);
-        loginBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        loginBtn.setFont(btnFont);
         loginBtn.setFocusPainted(false);
         loginBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Links (Quên mật khẩu / Đăng ký)
-        JPanel linksPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
+        JPanel linksPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, gapSmall, 0));
         linksPanel.setOpaque(false);
         forgotPassLabel = new JLabel("<html><u>Quên mật khẩu?</u></html>");
+        forgotPassLabel.setFont(linkFont);
         signUpLabel = new JLabel("<html><u>Đăng ký</u></html>");
+        signUpLabel.setFont(linkFont);
         forgotPassLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         signUpLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         linksPanel.add(forgotPassLabel);
         linksPanel.add(signUpLabel);
 
         // Lắp ráp các thành phần vào Glass Panel
-//        glassPanel.add(titleLabel);
-//        glassPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-//        glassPanel.add(Box.createRigidArea(new Dimension(0, 30)));
-//        glassPanel.add(userField);
-//        glassPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-//        glassPanel.add(passField);
-//        glassPanel.add(Box.createRigidArea(new Dimension(0, 30)));
-//        glassPanel.add(loginBtn);
-//        glassPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-//        glassPanel.add(linksPanel);
-
-          // 1. Thêm khoảng trống co giãn ở trên cùng để đẩy nội dung xuống giữa
+        // 1. Thêm khoảng trống co giãn ở trên cùng để đẩy nội dung xuống giữa
         glassPanel.add(Box.createVerticalGlue()); 
 
         glassPanel.add(titleLabel);
         
-        // Tăng khoảng cách từ tiêu đề xuống ô nhập liệu cho thoáng mắt hơn (đổi từ 30 -> 40)
-        glassPanel.add(Box.createRigidArea(new Dimension(0, 40))); 
+        // Tăng khoảng cách từ tiêu đề xuống ô nhập liệu cho thoáng mắt hơn
+        glassPanel.add(Box.createRigidArea(new Dimension(0, gapLarge))); 
         
         glassPanel.add(userField);
-        glassPanel.add(Box.createRigidArea(new Dimension(0, 20))); 
+        glassPanel.add(Box.createRigidArea(new Dimension(0, gapSmall))); 
         
         glassPanel.add(passField);
-        glassPanel.add(Box.createRigidArea(new Dimension(0, 30))); 
+        glassPanel.add(Box.createRigidArea(new Dimension(0, gapMedium))); 
         
         glassPanel.add(loginBtn);
-        glassPanel.add(Box.createRigidArea(new Dimension(0, 20))); 
+        glassPanel.add(Box.createRigidArea(new Dimension(0, gapSmall))); 
         
         glassPanel.add(linksPanel);
 
         // 2. Thêm khoảng trống co giãn ở dưới cùng để giữ nội dung ở giữa
         glassPanel.add(Box.createVerticalGlue());
 
-       // Cài đặt ràng buộc để đẩy form sang phải
+        // Cài đặt ràng buộc để đẩy form sang phải
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx = 1.0; // Yêu cầu lấy toàn bộ không gian chiều ngang còn trống
         gbc.weighty = 1.0; // Yêu cầu lấy toàn bộ không gian chiều dọc còn trống
         gbc.anchor = GridBagConstraints.EAST; // Căn lề về phía Đông (bên phải màn hình)
         
-        // Căn lề: trên, trái, dưới, phải. 
-        // Đặt lề phải là 150px (bạn có thể thay đổi số này cho vừa vặn với vùng màu trắng)
-        gbc.insets = new Insets(0, 0, 0, 150); 
+        // Căn lề phải theo tỉ lệ màn hình
+        gbc.insets = new Insets(0, 0, 0, rightInset); 
 
         // Thêm Glass Panel vào Background với ràng buộc (gbc)
         backgroundPanel.add(glassPanel, gbc);
