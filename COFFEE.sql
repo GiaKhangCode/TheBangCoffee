@@ -138,6 +138,7 @@ CREATE TABLE CONG_THUC
     MaSanPham    NUMBER,
     MaNguyenLieu NUMBER,
     DinhLuong    NUMBER NOT NULL CHECK (DinhLuong > 0),
+    DonViTinh    NVARCHAR2(100) DEFAULT 'gram' NOT NULL CHECK(DonViTinh IN ('kg', 'gram', 'lit', 'ml')),
     PRIMARY KEY (MaSanPham, MaNguyenLieu),
     FOREIGN KEY (MaSanPham) REFERENCES SAN_PHAM (MaSanPham),
     FOREIGN KEY (MaNguyenLieu) REFERENCES NGUYEN_LIEU (MaNguyenLieu)
@@ -745,3 +746,34 @@ SELECT * FROM CHUC_NANG;
 
 INSERT INTO CONG_THUC (MaSanPham, MaNguyenLieu) VALUES (?, ?);
 
+CREATE OR REPLACE PROCEDURE CT_LAY_CONG_THUC_SAN_PHAM(
+    p_MaSanPham IN SAN_PHAM.MaSanPham%type,
+    p_ResultSet OUT SYS_REFCURSOR
+) AS
+BEGIN
+    OPEN p_ResultSet FOR
+        WITH GiaTrungBinh AS (
+            SELECT MaNguyenLieu,
+                   NVL(SUM(ThanhTien) / NULLIF(SUM(TongDinhLuong), 0), 0) AS Gia1DonViCoBan
+            FROM CHI_TIET_PHIEU_NHAP
+            GROUP BY MaNguyenLieu
+        )
+        SELECT
+            C.MaNguyenLieu,
+            N.TenNguyenLieu,
+            C.DonViTinh AS DonViCongThuc,
+            C.DinhLuong,
+            CASE
+                WHEN LOWER(N.DonViTinh) = LOWER(C.DonViTinh) THEN NVL(G.Gia1DonViCoBan, 0) * C.DinhLuong
+                WHEN LOWER(N.DonViTinh) = 'kg' AND LOWER(C.DonViTinh) = 'gram' THEN (NVL(G.Gia1DonViCoBan, 0) / 1000) * C.DinhLuong
+                WHEN LOWER(N.DonViTinh) = 'lit' AND LOWER(C.DonViTinh) = 'ml' THEN (NVL(G.Gia1DonViCoBan, 0) / 1000) * C.DinhLuong
+                WHEN LOWER(N.DonViTinh) = 'gram' AND LOWER(C.DonViTinh) = 'kg' THEN (NVL(G.Gia1DonViCoBan, 0) * 1000) * C.DinhLuong
+                WHEN LOWER(N.DonViTinh) = 'ml' AND LOWER(C.DonViTinh) = 'lit' THEN (NVL(G.Gia1DonViCoBan, 0) * 1000) * C.DinhLuong
+                ELSE NVL(G.Gia1DonViCoBan, 0) * C.DinhLuong
+            END AS ThanhTien
+        FROM CONG_THUC C
+        JOIN NGUYEN_LIEU N ON C.MaNguyenLieu = N.MaNguyenLieu
+        LEFT JOIN GiaTrungBinh G ON C.MaNguyenLieu = G.MaNguyenLieu
+        WHERE C.MaSanPham = p_MaSanPham;
+END;
+/
