@@ -11,7 +11,9 @@ public class SidebarPanel extends JPanel {
     public SidebarPanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBackground(AppColor.SIDEBAR_BG);
-        setBorder(new EmptyBorder(0, 15, 0, 15));
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int paddingSide = (int) (screenSize.width * 0.010); // Khoảng 15px trên màn 1536
+        setBorder(new EmptyBorder(0, paddingSide, 0, paddingSide));
     }
 
     @Override

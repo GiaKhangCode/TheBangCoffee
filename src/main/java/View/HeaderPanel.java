@@ -13,20 +13,32 @@ public class HeaderPanel extends JPanel {
     public HeaderPanel(String defaultTitle) {
         setLayout(new BorderLayout());
         setOpaque(false);
-        setPreferredSize(new Dimension(800, 80)); // Chiều rộng mặc định sẽ được BorderLayout.NORTH của container xử lý
-        setBorder(new EmptyBorder(10, 0, 20, 0));
+        
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int screenWidth = screenSize.width;
+        int screenHeight = screenSize.height;
+
+        int headerHeight = (int) (screenHeight * 0.09); // Khoảng 80px
+        int titleFontSize = Math.max(20, (int) (screenWidth * 0.018)); // Khoảng 28px
+        int btnFontSize = Math.max(12, (int) (screenWidth * 0.009)); // Khoảng 14px
+        int paddingTop = (int) (screenHeight * 0.012); // Khoảng 10px
+        int paddingBottom = (int) (screenHeight * 0.023); // Khoảng 20px
+        int btnPaddingSide = (int) (screenWidth * 0.013); // Khoảng 20px
+        
+        setPreferredSize(new Dimension(screenWidth, headerHeight)); 
+        setBorder(new EmptyBorder(paddingTop, 0, paddingBottom, 0));
 
         titleLabel = new JLabel(defaultTitle);
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, titleFontSize));
         titleLabel.setForeground(AppColor.TEXT_DARK);
 
         // Nút "Tạo đơn hàng mới" ở góc phải
         JButton actionBtn = new JButton("Tạo đơn hàng mới +");
-        actionBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        actionBtn.setFont(new Font("Segoe UI", Font.BOLD, btnFontSize));
         actionBtn.setBackground(AppColor.PRIMARY);
         actionBtn.setForeground(Color.WHITE);
         actionBtn.setFocusPainted(false);
-        actionBtn.setBorder(new EmptyBorder(10, 20, 10, 20));
+        actionBtn.setBorder(new EmptyBorder(paddingTop, btnPaddingSide, paddingTop, btnPaddingSide));
         actionBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
         actionBtn.setContentAreaFilled(false);
