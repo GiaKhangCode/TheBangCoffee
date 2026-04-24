@@ -17,6 +17,7 @@ Controller\RoleController$5.class
 View\StockPanel.class
 Service\OtpService$OtpDetails.class
 View\ProductDetailDialog$WrapLayout.class
+DatabaseAccessObject\RecipeDAO.class
 View\RolePanel$DeleteActionButtonEditor.class
 Controller\AccountController.class
 Model\AccountModel.class
@@ -62,6 +63,7 @@ Model\WarehouseReceiptModel.class
 Common\EmailUtil$1.class
 View\HeaderPanel$RoundedButtonWrapper.class
 Controller\StockPanelController.class
+Service\RecipeService.class
 View\StockPanel$StatCard.class
 Service\OptionService.class
 View\LoginFrame.class
@@ -99,6 +101,7 @@ View\RolePanel$4.class
 DatabaseAccessObject\RoleDAO.class
 Model\WarehouseReceiptDetailModel.class
 View\RolePanel$DeleteActionListener.class
+Model\RecipeModel.class
 Model\IngredientModel.class
 DatabaseAccessObject\ProductCategoryDAO.class
 Controller\RoleController$6.class

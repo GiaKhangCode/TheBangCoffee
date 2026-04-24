@@ -5,10 +5,12 @@ import Model.OptionModel;
 import Model.ProductCategoryListModel;
 import Model.ProductListModel;
 import Model.OptionGroupModel;
+import Model.RecipeModel;
 import Service.IngredientService;
 import Service.OptionService;
 import Service.ProductCategoryService;
 import Service.ProductService;
+import Service.RecipeService;
 import View.MenuPanel;
 import View.MainFrame;
 import View.ProductDetailDialog;
@@ -30,6 +32,7 @@ public class ProductController {
     private ProductDetailDialog productDetailDialogFrame;
     private ProductCategoryService categoryService;
     private IngredientService ingredientService;
+    private RecipeService recipeService;
     private File selectedFile;
     private OptionService optionService;
     
@@ -40,6 +43,7 @@ public class ProductController {
         this.categoryService = new ProductCategoryService();
         this.optionService = new OptionService();
         this.ingredientService = new IngredientService();
+        this.recipeService = new RecipeService();
         
         this.productDetailDialogFrame = new ProductDetailDialog(mainFrame);
         this.selectedFile = null;
@@ -72,6 +76,41 @@ public class ProductController {
             
             editDialog.setProductData(product.getProductName(), product.getCategoryName(), product.getBasicPrice(), product.getProductStatus(), product.getDescription(),product.getImageData());
             editDialog.setIngredientList(ingredientService.getIngredientNames());
+            List<RecipeModel> recipes = recipeService.getRecipeByProductId(product.getProductID());
+            editDialog.loadRecipeData(recipes);
+            
+            editDialog.addAddRecipeListener(ev -> {
+                    String ingName = editDialog.getIngredientName();
+                    String unit = editDialog.getUnit();
+                    double quantitative = editDialog.getQuantitative();
+                    
+                    if (ingName == null || ingName.trim().isEmpty()) {
+                        JOptionPane.showMessageDialog(editDialog, "Vui lòng chọn nguyên liệu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                    if (quantitative <= 0) {
+                        JOptionPane.showMessageDialog(editDialog, "Định lượng phải là số lớn hơn 0!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                    
+                    int ingId = ingredientService.getIngredientIdByName(ingName); 
+                    
+                    if (ingId <= 0) {
+                        JOptionPane.showMessageDialog(editDialog, "Không tìm thấy mã nguyên liệu hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    
+                    boolean isSuccess = recipeService.upsertRecipe(product.getProductID(), ingId, unit, quantitative);
+                    
+                    if (isSuccess) {
+                        //Nhớ sửa
+                        List<RecipeModel> updatedRecipes = recipeService.getRecipeByProductId(product.getProductID());
+                        editDialog.loadRecipeData(updatedRecipes);
+                    } else {
+                        JOptionPane.showMessageDialog(editDialog, "Thêm nguyên liệu thất bại. Lỗi CSDL.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                });
+            
             editDialog.addChooseImageListener(ev -> {
                 selectedFile = productService.chooseImageFile();
                 if (selectedFile != null) {
@@ -194,24 +233,24 @@ public class ProductController {
 
         productDetailDialogFrame.addAddOptionListener(e -> {
             JPanel panel = new JPanel(new GridLayout(0, 1, 5, 5));
-            JComboBox<String> cbNhom = new JComboBox<>();
+            JComboBox<String> cbGroup = new JComboBox<>();
             
             ArrayList<OptionGroupModel> groups = optionService.getAllOptionGroups();
             if (groups != null) {
                 for (OptionGroupModel groupName : groups) {
-                    cbNhom.addItem(groupName.getOptionGroupName());
+                    cbGroup.addItem(groupName.getOptionGroupName());
                 }
             }
             
-            JTextField txtTenTuyChon = new JTextField();
-            JTextField txtPhuThu = new JTextField("0"); 
+            JTextField txtOptionName = new JTextField();
+            JTextField txtExtraPrice = new JTextField("0"); 
             
             panel.add(new JLabel("Chọn Nhóm Tùy Chọn:"));
-            panel.add(cbNhom);
+            panel.add(cbGroup);
             panel.add(new JLabel("Tên Tùy Chọn (VD: Size L, Trân châu đen):"));
-            panel.add(txtTenTuyChon);
+            panel.add(txtOptionName);
             panel.add(new JLabel("Giá Phụ Thu (VNĐ):"));
-            panel.add(txtPhuThu);
+            panel.add(txtExtraPrice);
 
             int result = JOptionPane.showConfirmDialog(
                     productDetailDialogFrame, panel, "Thêm Tùy Chọn Mới", 
@@ -219,29 +258,29 @@ public class ProductController {
             );
 
             if (result == JOptionPane.OK_OPTION) {
-                String tenNhom = (String) cbNhom.getSelectedItem();
-                String tenTuyChon = txtTenTuyChon.getText().trim();
-                double phuThu = 0;
+                String groupName = (String) cbGroup.getSelectedItem();
+                String optionName = txtOptionName.getText().trim();
+                double extraPrice = 0;
 
-                if (tenNhom == null || tenTuyChon.isEmpty()) {
+                if (groupName == null || optionName.isEmpty()) {
                     JOptionPane.showMessageDialog(productDetailDialogFrame, "Vui lòng nhập đầy đủ thông tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
                 try {
-                    phuThu = Double.parseDouble(txtPhuThu.getText().trim());
+                    extraPrice = Double.parseDouble(txtExtraPrice.getText().trim());
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(productDetailDialogFrame, "Giá phụ thu phải là số!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 
-                int maNhom = optionService.getGroupIdByName(tenNhom); 
-                if (maNhom <= 0) {
+                int groupID = optionService.getGroupIdByName(groupName); 
+                if (groupID <= 0) {
                      JOptionPane.showMessageDialog(productDetailDialogFrame, "Không tìm thấy mã nhóm hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                      return;
                 }
 
-                boolean isSuccess = optionService.addOption(maNhom, tenTuyChon, phuThu, "Đang sử dụng");
+                boolean isSuccess = optionService.addOption(groupID, optionName, extraPrice, "Đang sử dụng");
                 if (isSuccess) {
                     JOptionPane.showMessageDialog(productDetailDialogFrame, "Thêm Tùy chọn thành công!");
                     loadDialogData();

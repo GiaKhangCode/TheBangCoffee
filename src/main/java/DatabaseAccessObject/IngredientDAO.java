@@ -176,4 +176,21 @@ public class IngredientDAO {
         }
         return ingredientNames;
     }
+    
+    public int getIngredientIdByName (String name){
+        int id = -1;
+        String query = "SELECT MaNguyenLieu FROM NGUYEN_LIEU WHERE TenNguyenLieu = ?";
+        try (Connection conn = getMyConnection();) { 
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, name); // Truyền tên NL vào
+            
+            ResultSet rs = ps.executeQuery();
+            while(rs.next()){
+                id = rs.getInt("MaNguyenLieu");
+            }
+        } catch (Exception e){
+            e.printStackTrace(); 
+        }
+        return id;
+    }
 }

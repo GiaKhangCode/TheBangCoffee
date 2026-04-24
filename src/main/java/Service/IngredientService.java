@@ -41,6 +41,9 @@ public class IngredientService {
     public ArrayList<String> getIngredientNames(){
         return ingredientDAO.getIngredientNames();
     }
+    public int getIngredientIdByName (String name){
+        return ingredientDAO.getIngredientIdByName(name);
+    }
 }
 
 
