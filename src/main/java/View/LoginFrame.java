@@ -65,7 +65,7 @@ public class LoginFrame extends JFrame {
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 // Đảm bảo bạn có file ảnh này trong thư mục dự án
-                ImageIcon imageIcon = new ImageIcon(getClass().getResource("/images/background3.jpeg"));
+                ImageIcon imageIcon = new ImageIcon(getClass().getResource("/images/background3.png"));
                 Image image = imageIcon.getImage();
                 g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
             }
@@ -91,7 +91,7 @@ public class LoginFrame extends JFrame {
         // 3. Thêm các thành phần vào Form
         // Tiêu đề
         JLabel titleLabel = new JLabel("ĐĂNG NHẬP");
-        titleLabel.setFont(titleFont);
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, Math.max(16, titleFontSize - 4)));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         // Trường nhập liệu Username
@@ -138,7 +138,7 @@ public class LoginFrame extends JFrame {
         glassPanel.add(titleLabel);
         
         // Tăng khoảng cách từ tiêu đề xuống ô nhập liệu cho thoáng mắt hơn
-        glassPanel.add(Box.createRigidArea(new Dimension(0, gapLarge))); 
+        glassPanel.add(Box.createRigidArea(new Dimension(0, gapMedium)));  
         
         glassPanel.add(userField);
         glassPanel.add(Box.createRigidArea(new Dimension(0, gapSmall))); 
@@ -154,10 +154,41 @@ public class LoginFrame extends JFrame {
         // 2. Thêm khoảng trống co giãn ở dưới cùng để giữ nội dung ở giữa
         glassPanel.add(Box.createVerticalGlue());
 
+        // 4. Tạo Panel chứa chữ ở bên trái (dưới ly cà phê)
+        JPanel textPanel = new JPanel();
+        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+        textPanel.setOpaque(false);
+
+        JLabel brandLabelLeft = new JLabel("THE BANG COFFEE");
+        brandLabelLeft.setFont(new Font("Segoe UI", Font.BOLD, titleFontSize + 16)); 
+        brandLabelLeft.setForeground(Color.WHITE);
+        brandLabelLeft.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel welcomeLabelLeft = new JLabel("CHÀO MỪNG TRỞ LẠI!");
+        welcomeLabelLeft.setFont(new Font("Segoe UI", Font.PLAIN, Math.max(18, titleFontSize - 2)));
+        welcomeLabelLeft.setForeground(Color.WHITE);
+        welcomeLabelLeft.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        textPanel.add(brandLabelLeft);
+        textPanel.add(Box.createRigidArea(new Dimension(0, gapSmall)));
+        textPanel.add(welcomeLabelLeft);
+
+        GridBagConstraints gbcText = new GridBagConstraints();
+        gbcText.gridx = 0;
+        gbcText.gridy = 0;
+        gbcText.weightx = 1.0;
+        gbcText.weighty = 1.0;
+        gbcText.anchor = GridBagConstraints.CENTER;
+        // Đẩy panel xuống một chút để nằm dưới hình ly cà phê, và lệch nhẹ sang trái cho cân với ảnh
+        gbcText.insets = new Insets((int)(screenHeight * 0.15), 0, 0, (int)(screenWidth * 0.05)); 
+        backgroundPanel.add(textPanel, gbcText);
+
         // Cài đặt ràng buộc để đẩy form sang phải
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.weightx = 1.0; // Yêu cầu lấy toàn bộ không gian chiều ngang còn trống
-        gbc.weighty = 1.0; // Yêu cầu lấy toàn bộ không gian chiều dọc còn trống
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.weightx = 0.0; // Không chiếm khoảng trắng thừa để giữ đúng kích thước form
+        gbc.weighty = 1.0; 
         gbc.anchor = GridBagConstraints.EAST; // Căn lề về phía Đông (bên phải màn hình)
         
         // Căn lề phải theo tỉ lệ màn hình
