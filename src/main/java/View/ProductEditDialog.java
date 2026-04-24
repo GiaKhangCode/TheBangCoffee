@@ -36,7 +36,8 @@ public class ProductEditDialog extends JDialog {
 
     // Tab 2 Components
     private JComboBox<String> cbIngredient;
-    private JTextField txtUnit, txtQuantitative;
+    private JComboBox<String> cbUnit;
+    private JTextField txtQuantitative;
     private JTable recipeTable;
     private DefaultTableModel recipeModel;
     private JLabel lblTotalCost;
@@ -209,15 +210,16 @@ public class ProductEditDialog extends JDialog {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         cbIngredient = new JComboBox<>();
-        txtUnit = createStyledTextField(""); txtUnit.setEditable(false);
+        String[] units = {"kg", "gram", "lit", "ml"}; 
+        cbUnit = new JComboBox<>(units); cbUnit.setBackground(Color.WHITE);
         txtQuantitative = createStyledTextField("");
-        JButton btnAdd = createModernButton(" ➕ Thêm", PRIMARY_COLOR, Color.WHITE);
+        JButton btnAdd = createModernButton("Thêm", PRIMARY_COLOR, Color.WHITE);
 
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.4; inputPanel.add(new JLabel("Nguyên liệu:"), gbc);
         gbc.gridx = 0; gbc.gridy = 1; inputPanel.add(cbIngredient, gbc);
         
         gbc.gridx = 1; gbc.gridy = 0; gbc.weightx = 0.2; inputPanel.add(new JLabel("Đơn vị:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 1; inputPanel.add(txtUnit, gbc);
+        gbc.gridx = 1; gbc.gridy = 1; inputPanel.add(cbUnit, gbc);
         
         gbc.gridx = 2; gbc.gridy = 0; gbc.weightx = 0.2; inputPanel.add(new JLabel("Định lượng:"), gbc);
         gbc.gridx = 2; gbc.gridy = 1; inputPanel.add(txtQuantitative, gbc);
@@ -287,6 +289,15 @@ public class ProductEditDialog extends JDialog {
         if (categories != null) {
             for (String cat : categories) {
                 cbOption.addItem(cat);
+            }
+        }
+    }
+    
+    public void setIngredientList(ArrayList<String> ingredients){
+        cbIngredient.removeAllItems();
+        if(ingredients != null){
+            for (String name : ingredients){
+                cbIngredient.addItem(name);
             }
         }
     }

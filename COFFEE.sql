@@ -137,7 +137,7 @@ CREATE TABLE CONG_THUC
 (
     MaSanPham    NUMBER,
     MaNguyenLieu NUMBER,
-    SoLuongCan   NUMBER NOT NULL CHECK (SoLuongCan > 0),
+    DinhLuong    NUMBER NOT NULL CHECK (DinhLuong > 0),
     PRIMARY KEY (MaSanPham, MaNguyenLieu),
     FOREIGN KEY (MaSanPham) REFERENCES SAN_PHAM (MaSanPham),
     FOREIGN KEY (MaNguyenLieu) REFERENCES NGUYEN_LIEU (MaNguyenLieu)
@@ -743,5 +743,5 @@ SELECT TK.MaTaiKhoan, TenDangNhap, MatKhauDaMaHoa, HoTen, SoDienThoai, Email
 
 SELECT * FROM CHUC_NANG;
 
-
+INSERT INTO CONG_THUC (MaSanPham, MaNguyenLieu) VALUES (?, ?);
 

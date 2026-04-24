@@ -5,6 +5,7 @@ import Model.OptionModel;
 import Model.ProductCategoryListModel;
 import Model.ProductListModel;
 import Model.OptionGroupModel;
+import Service.IngredientService;
 import Service.OptionService;
 import Service.ProductCategoryService;
 import Service.ProductService;
@@ -28,6 +29,7 @@ public class ProductController {
     private ProductListModel productList;
     private ProductDetailDialog productDetailDialogFrame;
     private ProductCategoryService categoryService;
+    private IngredientService ingredientService;
     private File selectedFile;
     private OptionService optionService;
     
@@ -37,6 +39,7 @@ public class ProductController {
         this.productService = new ProductService();
         this.categoryService = new ProductCategoryService();
         this.optionService = new OptionService();
+        this.ingredientService = new IngredientService();
         
         this.productDetailDialogFrame = new ProductDetailDialog(mainFrame);
         this.selectedFile = null;
@@ -68,7 +71,7 @@ public class ProductController {
             }
             
             editDialog.setProductData(product.getProductName(), product.getCategoryName(), product.getBasicPrice(), product.getProductStatus(), product.getDescription(),product.getImageData());
-            
+            editDialog.setIngredientList(ingredientService.getIngredientNames());
             editDialog.addChooseImageListener(ev -> {
                 selectedFile = productService.chooseImageFile();
                 if (selectedFile != null) {
