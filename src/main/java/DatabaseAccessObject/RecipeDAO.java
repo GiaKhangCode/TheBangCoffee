@@ -77,4 +77,26 @@ public class RecipeDAO {
             return false;
         }
     }
+    
+    public boolean deleteRecipe(int productId, int ingredientId) {
+        String sql = "DELETE FROM CONG_THUC WHERE MaSanPham = ? AND MaNguyenLieu = ?";
+        
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+             
+            ps.setInt(1, productId);
+            ps.setInt(2, ingredientId);
+            
+            return ps.executeUpdate() > 0;
+            
+        } 
+        catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } 
+        catch (ClassNotFoundException c) {
+            c.printStackTrace();
+            return false;
+        }
+    }
 }

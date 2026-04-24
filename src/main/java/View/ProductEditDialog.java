@@ -21,7 +21,7 @@ public class ProductEditDialog extends JDialog {
     private JPanel tabInfo, tabRecipe;
 
     private Color PRIMARY_COLOR = AppColor.PRIMARY;
-    private Color DANGER_COLOR = new Color(231, 76, 60); // Màu đỏ cho nút Xóa
+    private Color DANGER_COLOR = new Color(231, 76, 60);
     private Color TEXT_DARK = AppColor.TEXT_DARK;
 
     // Tab 1 Components
@@ -43,10 +43,13 @@ public class ProductEditDialog extends JDialog {
     private JLabel lblTotalCost;
     private JButton btnAddRecipe;
 
-    // Buttons
+    // Buttons Tab 1
     private JButton btnUpload;
     private JButton btnUpdate;
     private JButton btnDelete;
+
+    // Listeners cho bảng
+    private RecipeActionListener recipeTableListener;
 
     public ProductEditDialog(Frame parent) {
         super(parent, "CHI TIẾT SẢN PHẨM", true);
@@ -59,7 +62,6 @@ public class ProductEditDialog extends JDialog {
         setLayout(new BorderLayout());
         getContentPane().setBackground(Color.WHITE);
 
-        // Header
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(PRIMARY_COLOR);
         header.setPreferredSize(new Dimension(getWidth(), 50));
@@ -69,7 +71,6 @@ public class ProductEditDialog extends JDialog {
         header.add(title, BorderLayout.WEST);
         add(header, BorderLayout.NORTH);
 
-        // TabbedPane
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         tabbedPane.setBackground(Color.WHITE);
@@ -82,7 +83,6 @@ public class ProductEditDialog extends JDialog {
         
         add(tabbedPane, BorderLayout.CENTER);
 
-        // Footer của Cửa sổ CHỈ CÒN nút ĐÓNG
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
         footer.setBackground(new Color(245, 245, 245));
         footer.setBorder(new MatteBorder(1, 0, 0, 0, new Color(230, 230, 230)));
@@ -95,12 +95,10 @@ public class ProductEditDialog extends JDialog {
     }
 
     private void initTabInfo() {
-        // Tăng khoảng cách vertical gap lên 15 để Footer của Tab cách nội dung một chút
         tabInfo = new JPanel(new BorderLayout(20, 15)); 
         tabInfo.setBackground(Color.WHITE);
         tabInfo.setBorder(new EmptyBorder(15, 15, 15, 15));
 
-        // LEFT PANEL (400px)
         JPanel leftPanel = createSectionPanel("Thông tin cơ bản");
         leftPanel.setPreferredSize(new Dimension(400, 0));
         leftPanel.setLayout(new GridBagLayout());
@@ -153,7 +151,6 @@ public class ProductEditDialog extends JDialog {
         gbc.gridx = 1; gbc.gridy = 4; gbc.weightx = 1.0; gbc.weighty = 1.0; gbc.fill = GridBagConstraints.BOTH; 
         leftPanel.add(new JScrollPane(txtDescription), gbc);
 
-        // RIGHT PANEL
         JPanel rightContainer = new JPanel(new GridBagLayout());
         rightContainer.setOpaque(false);
         GridBagConstraints rightGbc = new GridBagConstraints();
@@ -177,12 +174,8 @@ public class ProductEditDialog extends JDialog {
         rightGbc.gridy = 1; rightGbc.weighty = 0.0; rightGbc.insets = new Insets(0, 0, 0, 0);
         rightContainer.add(statusPanel, rightGbc);
 
-        // ========================================================
-        // TAB INFO FOOTER (Chứa nút Xóa và Cập nhật - Gắn riêng vào Tab)
-        // ========================================================
         JPanel tabFooter = new JPanel(new BorderLayout());
         tabFooter.setOpaque(false);
-        // Đường kẻ xám nhỏ cách điệu phần nút bấm với phần nội dung
         tabFooter.setBorder(new CompoundBorder(
                 new MatteBorder(1, 0, 0, 0, new Color(230, 230, 230)), 
                 new EmptyBorder(10, 0, 0, 0)
@@ -201,7 +194,6 @@ public class ProductEditDialog extends JDialog {
         tabFooter.add(leftFooter, BorderLayout.WEST);
         tabFooter.add(rightFooter, BorderLayout.EAST);
 
-        // Gắn các khối vào Tab Info
         tabInfo.add(leftPanel, BorderLayout.WEST);
         tabInfo.add(rightContainer, BorderLayout.CENTER);
         tabInfo.add(tabFooter, BorderLayout.SOUTH); 
@@ -229,7 +221,7 @@ public class ProductEditDialog extends JDialog {
         String[] units = {"kg", "gram", "lit", "ml"}; 
         cbUnit = new JComboBox<>(units); cbUnit.setBackground(Color.WHITE);
         txtQuantitative = createStyledTextField("");
-        btnAddRecipe = createModernButton("Thêm", PRIMARY_COLOR, Color.WHITE);
+        btnAddRecipe = createModernButton(" ➕ Thêm", PRIMARY_COLOR, Color.WHITE);
 
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.4; inputPanel.add(new JLabel("Nguyên liệu:"), gbc);
         gbc.gridx = 0; gbc.gridy = 1; inputPanel.add(cbIngredient, gbc);
@@ -242,17 +234,41 @@ public class ProductEditDialog extends JDialog {
         
         gbc.gridx = 3; gbc.gridy = 1; gbc.weightx = 0.2; inputPanel.add(btnAddRecipe, gbc);
 
-        String[] cols = {"STT", "Mã NL", "Tên Nguyên Liệu", "Đơn vị", "Định lượng", "Thành tiền"};
-        recipeModel = new DefaultTableModel(cols, 0) { @Override public boolean isCellEditable(int r, int c) { return false; } };
+        // ĐÃ BỎ CỘT STT, THÊM CỘT HÀNH ĐỘNG
+        String[] cols = {"Mã NL", "Tên Nguyên Liệu", "Đơn vị", "Định lượng", "Thành tiền", "Hành động"};
+        recipeModel = new DefaultTableModel(cols, 0) { 
+            @Override public boolean isCellEditable(int r, int c) { return c == 5; } // Chỉ cho click vào cột Hành động (index 5)
+        };
         recipeTable = new JTable(recipeModel); 
         
-        recipeTable.setRowHeight(40); recipeTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        recipeTable.setRowHeight(45); 
+        recipeTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         recipeTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         recipeTable.getTableHeader().setBackground(new Color(242, 242, 242));
         recipeTable.getTableHeader().setForeground(TEXT_DARK);
         
+        // Căn chỉnh độ rộng cho đẹp
+        recipeTable.getColumnModel().getColumn(0).setPreferredWidth(80);
+        recipeTable.getColumnModel().getColumn(1).setPreferredWidth(250);
+        recipeTable.getColumnModel().getColumn(2).setPreferredWidth(100);
+        recipeTable.getColumnModel().getColumn(3).setPreferredWidth(100);
+        recipeTable.getColumnModel().getColumn(4).setPreferredWidth(150);
+        recipeTable.getColumnModel().getColumn(5).setPreferredWidth(140);
+
+        // NHÚNG NÚT SỬA/XÓA VÀO BẢNG RECIPE
+        TableColumn actionCol = recipeTable.getColumnModel().getColumn(5);
+        actionCol.setCellRenderer(new RecipeActionButtonRenderer(new RecipeActionPanel()));
+        actionCol.setCellEditor(new RecipeActionButtonEditor(new RecipeActionListener() {
+            @Override public void onEdit(int row) {
+                if (recipeTableListener != null) recipeTableListener.onEdit(row);
+            }
+            @Override public void onDelete(int row) {
+                if (recipeTableListener != null) recipeTableListener.onDelete(row);
+            }
+        }, new RecipeActionPanel()));
+        
         JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT)); summaryPanel.setOpaque(false);
-        lblTotalCost = new JLabel("Tổng giá vốn: 0 VND"); lblTotalCost.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblTotalCost = new JLabel("Tổng giá vốn: 0 VNĐ"); lblTotalCost.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblTotalCost.setForeground(PRIMARY_COLOR); summaryPanel.add(lblTotalCost);
 
         JPanel centerPanel = new JPanel(new BorderLayout(0, 15)); centerPanel.setOpaque(false);
@@ -358,27 +374,26 @@ public class ProductEditDialog extends JDialog {
         optionsPanel.add(Box.createVerticalGlue(), optGbc);
         optionsPanel.revalidate(); optionsPanel.repaint();
     }
-    
+
     public void loadRecipeData(List<Model.RecipeModel> recipes) {
         recipeModel.setRowCount(0); // Xóa dữ liệu cũ
         double totalCost = 0;
         
         if (recipes != null && !recipes.isEmpty()) {
-            int stt = 1;
             for (Model.RecipeModel recipe : recipes) {
                 String thanhTienFormatted = String.format("%,.0f VNĐ", recipe.getPrice());
+                // Đã bỏ STT, thêm cột "Sửa / Xóa"
                 recipeModel.addRow(new Object[]{
-                    stt++,
                     recipe.getIngredientID(),
                     recipe.getIngredientName(),
                     recipe.getUnit(),
                     recipe.getQuantitative(),
-                    thanhTienFormatted
+                    thanhTienFormatted,
+                    "Sửa / Xóa"
                 });
                 totalCost += recipe.getPrice();
             }
         }
-        // Cập nhật nhãn Tổng giá vốn dưới góc phải bảng
         lblTotalCost.setText("Tổng giá vốn: " + String.format("%,.0f VNĐ", totalCost));
     }
 
@@ -437,17 +452,15 @@ public class ProductEditDialog extends JDialog {
     public void addChooseImageListener(ActionListener listener) { btnUpload.addActionListener(listener); }
     public void addUpdateListener(ActionListener listener) { btnUpdate.addActionListener(listener); }
     public void addDeleteListener(ActionListener listener) { btnDelete.addActionListener(listener); }
-    public void addAddRecipeListener(ActionListener listener) { 
-        btnAddRecipe.addActionListener(listener); 
-    }
+    
+    // Tab Công Thức
+    public void addAddRecipeListener(ActionListener listener) { btnAddRecipe.addActionListener(listener); }
+    public void setRecipeTableListener(RecipeActionListener listener) { this.recipeTableListener = listener; }
+
     public String getProductName() { return txtProductName.getText().trim(); }
     public double getPrice() {
-        try { 
-            return Double.parseDouble(txtPrice.getText().trim().replace(".", "").replace(",", "")); 
-        } 
-        catch (Exception e) {
-            return 0; 
-        }
+        try { return Double.parseDouble(txtPrice.getText().trim().replace(".", "").replace(",", "")); } 
+        catch (Exception e) { return 0; }
     }
     public String getCategory() { return (String) cbOption.getSelectedItem(); }
     public String getStatus() {
@@ -457,25 +470,22 @@ public class ProductEditDialog extends JDialog {
     }
     public String getDescription() { return txtDescription.getText().trim(); }
     
-    public String getIngredientName(){
-        return (String) cbIngredient.getSelectedItem();
-    }
-    
-    public String getUnit(){
-        return (String) cbUnit.getSelectedItem();
-    }
-    
+    // Lấy dữ liệu Input của Tab Công thức
+    public String getIngredientName(){ return (String) cbIngredient.getSelectedItem(); }
+    public String getUnit(){ return (String) cbUnit.getSelectedItem(); }
     public double getQuantitative(){
-        try { 
-            return Double.parseDouble(txtQuantitative.getText().trim().replace(".", "").replace(",", "")); 
-        } 
-        catch (Exception e) {
-            return 0; 
-        }
+        try { return Double.parseDouble(txtQuantitative.getText().trim().replace(".", "").replace(",", "")); } 
+        catch (Exception e) { return 0; }
     }
 
+    // Lấy dữ liệu dòng đang chọn trên bảng Công thức (cho tính năng Sửa/Xóa)
+    public int getRecipeIngredientIdAt(int row) { return (int) recipeModel.getValueAt(row, 0); }
+    public String getRecipeIngredientNameAt(int row) { return (String) recipeModel.getValueAt(row, 1); }
+    public String getRecipeUnitAt(int row) { return (String) recipeModel.getValueAt(row, 2); }
+    public double getRecipeQuantitativeAt(int row) { return (double) recipeModel.getValueAt(row, 3); }
+
     // =====================================================================
-    // CLASS HỖ TRỢ BÊN TRONG
+    // CLASS HỖ TRỢ BÊN TRONG (LAYOUT VÀ NÚT SỬA/XÓA)
     // =====================================================================
     class WrapLayout extends FlowLayout {
         public WrapLayout(int align, int hgap, int vgap) { super(align, hgap, vgap); }
@@ -507,5 +517,51 @@ public class ProductEditDialog extends JDialog {
                 dim.height += rowHeight + insets.top + insets.bottom + vgap * 2; return dim;
             }
         }
+    }
+
+    public interface RecipeActionListener {
+        void onEdit(int row);
+        void onDelete(int row);
+    }
+
+    class RecipeActionPanel extends JPanel {
+        protected JButton btnEdit = new JButton("Sửa");
+        protected JButton btnDelete = new JButton("Xóa");
+        public RecipeActionPanel() {
+            setLayout(new FlowLayout(FlowLayout.CENTER, 5, 8)); setOpaque(true);
+            styleButton(btnEdit, new Color(0, 122, 255), 50, 26);
+            styleButton(btnDelete, new Color(255, 59, 48), 50, 26);
+            add(btnEdit); add(btnDelete);
+        }
+        protected void styleButton(JButton btn, Color color, int width, int height) {
+            btn.setFont(new Font("Segoe UI", Font.BOLD, 12)); btn.setForeground(color);
+            btn.setBackground(Color.WHITE); btn.setBorder(BorderFactory.createLineBorder(color, 1));
+            btn.setFocusPainted(false); btn.setPreferredSize(new Dimension(width, height));
+            btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        }
+    }
+
+    class RecipeActionButtonRenderer implements TableCellRenderer {
+        protected JPanel panel;
+        public RecipeActionButtonRenderer(JPanel panel) { this.panel = panel; }
+        @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
+            return panel;
+        }
+    }
+
+    class RecipeActionButtonEditor extends DefaultCellEditor {
+        protected RecipeActionPanel panel;
+        protected RecipeActionListener listener;
+        protected int currentRow;
+        public RecipeActionButtonEditor(RecipeActionListener listener, RecipeActionPanel panel) {
+            super(new JCheckBox()); this.listener = listener; this.panel = panel;
+            this.panel.btnEdit.addActionListener(e -> { stopCellEditing(); listener.onEdit(currentRow); });
+            this.panel.btnDelete.addActionListener(e -> { stopCellEditing(); listener.onDelete(currentRow); });
+        }
+        @Override public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            currentRow = row; panel.setBackground(table.getSelectionBackground()); return panel;
+        }
+        @Override public Object getCellEditorValue() { return ""; }
     }
 }

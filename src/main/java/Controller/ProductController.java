@@ -15,6 +15,7 @@ import View.MenuPanel;
 import View.MainFrame;
 import View.ProductDetailDialog;
 import View.ProductEditDialog;
+import java.awt.Color;
 import java.awt.GridLayout;
 import java.io.File;
 import java.sql.SQLException;
@@ -76,40 +77,7 @@ public class ProductController {
             
             editDialog.setProductData(product.getProductName(), product.getCategoryName(), product.getBasicPrice(), product.getProductStatus(), product.getDescription(),product.getImageData());
             editDialog.setIngredientList(ingredientService.getIngredientNames());
-            List<RecipeModel> recipes = recipeService.getRecipeByProductId(product.getProductID());
-            editDialog.loadRecipeData(recipes);
-            
-            editDialog.addAddRecipeListener(ev -> {
-                    String ingName = editDialog.getIngredientName();
-                    String unit = editDialog.getUnit();
-                    double quantitative = editDialog.getQuantitative();
-                    
-                    if (ingName == null || ingName.trim().isEmpty()) {
-                        JOptionPane.showMessageDialog(editDialog, "Vui lòng chọn nguyên liệu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                        return;
-                    }
-                    if (quantitative <= 0) {
-                        JOptionPane.showMessageDialog(editDialog, "Định lượng phải là số lớn hơn 0!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                        return;
-                    }
-                    
-                    int ingId = ingredientService.getIngredientIdByName(ingName); 
-                    
-                    if (ingId <= 0) {
-                        JOptionPane.showMessageDialog(editDialog, "Không tìm thấy mã nguyên liệu hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                    
-                    boolean isSuccess = recipeService.upsertRecipe(product.getProductID(), ingId, unit, quantitative);
-                    
-                    if (isSuccess) {
-                        //Nhớ sửa
-                        List<RecipeModel> updatedRecipes = recipeService.getRecipeByProductId(product.getProductID());
-                        editDialog.loadRecipeData(updatedRecipes);
-                    } else {
-                        JOptionPane.showMessageDialog(editDialog, "Thêm nguyên liệu thất bại. Lỗi CSDL.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    }
-                });
+            editDialog.loadRecipeData(recipeService.getRecipeByProductId(product.getProductID()));
             
             editDialog.addChooseImageListener(ev -> {
                 selectedFile = productService.chooseImageFile();
@@ -152,6 +120,97 @@ public class ProductController {
                     JOptionPane.showMessageDialog(editDialog, "Xóa sản phẩm thành công!");
                     editDialog.dispose();
                     loadMainMenuData();
+                }
+            });
+            
+            editDialog.addAddRecipeListener(ev -> {
+                    String ingName = editDialog.getIngredientName();
+                    String unit = editDialog.getUnit();
+                    double quantitative = editDialog.getQuantitative();
+                    
+                    ValidationUtil.validateAddRecipe(ingName, quantitative, editDialog);
+                    int ingId = ingredientService.getIngredientIdByName(ingName); 
+                    if (ingId <= 0) {
+                        JOptionPane.showMessageDialog(editDialog, "Không tìm thấy mã nguyên liệu hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    
+                    boolean isSuccess = recipeService.upsertRecipe(product.getProductID(), ingId, unit, quantitative);
+                    if (isSuccess) {
+                        editDialog.loadRecipeData(recipeService.getRecipeByProductId(product.getProductID()));
+                    } else {
+                        JOptionPane.showMessageDialog(editDialog, "Thêm nguyên liệu thất bại. Lỗi CSDL.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                });
+            
+            editDialog.setRecipeTableListener(new ProductEditDialog.RecipeActionListener() {
+                @Override
+                public void onEdit(int row) {
+                    int ingId = editDialog.getRecipeIngredientIdAt(row);
+                    String ingName = editDialog.getRecipeIngredientNameAt(row);
+                    String currentUnit = editDialog.getRecipeUnitAt(row);
+                    double currentQty = editDialog.getRecipeQuantitativeAt(row);
+
+                    JPanel panel = new JPanel(new GridLayout(0, 1, 5, 5));
+                    
+                    JTextField txtName = new JTextField(ingName);
+                    txtName.setEditable(false);
+                    txtName.setBackground(new Color(240, 240, 240));
+                    
+                    JComboBox<String> cbUnit = new JComboBox<>(new String[]{"kg", "gram", "lit", "ml"});
+                    cbUnit.setSelectedItem(currentUnit);
+                    
+                    JTextField txtQty = new JTextField(String.valueOf(currentQty));
+
+                    panel.add(new JLabel("Nguyên liệu (Không thể đổi):")); panel.add(txtName);
+                    panel.add(new JLabel("Đơn vị:")); panel.add(cbUnit);
+                    panel.add(new JLabel("Định lượng:")); panel.add(txtQty);
+
+                    int result = JOptionPane.showConfirmDialog(editDialog, panel, "Sửa Định Lượng Nguyên Liệu", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                    
+                    if (result == JOptionPane.OK_OPTION) {
+                        try {
+                            double newQty = Double.parseDouble(txtQty.getText().trim().replace(".", "").replace(",", ""));
+                            if (newQty <= 0) {
+                                JOptionPane.showMessageDialog(editDialog, "Định lượng phải lớn hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                                return;
+                            }
+                            
+                            boolean isSuccess = recipeService.upsertRecipe(product.getProductID(), ingId, (String) cbUnit.getSelectedItem(), newQty);
+                            
+                            if (isSuccess) {
+                                JOptionPane.showMessageDialog(editDialog, "Cập nhật thành công!");
+                                editDialog.loadRecipeData(recipeService.getRecipeByProductId(product.getProductID()));
+                            } else {
+                                JOptionPane.showMessageDialog(editDialog, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            }
+                        } catch (NumberFormatException ex) {
+                            JOptionPane.showMessageDialog(editDialog, "Định lượng không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                }
+
+                @Override
+                public void onDelete(int row) {
+                    int ingId = editDialog.getRecipeIngredientIdAt(row);
+                    String ingName = editDialog.getRecipeIngredientNameAt(row);
+                    
+                    int confirm = JOptionPane.showConfirmDialog(
+                            editDialog, 
+                            "Xóa nguyên liệu [" + ingName + "] khỏi công thức món này?", 
+                            "Xác nhận", 
+                            JOptionPane.YES_NO_OPTION, 
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                    
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        if (recipeService.deleteRecipe(product.getProductID(), ingId)) {
+                            JOptionPane.showMessageDialog(editDialog, "Xóa thành công!");
+                            editDialog.loadRecipeData(recipeService.getRecipeByProductId(product.getProductID()));
+                        } else {
+                            JOptionPane.showMessageDialog(editDialog, "Xóa thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
                 }
             });
 

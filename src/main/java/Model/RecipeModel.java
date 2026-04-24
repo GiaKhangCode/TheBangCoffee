@@ -21,20 +21,43 @@ public class RecipeModel {
         this.price = price;
     }
 
+    public int getIngredientID() { 
+        return ingredientID; 
+    }
     
+    public void setIngredientID(int ingredientID) { 
+        this.ingredientID = ingredientID; 
+    }
 
-    public int getIngredientID() { return ingredientID; }
-    public void setIngredientID(int ingredientID) { this.ingredientID = ingredientID; }
+    public String getIngredientName() { 
+        return ingredientName; 
+    }
+    
+    public void setIngredientName(String ingredientName) { 
+        this.ingredientName = ingredientName; 
+    }
 
-    public String getIngredientName() { return ingredientName; }
-    public void setIngredientName(String ingredientName) { this.ingredientName = ingredientName; }
+    public String getUnit() { 
+        return unit; 
+    }
+    
+    public void setUnit(String unit) { 
+        this.unit = unit; 
+    }
 
-    public String getUnit() { return unit; }
-    public void setUnit(String unit) { this.unit = unit; }
+    public double getQuantitative() { 
+        return quantitative; 
+    }
+    
+    public void setQuantitative(double quantitative) { 
+        this.quantitative = quantitative; 
+    }
 
-    public double getQuantitative() { return quantitative; }
-    public void setQuantitative(double quantitative) { this.quantitative = quantitative; }
-
-    public double getPrice() { return price; }
-    public void setPrice(double price) { this.price = price; }
+    public double getPrice() { 
+        return price; 
+    }
+    
+    public void setPrice(double price) { 
+        this.price = price; 
+    }
 }

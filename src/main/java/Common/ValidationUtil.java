@@ -6,6 +6,7 @@ package Common;
 
 import Model.SessionManager;
 import Service.SessionService;
+import View.ProductEditDialog;
 import View.StockPanel;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -140,7 +141,19 @@ public class ValidationUtil {
     public static boolean validateAddCategory(String newCategoryName){
         return newCategoryName != null && !newCategoryName.trim().isEmpty();
     }
+    
     public static boolean validateAddOptionGroup(String newGroupName){
         return (newGroupName != null && !newGroupName.trim().isEmpty());
+    }
+    
+    public static void validateAddRecipe(String ingName, double quantitative, ProductEditDialog editDialog){
+        if (ingName == null || ingName.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(editDialog, "Vui lòng chọn nguyên liệu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (quantitative <= 0) {
+            JOptionPane.showMessageDialog(editDialog, "Định lượng phải là số lớn hơn 0!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
     }
 }

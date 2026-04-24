@@ -1,4 +1,5 @@
 ConnectDatabase\ConnectionOracle.class
+View\ProductEditDialog$RecipeActionButtonRenderer.class
 View\ProductEditDialog$WrapLayout.class
 View\StockPanel$ActionButtonEditor.class
 Controller\StockPanelController$1.class
@@ -27,6 +28,7 @@ View\RolePanel$5.class
 View\ForgotPasswordFrame$3.class
 Controller\RoleController$2.class
 Controller\StockPanelController$4.class
+View\ProductEditDialog$RecipeActionButtonEditor.class
 View\StockPanel$ActionPanel.class
 Controller\ProductController.class
 Controller\ProductController$2.class
@@ -72,6 +74,8 @@ View\MenuPanel$ProductClickListener.class
 View\NavButton.class
 Model\RoleModel.class
 View\ProductDetailDialog.class
+View\ProductEditDialog$RecipeActionListener.class
+Controller\ProductController$4.class
 Model\CategoryModel.class
 View\RolePanel$RoleActionListener.class
 View\ForgotPasswordFrame$2.class
@@ -84,6 +88,7 @@ DatabaseAccessObject\WarehouseReceiptDAO.class
 View\StockPanel$ActionButtonListener.class
 Controller\ProductController$1.class
 View\RegisterFrame$2.class
+View\ProductEditDialog$3.class
 View\RolePanel$1.class
 Model\RoleGroupModel.class
 Model\SessionManager.class
@@ -127,6 +132,7 @@ Controller\StockPanelController$3.class
 View\ProductEditDialog.class
 View\LoginFrame$2.class
 View\ProductDetailDialog$3.class
+View\ProductEditDialog$RecipeActionPanel.class
 DatabaseAccessObject\IngredientDAO.class
 View\RolePanel$DeleteActionPanel.class
 View\MenuPanel$ScrollablePanel.class

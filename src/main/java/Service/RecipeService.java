@@ -26,4 +26,8 @@ public class RecipeService {
         return recipeDAO.upsertRecipe(productId, ingredientId, unit, quantitative);
     }
     
+    public boolean deleteRecipe(int productId, int ingredientId) {
+        return recipeDAO.deleteRecipe(productId, ingredientId);
+    }
+    
 }
