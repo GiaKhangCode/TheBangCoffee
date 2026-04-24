@@ -160,4 +160,20 @@ public class IngredientDAO {
         
         return detail.isEmpty() ? "Chưa có lịch sử chi tiết cho nguyên liệu này." : detail;
     }
+    
+    public ArrayList<String> getIngredientNames (){
+        String sql = "SELECT DISTINCT TenNguyenLieu "
+                + "FROM NGUYEN_LIEU ";
+        ArrayList<String> ingredientNames = new ArrayList<>();
+        try (Connection conn = getMyConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql);){
+            while (rs.next()){
+                ingredientNames.add(rs.getString("TenNguyenLieu"));
+            }
+        }catch (Exception e){
+            e.printStackTrace(); 
+        }
+        return ingredientNames;
+    }
 }

@@ -7,6 +7,7 @@ package Service;
 import DatabaseAccessObject.IngredientDAO;
 import Model.IngredientModel;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,6 +36,10 @@ public class IngredientService {
     
     public String getIngredientDetail(String ingredientName) {
         return ingredientDAO.getIngredientDetail(ingredientName);
+    }
+    
+    public ArrayList<String> getIngredientNames(){
+        return ingredientDAO.getIngredientNames();
     }
 }
 
