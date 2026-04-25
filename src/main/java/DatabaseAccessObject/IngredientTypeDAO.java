@@ -7,6 +7,7 @@ package DatabaseAccessObject;
 import static ConnectDatabase.ConnectionUtils.getMyConnection;
 import Model.IngredientTypeModel;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -36,5 +37,18 @@ public class IngredientTypeDAO {
             e.printStackTrace(); 
         }
         return list;
+    }
+    
+    public boolean insertIngredientType(String tenLoai) throws SQLException, ClassNotFoundException {
+        String sql = "INSERT INTO LOAI_NGUYEN_LIEU (TenLoaiNguyenLieu) VALUES (?)";
+        try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, tenLoai);
+            int rows = ps.executeUpdate();
+            return rows > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

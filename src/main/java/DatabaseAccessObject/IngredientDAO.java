@@ -23,49 +23,78 @@ import javax.swing.JOptionPane;
 public class IngredientDAO {
     public List<IngredientModel> getIngredient() throws SQLException{
         ArrayList<IngredientModel> ingredientList = new ArrayList<>();
-        String query = "SELECT MIN(MaNguyenLieu) AS MaNguyenLieuDaiDien, "
-                     + "TenNguyenLieu, DonViTinh, "
-                     + "SUM(SoLuongTon) AS TongTonKho, "   
-                     + "MAX(NguongCanhBao) AS NguongCanhBaoDaiDien " 
-                     + "FROM NGUYEN_LIEU "
-                     + "GROUP BY TenNguyenLieu, DonViTinh " 
-                     + "ORDER BY MIN(MaNguyenLieu)";
-        
-        //try(): Tự động đóng tài nguyên
+        String query = "SELECT MIN(nl.MaNguyenLieu) AS MaNguyenLieuDaiDien, "
+                     + "UPPER(nl.TenNguyenLieu) AS TenNguyenLieu, "
+                     + "CASE "
+                     + "    WHEN nl.DonViTinh = 'kg' THEN 'gram' "
+                     + "    WHEN nl.DonViTinh = 'lít' THEN 'ml' "
+                     + "    ELSE nl.DonViTinh "
+                     + "END AS DonViTinhQuyDoi, "
+                     + "SUM("
+                     + "    nl.SoLuongTon * "
+                     + "    COALESCE((SELECT MAX(ct.TongDinhLuong / ct.SoLuong) FROM CHI_TIET_PHIEU_NHAP ct WHERE ct.MaNguyenLieu = nl.MaNguyenLieu), 1) * "
+                     + "    CASE WHEN LOWER(nl.DonViTinh) IN ('kg', 'lít') THEN 1000 ELSE 1 END "
+                     + ") AS TongDinhLuongHienTai, "
+                     + "MAX("
+                     + "    nl.NguongCanhBao * "
+                     + "    COALESCE((SELECT MAX(ct.TongDinhLuong / ct.SoLuong) FROM CHI_TIET_PHIEU_NHAP ct WHERE ct.MaNguyenLieu = nl.MaNguyenLieu), 1) * "
+                     + "    CASE WHEN LOWER(nl.DonViTinh) IN ('kg', 'lít') THEN 1000 ELSE 1 END "
+                     + ") AS NguongQuyDoi "
+                     + "FROM NGUYEN_LIEU nl "
+                     + "GROUP BY UPPER(nl.TenNguyenLieu), "
+                     + "CASE "
+                     + "    WHEN nl.DonViTinh = 'kg' THEN 'gram' "
+                     + "    WHEN nl.DonViTinh = 'lít' THEN 'ml' "
+                     + "    ELSE nl.DonViTinh "
+                     + "END "
+                     + "ORDER BY UPPER(nl.TenNguyenLieu)";
+
         try (Connection conn = getMyConnection();
              Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(query);){ //Chỉ phục vụ đọc/lấy dữ liệu
-        
+             ResultSet rs = stmt.executeQuery(query);){ 
+
             while(rs.next()){
-                IngredientModel t = new IngredientModel(rs.getInt("MaNguyenLieuDaiDien"),
-                                  rs.getString("TenNguyenLieu"),
-                                  rs.getString("DonViTinh"),
-                                  rs.getInt("TongTonKho"),
-                                  rs.getInt("NguongCanhBaoDaiDien"));
+                IngredientModel t; 
+                t = new IngredientModel(
+                        rs.getInt("MaNguyenLieuDaiDien"),
+                        rs.getString("TenNguyenLieu"),
+                        rs.getString("DonViTinhQuyDoi"),
+                        rs.getInt("TongDinhLuongHienTai"),
+                        rs.getInt("NguongQuyDoi"));
                 ingredientList.add(t);
             }
         }
         catch (Exception e){
-            System.out.println("LỖI KHI KÉO TỒN KHO: " + e.getMessage());
+            System.out.println("LỖI KHI LẤY DỮ LIỆU TỒN KHO: " + e.getMessage());
             e.printStackTrace();
         }
         
         return ingredientList;
-    }
-    
-    public boolean deleteIngredient(int maNL) {
-        try {
-            Connection conn = getMyConnection();
-            String sql = "DELETE FROM NGUYEN_LIEU WHERE MaNguyenLieu = ?";
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setInt(1, maNL);
+    }   
+ 
 
-            int rowAffected = ps.executeUpdate(); // Thực hiện lệnh xóa
-            conn.close();
-            return rowAffected > 0; // Trả về true nếu có ít nhất 1 dòng bị xóa
-        } 
-        catch (Exception e) {
+    public boolean deleteIngredientWithLog(int maNL, int maTaiKhoan, String lyDo) {
+        String sql = "{CALL SP_XOA_NGUYEN_LIEU(?, ?, ?, ?)}";
+        try (Connection conn = getMyConnection();
+             CallableStatement cs = conn.prepareCall(sql)) {
+
+            cs.setInt(1, maNL);
+            cs.setInt(2, maTaiKhoan);
+            cs.setString(3, lyDo);
+            cs.registerOutParameter(4, java.sql.Types.NVARCHAR);
+
+            cs.execute();
+            String ketQua = cs.getString(4);
+
+            if (ketQua.equals("Thành công")) {
+                return true;
+            } else {
+                JOptionPane.showMessageDialog(null, ketQua, "Lỗi Database", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+        } catch (Exception e) {
             e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Lỗi kết nối: " + e.getMessage());
             return false;
         }
     }
@@ -105,32 +134,6 @@ public class IngredientDAO {
             return false;
         }
     }
-
-    public boolean deleteIngredientWithLog(int maNL, int maTaiKhoan, String lyDo) {
-        String sql = "{CALL SP_XOA_NGUYEN_LIEU(?, ?, ?, ?)}";
-        try (Connection conn = getMyConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
-
-            cs.setInt(1, maNL);
-            cs.setInt(2, maTaiKhoan);
-            cs.setString(3, lyDo);
-            cs.registerOutParameter(4, java.sql.Types.NVARCHAR);
-
-            cs.execute();
-            String ketQua = cs.getString(4);
-
-            if (ketQua.equals("Thành công")) {
-                return true;
-            } else {
-                JOptionPane.showMessageDialog(null, ketQua, "Lỗi Database", JOptionPane.ERROR_MESSAGE);
-                return false;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Lỗi kết nối: " + e.getMessage());
-            return false;
-        }
-    }
     
     public String getIngredientDetail(String tenNguyenLieu) {
         String detail = "";
@@ -138,7 +141,7 @@ public class IngredientDAO {
                        "FROM NGUYEN_LIEU nl " +
                        "JOIN CHI_TIET_PHIEU_NHAP ct ON nl.MaNguyenLieu = ct.MaNguyenLieu " +
                        "JOIN PHIEU_NHAP_KHO pnk ON pnk.MaPhieuNhap = ct.MaPhieuNhap " +
-                       "WHERE nl.TenNguyenLieu = ? " +
+                       "WHERE UPPER(nl.TenNguyenLieu) = UPPER(?) " +
                        "ORDER BY pnk.NgayNhap DESC";
    
         try (Connection conn = getMyConnection();) { 

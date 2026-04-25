@@ -33,6 +33,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import Service.IngredientTypeService;
+import javax.swing.JComboBox;
 
 public class StockPanelController {
     private List<IngredientModel> ingredientListModel;
@@ -287,6 +288,56 @@ public class StockPanelController {
                 }
             }
         });
+        
+        // --- LOGIC THÊM LOẠI NGUYÊN LIỆU MỚI (POPUP) ---
+        this.stockPanelView.addAddCategoryListener(e -> {
+            // 1. Hiển thị Popup nhập liệu giống hệt ảnh của bạn
+            String newCategoryName = JOptionPane.showInputDialog(
+                null, 
+                "Nhập tên loại nguyên liệu mới:", 
+                "Loại nguyên liệu",
+                JOptionPane.PLAIN_MESSAGE
+            );
+
+            // 2. Kiểm tra nếu người dùng bấm OK và có nhập chữ
+            if (newCategoryName != null && !newCategoryName.trim().isEmpty()) {
+                newCategoryName = newCategoryName.trim();
+                
+                // 3. Gọi Service đẩy xuống Database
+                boolean success = false;
+                try {
+                    success = ingredientTypeService.addIngredientType(newCategoryName);
+                   
+                } catch (SQLException ex) {
+                    System.getLogger(StockPanelController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+                } catch (ClassNotFoundException ex) {
+                    System.getLogger(StockPanelController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+                }
+                
+                if (success) {
+                    try {
+                        // 4. Tải lại danh sách mới từ DB
+                        ingredientTypeList = ingredientTypeService.getIngredientTypes();
+                        stockPanelView.loadIngredientTypesToComboBox(ingredientTypeList);
+                        
+                        // 5. Tự động Set lựa chọn (Select) vào đúng cái loại vừa mới tạo
+                        JComboBox<IngredientTypeModel> cb = stockPanelView.getCategoryComboBox();
+                        for (int i = 0; i < cb.getItemCount(); i++) {
+                            if (cb.getItemAt(i).getTypeName().equalsIgnoreCase(newCategoryName)) {
+                                cb.setSelectedIndex(i);
+                                break;
+                            }
+                        }
+                        
+                        JOptionPane.showMessageDialog(null, "Đã thêm loại nguyên liệu mới thành công!");
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(null, "Thêm thất bại! Tên loại này có thể đã tồn tại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
     }
         
     private void implementCreateReceipt() throws Exception {
@@ -332,6 +383,22 @@ public class StockPanelController {
     public void loadIngredientToView() throws SQLException {
         ingredientListModel = ingredientService.getIngredientList();
         stockPanelView.displayIngredientData(ingredientListModel);
+        
+        int totalTypes = ingredientListModel.size();
+        int warningCount = 0;
+        
+        // Duyệt qua danh sách xem có bao nhiêu món "Hết hàng" hoặc "Sắp hết"
+        for (IngredientModel item : ingredientListModel) {
+            String trangThai = item.getStatus(); // Lấy trạng thái từ Model
+            // Chỗ này bạn tự điền chữ cho khớp với chữ sinh ra từ Model của bạn nhé
+            if (trangThai.equalsIgnoreCase("Hết hàng")) {
+                warningCount++;
+            }
+        }
+        
+
+        // 3. Đẩy 3 con số vừa tính được ngược lại cho View hiển thị
+        stockPanelView.updateDashboardStats(totalTypes, warningCount);
     }
     
     public void loadWarehouseReceiptToView() throws SQLException {

@@ -1,11 +1,13 @@
 ConnectDatabase\ConnectionOracle.class
 View\StockPanel$ActionButtonEditor.class
 Controller\StockPanelController$1.class
+View\EmployeeSchedulePanel$DayCellPanel$4.class
 View\MenuPanel.class
 View\RolePanel$RoleActionButtonRenderer.class
 Model\IngredientTypeModel.class
 View\LoginFrame$1.class
 View\StockPanel$3.class
+View\EmployeeSchedulePanel$1.class
 View\HeaderPanel.class
 View\ProductDetailDialog$8.class
 View\MenuPanel$2.class
@@ -25,6 +27,7 @@ View\RolePanel$5.class
 View\ForgotPasswordFrame$3.class
 Controller\RoleController$2.class
 View\TableActionSupport$1.class
+View\EmployeeSchedulePanel.class
 Controller\StockPanelController$4.class
 View\StockPanel$ActionPanel.class
 Controller\ProductController.class
@@ -50,12 +53,14 @@ View\TableActionSupport.class
 View\RegisterFrame$1.class
 View\MainFrame.class
 View\StockPanel$ActionButtonRenderer.class
+View\EmployeeSchedulePanel$DayCellPanel$5.class
 Common\ValidationUtil.class
 View\ProductDetailDialog$6.class
 View\StockPanel$1.class
 com\is216\thebangcf\TheBangCF.class
 View\StockPanel$6.class
 Controller\RoleController$4.class
+View\EmployeeSchedulePanel$DaySchedule.class
 View\ForgotPasswordFrame$1.class
 View\ProductDetailDialog$5.class
 Model\IngredientListModel.class
@@ -88,9 +93,11 @@ View\StockPanel$ActionButtonListener.class
 Controller\ProductController$1.class
 View\RegisterFrame$2.class
 View\ProductEditDialog$3.class
+View\EmployeeSchedulePanel$ShiftDetail.class
 View\RolePanel$1.class
 Model\RoleGroupModel.class
 Model\SessionManager.class
+View\EmployeeSchedulePanel$2.class
 Model\ProductModel.class
 View\RolePanel$7.class
 Service\RoleService.class
@@ -102,6 +109,7 @@ Service\ProductService.class
 View\AppColor.class
 com\is216\thebangcf\TheBangCF$1.class
 View\RolePanel$4.class
+View\EmployeeSchedulePanel$DayCellPanel$3.class
 DatabaseAccessObject\RoleDAO.class
 Model\WarehouseReceiptDetailModel.class
 View\RolePanel$DeleteActionListener.class
@@ -121,6 +129,7 @@ DatabaseAccessObject\AccountDAO.class
 Service\OtpService.class
 Controller\AccountController$1.class
 View\TableActionSupport$ActionRenderer.class
+View\EmployeeSchedulePanel$DayCellPanel$2.class
 View\TableActionSupport$ActionEditor.class
 Service\IngredientTypeService.class
 View\RolePanel$2.class
@@ -136,6 +145,7 @@ View\ProductDetailDialog$3.class
 DatabaseAccessObject\IngredientDAO.class
 View\RolePanel$DeleteActionPanel.class
 View\MenuPanel$ScrollablePanel.class
+View\EmployeeSchedulePanel$DayCellPanel.class
 Model\OptionGroupModel.class
 Controller\ProductController$3.class
 Service\AccountService.class
@@ -151,6 +161,7 @@ Controller\RoleController$7.class
 DatabaseAccessObject\ProductDAO.class
 Controller\RoleController$1.class
 View\StockPanel$ReceiptItem.class
+View\EmployeeSchedulePanel$DayCellPanel$1.class
 View\TableActionSupport$ActionPanel.class
 Model\WarehouseReceiptListModel.class
 View\RolePanel$3.class

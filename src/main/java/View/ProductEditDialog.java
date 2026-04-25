@@ -330,6 +330,14 @@ public class ProductEditDialog extends JDialog {
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
     }
+    
+    private String formatCurrency(double amount) {
+        java.text.DecimalFormatSymbols symbols = new java.text.DecimalFormatSymbols();
+        symbols.setGroupingSeparator('.'); // Dấu chấm cho hàng nghìn
+
+        java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0", symbols);
+        return df.format(amount) + " VNĐ";
+    }
 
     // =====================================================================
     // PUBLIC API — NẠP DỮ LIỆU
@@ -400,13 +408,13 @@ public class ProductEditDialog extends JDialog {
                     recipe.getIngredientName(),
                     recipe.getUnit(),
                     recipe.getQuantitative(),
-                    String.format("%,.0f VNĐ", recipe.getPrice()),
+                    formatCurrency(recipe.getPrice()),
                     "Sửa / Xóa"
                 });
                 totalCost += recipe.getPrice();
             }
         }
-        lblTotalCost.setText("Tổng giá vốn: " + String.format("%,.0f VNĐ", totalCost));
+        lblTotalCost.setText("Tổng giá vốn: " + formatCurrency(totalCost));
     }
 
     public void setProductData(String name, String category, double price,

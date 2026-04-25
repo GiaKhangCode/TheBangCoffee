@@ -766,9 +766,9 @@ BEGIN
             CASE
                 WHEN LOWER(N.DonViTinh) = LOWER(C.DonViTinh) THEN NVL(G.Gia1DonViCoBan, 0) * C.DinhLuong
                 WHEN LOWER(N.DonViTinh) = 'kg' AND LOWER(C.DonViTinh) = 'gram' THEN (NVL(G.Gia1DonViCoBan, 0) / 1000) * C.DinhLuong
-                WHEN LOWER(N.DonViTinh) = 'lit' AND LOWER(C.DonViTinh) = 'ml' THEN (NVL(G.Gia1DonViCoBan, 0) / 1000) * C.DinhLuong
+                WHEN LOWER(N.DonViTinh) = 'lít' AND LOWER(C.DonViTinh) = 'ml' THEN (NVL(G.Gia1DonViCoBan, 0) / 1000) * C.DinhLuong
                 WHEN LOWER(N.DonViTinh) = 'gram' AND LOWER(C.DonViTinh) = 'kg' THEN (NVL(G.Gia1DonViCoBan, 0) * 1000) * C.DinhLuong
-                WHEN LOWER(N.DonViTinh) = 'ml' AND LOWER(C.DonViTinh) = 'lit' THEN (NVL(G.Gia1DonViCoBan, 0) * 1000) * C.DinhLuong
+                WHEN LOWER(N.DonViTinh) = 'ml' AND LOWER(C.DonViTinh) = 'lít' THEN (NVL(G.Gia1DonViCoBan, 0) * 1000) * C.DinhLuong
                 ELSE NVL(G.Gia1DonViCoBan, 0) * C.DinhLuong
             END AS ThanhTien
         FROM CONG_THUC C

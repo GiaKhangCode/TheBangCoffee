@@ -164,12 +164,14 @@ public class ProductController {
                     if (result == null) return;
 
                     try {
-                        double newQty = Double.parseDouble(result[1].toString());
+                        String qtyStr = result[1].toString().replace(",", "."); 
+                        double newQty = Double.parseDouble(qtyStr);
+                        String newUnit = (String) result[0];
                         if (newQty <= 0) {
                             JOptionPane.showMessageDialog(editDialog, "Định lượng phải lớn hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                             return;
                         }
-                        boolean ok = recipeService.upsertRecipe(product.getProductID(), ingId, (String) result[0], newQty);
+                        boolean ok = recipeService.upsertRecipe(product.getProductID(), ingId, newUnit, newQty);
                         if (ok) {
                             JOptionPane.showMessageDialog(editDialog, "Cập nhật thành công!");
                             editDialog.loadRecipeData(recipeService.getRecipeByProductId(product.getProductID()));

@@ -23,4 +23,8 @@ public class IngredientTypeService {
     public List<IngredientTypeModel> getIngredientTypes() throws SQLException {
         return ingredientTypeDAO.getIngredientTypes();
     }
+    
+    public boolean addIngredientType(String ingredientTypeName) throws SQLException, ClassNotFoundException{
+        return ingredientTypeDAO.insertIngredientType(ingredientTypeName);
+    }
 }
