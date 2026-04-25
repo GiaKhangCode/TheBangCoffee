@@ -25,7 +25,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 /**
  *
- * @author Kiet
+ * @author FAKK
  */
 public class AccountController {
     private AccountModel accountModel;
@@ -246,7 +246,7 @@ public class AccountController {
             roleController = new RoleController(this.mainFrame);
             roleController.hiddenButton();
             new ProductController(mainFrame);
-            
+            new ShiftController(mainFrame);
             this.setRoleController(roleController);
         } catch (SQLException ex) {
             ex.printStackTrace();

@@ -29,7 +29,7 @@ public class MainFrame extends JFrame {
     private Map<String, NavButton> navButtons;
     private NavButton activeButton;
     private RolePanel rolePanel;
-    private EmployeeSchedulePanel staffPanel;
+    private EmployeeSchedulePanel shiftPanel;
     
     public MainFrame() throws SQLException {
         initComponents();
@@ -127,8 +127,8 @@ public class MainFrame extends JFrame {
 //            this.stockPanel.displayPhieuNhapKhoData(lsPhieu);
         
         //------------------------------------------------------------------------
-        this.staffPanel = new EmployeeSchedulePanel();
-        contentArea.add(this.staffPanel, "Staff");
+        this.shiftPanel = new EmployeeSchedulePanel();
+        contentArea.add(this.shiftPanel, "Staff");
         contentArea.add(this.rolePanel, "Role"); // Giao diện Phân quyền
         contentArea.add(new ContentBasePanel("Cài đặt Hệ thống", "Tùy chỉnh các tham số vận hành."), "Settings");
 
@@ -215,8 +215,8 @@ public class MainFrame extends JFrame {
         return rolePanel;
     }
     
-    public EmployeeSchedulePanel getStaffPanel(){
-        return staffPanel;
+    public EmployeeSchedulePanel getShiftPanel(){
+        return shiftPanel;
     }
     
     public void setRoleMenuVisible(boolean isVisible) {

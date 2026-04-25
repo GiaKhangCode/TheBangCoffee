@@ -1,4 +1,5 @@
 ConnectDatabase\ConnectionOracle.class
+Model\ShiftModel.class
 View\StockPanel$ActionButtonEditor.class
 Controller\StockPanelController$1.class
 View\EmployeeSchedulePanel$DayCellPanel$4.class
@@ -33,6 +34,7 @@ View\StockPanel$ActionPanel.class
 Controller\ProductController.class
 Controller\ProductController$2.class
 View\OtpDialog.class
+View\EmployeeSchedulePanel$AddShiftListener.class
 View\ForgotPasswordFrame.class
 View\StockPanel$5.class
 View\ProductEditDialog$1.class
@@ -53,7 +55,6 @@ View\TableActionSupport.class
 View\RegisterFrame$1.class
 View\MainFrame.class
 View\StockPanel$ActionButtonRenderer.class
-View\EmployeeSchedulePanel$DayCellPanel$5.class
 Common\ValidationUtil.class
 View\ProductDetailDialog$6.class
 View\StockPanel$1.class
@@ -119,6 +120,7 @@ DatabaseAccessObject\ProductCategoryDAO.class
 Controller\RoleController$6.class
 Service\OtpService$OtpType.class
 View\StockPanel$2.class
+Controller\ShiftController$1.class
 Service\WarehouseReceiptService.class
 View\LoginFrame$3.class
 View\ProductDetailDialog$7.class
@@ -127,13 +129,16 @@ View\DashboardPanel$RoundedChartPlaceholder.class
 Controller\RoleController$9.class
 DatabaseAccessObject\AccountDAO.class
 Service\OtpService.class
+View\EmployeeSchedulePanel$FilterChangeListener.class
 Controller\AccountController$1.class
 View\TableActionSupport$ActionRenderer.class
 View\EmployeeSchedulePanel$DayCellPanel$2.class
+View\EmployeeSchedulePanel$ShiftActionUpdateListener.class
 View\TableActionSupport$ActionEditor.class
 Service\IngredientTypeService.class
 View\RolePanel$2.class
 View\ContentBasePanel$RoundedCard.class
+DatabaseAccessObject\ShiftDAO.class
 View\ContentBasePanel.class
 View\RolePanel$RoleActionButtonEditor.class
 View\WrapLayout.class
@@ -163,7 +168,9 @@ Controller\RoleController$1.class
 View\StockPanel$ReceiptItem.class
 View\EmployeeSchedulePanel$DayCellPanel$1.class
 View\TableActionSupport$ActionPanel.class
+Controller\ShiftController.class
 Model\WarehouseReceiptListModel.class
 View\RolePanel$3.class
+Service\ShiftService.class
 View\RolePanel$RoleActionPanel.class
 View\ProductDetailDialog$2.class

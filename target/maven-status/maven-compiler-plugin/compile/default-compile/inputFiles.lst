@@ -8,6 +8,7 @@ D:\DoAn\TheBangCoffee\src\main\java\ConnectDatabase\ConnectionUtils.java
 D:\DoAn\TheBangCoffee\src\main\java\Controller\AccountController.java
 D:\DoAn\TheBangCoffee\src\main\java\Controller\ProductController.java
 D:\DoAn\TheBangCoffee\src\main\java\Controller\RoleController.java
+D:\DoAn\TheBangCoffee\src\main\java\Controller\ShiftController.java
 D:\DoAn\TheBangCoffee\src\main\java\Controller\StockPanelController.java
 D:\DoAn\TheBangCoffee\src\main\java\Controller\TheBangCoffeeController.java
 D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\AccountDAO.java
@@ -19,6 +20,7 @@ D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\ProductDAO.java
 D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\RecipeDAO.java
 D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\RoleDAO.java
 D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\SessionDAO.java
+D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\ShiftDAO.java
 D:\DoAn\TheBangCoffee\src\main\java\DatabaseAccessObject\WarehouseReceiptDAO.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\AccountModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\CategoryModel.java
@@ -35,6 +37,7 @@ D:\DoAn\TheBangCoffee\src\main\java\Model\RecipeModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\RoleGroupModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\RoleModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\SessionManager.java
+D:\DoAn\TheBangCoffee\src\main\java\Model\ShiftModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\WarehouseReceiptDetailModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\WarehouseReceiptListModel.java
 D:\DoAn\TheBangCoffee\src\main\java\Model\WarehouseReceiptModel.java
@@ -48,6 +51,7 @@ D:\DoAn\TheBangCoffee\src\main\java\Service\ProductService.java
 D:\DoAn\TheBangCoffee\src\main\java\Service\RecipeService.java
 D:\DoAn\TheBangCoffee\src\main\java\Service\RoleService.java
 D:\DoAn\TheBangCoffee\src\main\java\Service\SessionService.java
+D:\DoAn\TheBangCoffee\src\main\java\Service\ShiftService.java
 D:\DoAn\TheBangCoffee\src\main\java\Service\WarehouseReceiptService.java
 D:\DoAn\TheBangCoffee\src\main\java\View\AppColor.java
 D:\DoAn\TheBangCoffee\src\main\java\View\ContentBasePanel.java
