@@ -246,7 +246,8 @@ public class AccountController {
             roleController = new RoleController(this.mainFrame);
             roleController.hiddenButton();
             new ProductController(mainFrame);
-            
+            new PosController(mainFrame);
+            new ShiftController(mainFrame);
             this.setRoleController(roleController);
         } catch (SQLException ex) {
             ex.printStackTrace();

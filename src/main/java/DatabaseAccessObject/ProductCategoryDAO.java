@@ -12,24 +12,21 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 
-/**
- *
- * @author FAKK
- */
 public class ProductCategoryDAO {
     public ArrayList<CategoryModel> getAllCategoriesFull() {
-        String sql = "SELECT MaLoaiSanPham, TenLoaiSanPham, TrangThai FROM LOAI_SAN_PHAM";
-        ArrayList<Model.CategoryModel> list = new ArrayList<>();
+        String sql = "SELECT MaLoaiSanPham, TenLoaiSanPham, TrangThai, Thue_GTGT_MacDinh FROM LOAI_SAN_PHAM ORDER BY MaLoaiSanPham";
+        ArrayList<CategoryModel> list = new ArrayList<>();
         
         try (Connection conn = getMyConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
              
             while(rs.next()){
-                list.add(new Model.CategoryModel(
+                list.add(new CategoryModel(
                     rs.getInt("MaLoaiSanPham"),
                     rs.getString("TenLoaiSanPham"),
-                    rs.getString("TrangThai")
+                    rs.getString("TrangThai"),
+                    rs.getDouble("Thue_GTGT_MacDinh")
                 ));
             }
         } catch (Exception e){
@@ -37,23 +34,25 @@ public class ProductCategoryDAO {
         }
         return list;
     }
-    public boolean insertCategory(String categoryName, String status) {
-        String sql = "INSERT INTO LOAI_SAN_PHAM (TenLoaiSanPham, TrangThai) VALUES (?, ?)";
-        
+    
+    // Đã thêm tham số Thue_GTGT_MacDinh
+    public boolean insertCategory(String categoryName, String status, double defaultVat) {
+        String sql = "INSERT INTO LOAI_SAN_PHAM (TenLoaiSanPham, TrangThai, Thue_GTGT_MacDinh) VALUES (?, ?, ?)";
         try (Connection conn = getMyConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
              
             ps.setString(1, categoryName);
             ps.setString(2, status);
+            ps.setDouble(3, defaultVat);
             
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
+            return ps.executeUpdate() > 0;
             
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
+    
     public boolean deleteCategory(int categoryId) {
         String sql = "DELETE FROM LOAI_SAN_PHAM WHERE MaLoaiSanPham = ?";
         try (Connection conn = getMyConnection();
@@ -68,14 +67,16 @@ public class ProductCategoryDAO {
         }
     }
     
-    public boolean updateCategory(int categoryId, String newName, String status) {
-        String sql = "UPDATE LOAI_SAN_PHAM SET TenLoaiSanPham = ?, TrangThai = ? WHERE MaLoaiSanPham = ?";
+    // Đã thêm tham số Thue_GTGT_MacDinh
+    public boolean updateCategory(int categoryId, String newName, String status, double defaultVat) {
+        String sql = "UPDATE LOAI_SAN_PHAM SET TenLoaiSanPham = ?, TrangThai = ?, Thue_GTGT_MacDinh = ? WHERE MaLoaiSanPham = ?";
         try (Connection conn = getMyConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
              
             ps.setString(1, newName);
             ps.setString(2, status);
-            ps.setInt(3, categoryId);
+            ps.setDouble(3, defaultVat);
+            ps.setInt(4, categoryId);
             
             return ps.executeUpdate() > 0;
         } catch (Exception e) {

@@ -1,59 +1,44 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Model;
 
-import java.sql.SQLException;
-import java.time.LocalDate;
-import java.util.List;
-
-/**
- *
- * @author Kiet
- */
 public class IngredientModel {
     private int ingredientID;
     private String ingredientName;
     private String unit;
     private int inStock;
     private int threshold;
+    private double averagePrice;
     
-    public IngredientModel(int ingredientID, String ingredientName, String unit, int inStock, int threshold) {
+    // [MỚI] Thêm Nhà cung cấp và Thuế theo DB mới
+    private String provider;
+    private double vat; 
+
+    public IngredientModel(int ingredientID, String ingredientName, String unit, int inStock, int threshold, String provider, double vat, double averagePrice) {
         this.ingredientID = ingredientID;
         this.ingredientName = ingredientName;
         this.unit = unit;
         this.inStock = inStock;
         this.threshold = threshold;
+        this.provider = provider;
+        this.vat = vat;
+        this.averagePrice = averagePrice;
     }
 
-    public int getIngredientID() {
-        return ingredientID;
-    }
-
-    public String getIngredientName() {
-        return ingredientName;
-    }
-
-    public String getUnit() {
-        return unit;
-    }
-
-    public int getInStock() {
-        return inStock;
-    }
-
-    public int getThreshold() {
-        return threshold;
-    }
+    public int getIngredientID() { return ingredientID; }
+    public String getIngredientName() { return ingredientName; }
+    public String getUnit() { return unit; }
+    public int getInStock() { return inStock; }
+    public int getThreshold() { return threshold; }
+    public String getProvider() { return provider; }
+    public double getVat() { return vat; }
+    public double getAveragePrice() { return averagePrice; }
     
     public String getStatus() {
-        if (this.inStock > this.threshold){
+        if (this.inStock > this.threshold) {
             return "Còn hàng";
-        }
-        else
+        } else if (this.inStock > 0) {
+            return "Sắp hết"; // Bạn có thể thêm trạng thái này cho hay
+        } else {
             return "Hết hàng";
+        }
     }
-    
-    
 }

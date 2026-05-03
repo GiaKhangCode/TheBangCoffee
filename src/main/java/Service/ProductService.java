@@ -1,27 +1,21 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Service;
 
 import DatabaseAccessObject.ProductDAO;
 import Model.ProductListModel;
+import Model.VariantModel;
 import java.io.File;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-/**
- *
- * @author FAKK
- */
 public class ProductService {
     private ProductDAO productDAO;
+    
     public ProductService(){
         productDAO = new ProductDAO();
     }
+    
     public ProductListModel getProductList(){
         return productDAO.getAllProduct();
     }
@@ -41,12 +35,14 @@ public class ProductService {
         return null;
     }
     
-    public void insertProduct(String categoryName, String productName, double basicPrice, File imageFile, String status, HashMap<String, List<String>> selectedOptions, String description){
-        productDAO.insertProduct(categoryName, productName, basicPrice, imageFile, status, selectedOptions, description);
+    public void insertProduct(String categoryName, String productName, long dineInPrice, long takeawayPrice, long holidayPrice, double vat, File imageFile, 
+                              String status, String description, List<VariantModel> listVariants, List<Integer> listToppingIds){
+        productDAO.insertProduct(categoryName, productName, dineInPrice, takeawayPrice, holidayPrice, vat, imageFile, status, description, listVariants, listToppingIds);
     }
     
-    public void updateProduct(int productId, String categoryName, String productName, double basicPrice, File imageFile, String status, String description, HashMap<String, List<String>> selectedOptions){
-        productDAO.updateProduct(productId, categoryName, productName, basicPrice, imageFile, status, description, selectedOptions);
+    public void updateProduct(int productId, String categoryName, String productName, long dineInPrice, long takeawayPrice, long holidayPrice, double vat, File imageFile, 
+                              String status, String description, List<VariantModel> listVariants, List<Integer> listToppingIds){
+        productDAO.updateProduct(productId, categoryName, productName, dineInPrice, takeawayPrice, holidayPrice, vat, imageFile, status, description, listVariants, listToppingIds);
     }
     
     public void deleteProduct(int id) throws SQLException, ClassNotFoundException{

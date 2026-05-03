@@ -5,6 +5,7 @@
 package DatabaseAccessObject;
 
 import static ConnectDatabase.ConnectionUtils.getMyConnection;
+import Model.RecipeModel;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,68 +13,77 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- * @author FAKK
- */
 public class RecipeDAO {
-    public List<Model.RecipeModel> getRecipeByProductId(int productId) {
-        List<Model.RecipeModel> recipeList = new ArrayList<>();
-        String sql = "{call CT_LAY_CONG_THUC_SAN_PHAM(?, ?)}";
+    // [SỬA LỚN] Lấy công thức theo Mã Biến Thể (Size) chứ không lấy theo SP
+    public List<RecipeModel> getRecipeByVariantId(int variantId) {
+        List<RecipeModel> recipeList = new ArrayList<>();
+        // Query trực tiếp, không cần dùng Procedure Cursor cho phức tạp
+        String sql = "SELECT C.MaNguyenLieu, N.TenNguyenLieu, N.DonViTinh, C.SoLuongCan "
+                   + "FROM CONG_THUC C "
+                   + "JOIN NGUYEN_LIEU N ON C.MaNguyenLieu = N.MaNguyenLieu "
+                   + "WHERE C.MaBienThe = ?";
 
         try (Connection conn = getMyConnection();
-             java.sql.CallableStatement cs = conn.prepareCall(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
              
-            cs.setInt(1, productId);
+            ps.setInt(1, variantId);
             
-            cs.registerOutParameter(2, java.sql.Types.REF_CURSOR);
-            
-            cs.execute();
-            
-            try (ResultSet rs = (ResultSet) cs.getObject(2)) {
+            try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Model.RecipeModel recipe = new Model.RecipeModel();
-                    recipe.setIngredientID(rs.getInt("MaNguyenLieu"));
-                    recipe.setIngredientName(rs.getString("TenNguyenLieu"));
-                    recipe.setUnit(rs.getString("DonViCongThuc"));
-                    recipe.setQuantitative(rs.getDouble("DinhLuong"));
-                    recipe.setPrice(rs.getDouble("ThanhTien"));
-                    
+                    RecipeModel recipe = new RecipeModel(
+                        variantId,
+                        rs.getInt("MaNguyenLieu"),
+                        rs.getString("TenNguyenLieu"),
+                        rs.getString("DonViTinh"),
+                        rs.getDouble("SoLuongCan")
+                    );
                     recipeList.add(recipe);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
         return recipeList;
     }
     
-    public boolean upsertRecipe(int productId, int ingredientId, String unit, double quantitative) {
+    // Dùng MERGE để thêm hoặc cập nhật công thức
+    public boolean upsertRecipe(int variantId, int ingredientId, double quantityRequired) throws SQLException, ClassNotFoundException {
         String sql = "MERGE INTO CONG_THUC C " +
-                     "USING (SELECT ? AS MaSanPham, ? AS MaNguyenLieu, ? AS DinhLuong, ? AS DonViTinh FROM dual) input " +
-                     "ON (C.MaSanPham = input.MaSanPham AND C.MaNguyenLieu = input.MaNguyenLieu) " +
+                     "USING (SELECT ? AS MaBienThe, ? AS MaNguyenLieu, ? AS SoLuongCan FROM dual) input " +
+                     "ON (C.MaBienThe = input.MaBienThe AND C.MaNguyenLieu = input.MaNguyenLieu) " +
                      "WHEN MATCHED THEN " +
-                     "    UPDATE SET C.DinhLuong = input.DinhLuong, C.DonViTinh = input.DonViTinh " +
+                     "    UPDATE SET C.SoLuongCan = input.SoLuongCan " +
                      "WHEN NOT MATCHED THEN " +
-                     "    INSERT (MaSanPham, MaNguyenLieu, DinhLuong, DonViTinh) " +
-                     "    VALUES (input.MaSanPham, input.MaNguyenLieu, input.DinhLuong, input.DonViTinh)";
+                     "    INSERT (MaBienThe, MaNguyenLieu, SoLuongCan) " +
+                     "    VALUES (input.MaBienThe, input.MaNguyenLieu, input.SoLuongCan)";
 
         try (Connection conn = getMyConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
              
-            ps.setInt(1, productId);
+            ps.setInt(1, variantId);
             ps.setInt(2, ingredientId);
-            ps.setDouble(3, quantitative);
-            ps.setString(4, unit);
+            ps.setDouble(3, quantityRequired);
             
             return ps.executeUpdate() > 0;
             
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
-        } catch(ClassNotFoundException c){
-            c.printStackTrace();
+        } 
+    }
+    
+    public boolean deleteRecipe(int variantId, int ingredientId) {
+        String sql = "DELETE FROM CONG_THUC WHERE MaBienThe = ? AND MaNguyenLieu = ?";
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+             
+            ps.setInt(1, variantId);
+            ps.setInt(2, ingredientId);
+            
+            return ps.executeUpdate() > 0;
+            
+        } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }

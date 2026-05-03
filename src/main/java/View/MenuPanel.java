@@ -21,7 +21,6 @@ public class MenuPanel extends JPanel {
     private JTextField txtSearch;
 
     private ImageIcon defaultImage;
-    // Listener
     private ProductClickListener productClickListener;
 
     public MenuPanel() {
@@ -32,22 +31,20 @@ public class MenuPanel extends JPanel {
         loadDefaultImage();
         initHeader();
         initProductGrid();
-        
     }
 
-    // ================= LOAD IMAGE =================
     private void loadDefaultImage() {
         try {
             URL imgUrl = getClass().getResource("/images/backgroundLogin.jpg");
             if (imgUrl != null) {
                 ImageIcon originalIcon = new ImageIcon(imgUrl);
-                Image img = originalIcon.getImage().getScaledInstance(180, 150, Image.SCALE_SMOOTH);
+                Image img = originalIcon.getImage().getScaledInstance(90, 135, Image.SCALE_SMOOTH);
                 defaultImage = new ImageIcon(img);
             } else {
-                defaultImage = createPlaceholderIcon(180, 150);
+                defaultImage = createPlaceholderIcon(90, 135);
             }
         } catch (Exception e) {
-            defaultImage = createPlaceholderIcon(180, 150);
+            defaultImage = createPlaceholderIcon(90, 135);
         }
     }
 
@@ -62,7 +59,6 @@ public class MenuPanel extends JPanel {
         return new ImageIcon(img);
     }
 
-    // ================= HEADER =================
     private void initHeader() {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
@@ -95,7 +91,6 @@ public class MenuPanel extends JPanel {
         add(headerPanel, BorderLayout.NORTH);
     }
 
-    // ================= GRID =================
     private void initProductGrid() {
         gridPanel = new ScrollablePanel(new GridLayout(0, 4, 20, 20));
         gridPanel.setOpaque(false);
@@ -110,10 +105,7 @@ public class MenuPanel extends JPanel {
     }
 
     private class ScrollablePanel extends JPanel implements Scrollable {
-        public ScrollablePanel(LayoutManager layout) {
-            super(layout);
-        }
-
+        public ScrollablePanel(LayoutManager layout) { super(layout); }
         public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
         public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) { return 16; }
         public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) { return visibleRect.height; }
@@ -121,21 +113,16 @@ public class MenuPanel extends JPanel {
         public boolean getScrollableTracksViewportHeight() { return false; }
     }
     
-    // ================= DISPLAY DATA =================
     public void displayProductList(ProductListModel list) {
         gridPanel.removeAll();
-
         for (ProductModel p : list.getProductList()) {
             gridPanel.add(createProductCard(p));
         }
-
         gridPanel.revalidate();
         gridPanel.repaint();
     }
 
-    // ================= CARD =================
     private JPanel createProductCard(ProductModel product) {
-
         JPanel card = new JPanel(new BorderLayout(0, 15)) {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -151,16 +138,9 @@ public class MenuPanel extends JPanel {
         card.setBorder(new EmptyBorder(15, 15, 15, 15));
         card.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // Hover
         card.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) {
-                card.setBorder(BorderFactory.createLineBorder(PRIMARY_COLOR, 2, true));
-            }
-
-            public void mouseExited(MouseEvent e) {
-                card.setBorder(new EmptyBorder(15, 15, 15, 15));
-            }
-
+            public void mouseEntered(MouseEvent e) { card.setBorder(BorderFactory.createLineBorder(PRIMARY_COLOR, 2, true)); }
+            public void mouseExited(MouseEvent e) { card.setBorder(new EmptyBorder(15, 15, 15, 15)); }
             public void mouseClicked(MouseEvent e) {
                 if (productClickListener != null) {
                     productClickListener.onClick(product);
@@ -168,8 +148,13 @@ public class MenuPanel extends JPanel {
             }
         });
 
-        ImageIcon icon = product.getImageData() != null ? product.getImageData() : defaultImage;
-
+        ImageIcon icon = defaultImage;
+        if (product.getImageData() != null) {
+            Image originalImg = product.getImageData().getImage();
+            Image scaledImg = originalImg.getScaledInstance(115, 145, Image.SCALE_SMOOTH);
+            icon = new ImageIcon(scaledImg);
+        }
+        
         JLabel lblImage = new JLabel(icon);
         lblImage.setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -183,7 +168,8 @@ public class MenuPanel extends JPanel {
         JLabel lblCategory = new JLabel(product.getCategoryName());
         lblCategory.setForeground(TEXT_MUTED);
 
-        JLabel lblPrice = new JLabel(product.getBasicPrice()+ " đ");
+        // Gọi getDineInPrice() thay vì getGiaTaiQuan()
+        JLabel lblPrice = new JLabel(String.format("Tại quán: %,d đ", product.getDineInPrice()));
         lblPrice.setForeground(PRIMARY_COLOR);
 
         lblName.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -200,20 +186,10 @@ public class MenuPanel extends JPanel {
         return card;
     }
 
-    // ================= LISTENER =================
-    public void addAddProductListener(java.awt.event.ActionListener listener) {
-        btnAddProduct.addActionListener(listener);
-    }
+    public void addAddProductListener(java.awt.event.ActionListener listener) { btnAddProduct.addActionListener(listener); }
+    public void setProductClickListener(ProductClickListener listener) { this.productClickListener = listener; }
+    public String getSearchText() { return txtSearch.getText(); }
 
-    public void setProductClickListener(ProductClickListener listener) {
-        this.productClickListener = listener;
-    }
-
-    public String getSearchText() {
-        return txtSearch.getText();
-    }
-
-    // ================= INTERFACE =================
     public interface ProductClickListener {
         void onClick(ProductModel product);
     }

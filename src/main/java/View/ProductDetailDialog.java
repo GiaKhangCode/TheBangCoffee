@@ -1,16 +1,15 @@
 package View;
 
 import Model.CategoryModel;
-import Model.OptionModel;
+import Model.ToppingModel;
 import Model.ProductCategoryListModel;
-import Model.OptionGroupModel;
+import Model.VariantModel;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,38 +17,40 @@ import java.util.Map;
 public class ProductDetailDialog extends JDialog {
 
     private JTabbedPane tabbedPane;
-    private JPanel tabInfo, tabCategory, tabOptionGroup, tabOption;
+    private JPanel tabInfo, tabCategory, tabTopping;
 
     private Color PRIMARY_COLOR = AppColor.PRIMARY;
     private Color TEXT_DARK = AppColor.TEXT_DARK;
     private Color TEXT_MUTED = AppColor.TEXT_MUTED;
 
-    private JTextField txtProductName, txtPrice;
-    private JComboBox<String> cbOption;
+    // [SỬA] Đổi tên biến và thêm 3 loại giá
+    private JTextField txtProductName, txtDineInPrice, txtTakeawayPrice, txtHolidayPrice, txtVat; 
+    private JComboBox<String> cbCategory;
     private JTextArea txtDescription;
     private JLabel lblImagePlaceholder;
     private JRadioButton rbOnSale, rbOutOfStock, rbStopSelling;
-    private JPanel optionsPanel;
-    private Map<Integer, JCheckBox> optionCheckboxMap = new LinkedHashMap<>();
-    private HashMap<String, ArrayList<OptionModel>> currentOptionGroups = new HashMap<>();
+    
+    // Table quản lý Size (Variant)
+    private JTable variantTable;
+    private DefaultTableModel variantModel;
+    private JButton btnAddVariant;
+
+    private JPanel toppingsPanel;
+    private Map<Integer, JCheckBox> toppingCheckboxMap = new LinkedHashMap<>();
 
     private JButton btnSave, btnUpload;
-    private JComboBox<String> cbIngredient;
-    private JTextField txtUnit, txtQuantitative;
     
-    private JTable categoryTable, optionGroupTable, optionTable;
-    private DefaultTableModel categoryModel, optionGroupModel, optionModel;
-    private JLabel lblTotalCost;
+    // Quản lý Danh mục và Topping
+    private JTable categoryTable, toppingTable;
+    private DefaultTableModel categoryModel, toppingModel;
+    private JButton btnAddCategory, btnAddTopping;
     
-    // Đã bỏ các nút Sửa/Xóa ở header, chỉ giữ lại nút Thêm
-    private JButton btnAddCategory;
-    private JButton btnAddOptionGroup;
-    private JButton btnAddOption;
-    
-    // Thêm các biến lưu trữ Listener để truyền từ Controller vào Bảng
     private ProductActionListener categoryTableListener;
-    private ProductActionListener optionGroupTableListener;
-    private ProductActionListener optionTableListener;
+    private ProductActionListener toppingTableListener;
+    private DeleteActionListener variantDeleteListener;
+    
+    private boolean hasEditPermission = true;
+    private boolean hasDeletePermission = true;
 
     public ProductDetailDialog(Frame parent) {
         super(parent, "QUẢN LÝ MÓN VÀ DANH MỤC", true);
@@ -57,7 +58,7 @@ public class ProductDetailDialog extends JDialog {
     }
 
     private void initComponents() {
-        setSize(1050, 750);
+        setSize(1100, 650);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
         getContentPane().setBackground(Color.WHITE);
@@ -77,13 +78,11 @@ public class ProductDetailDialog extends JDialog {
         
         initTabInfo();
         initTabCategory();
-        initTabOptionGroup();
-        initTabOption();
+        initTabTopping(); 
 
         tabbedPane.addTab("Thông tin chung", tabInfo);
         tabbedPane.addTab("Quản lý Loại SP", tabCategory);
-        tabbedPane.addTab("Quản lý Nhóm Tùy Chọn", tabOptionGroup);
-        tabbedPane.addTab("Quản lý Tùy Chọn", tabOption);
+        tabbedPane.addTab("Quản lý Topping", tabTopping);
         
         add(tabbedPane, BorderLayout.CENTER);
 
@@ -106,7 +105,7 @@ public class ProductDetailDialog extends JDialog {
         tabInfo.setBorder(new EmptyBorder(15, 15, 15, 15));
 
         JPanel leftPanel = createSectionPanel("Thông tin cơ bản");
-        leftPanel.setPreferredSize(new Dimension(400, 0));
+        leftPanel.setPreferredSize(new Dimension(450, 0));
         leftPanel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -114,71 +113,116 @@ public class ProductDetailDialog extends JDialog {
         gbc.anchor = GridBagConstraints.WEST;
 
         txtProductName = createStyledTextField("");
-        cbOption = new JComboBox<>();
-        txtPrice = createStyledTextField("");
-        txtDescription = new JTextArea(4, 20);
+        cbCategory = new JComboBox<>();
+        
+        // [SỬA] Khởi tạo 3 ô nhập giá
+        txtDineInPrice = createStyledTextField("0");
+        txtTakeawayPrice = createStyledTextField("0");
+        txtHolidayPrice = createStyledTextField("0");
+        txtVat = createStyledTextField("8"); 
+        
+        txtDescription = new JTextArea(3, 20);
         txtDescription.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220)));
-        txtDescription.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         txtDescription.setLineWrap(true);
         txtDescription.setWrapStyleWord(true);
         
-        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.0;
-        leftPanel.add(new JLabel("Tên món: *"), gbc);
-        gbc.gridx = 1; gbc.gridy = 0; gbc.weightx = 1.0;
-        leftPanel.add(txtProductName, gbc);
+        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.0; leftPanel.add(new JLabel("Tên món: *"), gbc);
+        gbc.gridx = 1; gbc.gridy = 0; gbc.weightx = 1.0; leftPanel.add(txtProductName, gbc);
         
-        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.0;
-        leftPanel.add(new JLabel("Danh mục: *"), gbc);
-        gbc.gridx = 1; gbc.gridy = 1; gbc.weightx = 1.0;
-        leftPanel.add(cbOption, gbc);
+        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.0; leftPanel.add(new JLabel("Danh mục: *"), gbc);
+        gbc.gridx = 1; gbc.gridy = 1; gbc.weightx = 1.0; leftPanel.add(cbCategory, gbc);
         
-        gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0.0;
-        leftPanel.add(new JLabel("Giá bán: *"), gbc);
-        gbc.gridx = 1; gbc.gridy = 2; gbc.weightx = 1.0;
-        leftPanel.add(txtPrice, gbc);
+        // [SỬA] Bố cục lại phần hiển thị Giá
+        JPanel pricePanel1 = new JPanel(new GridLayout(1, 2, 10, 0));
+        pricePanel1.setOpaque(false);
+        pricePanel1.add(createInputWrapper("Giá tại quán:", txtDineInPrice));
+        pricePanel1.add(createInputWrapper("Giá mang về:", txtTakeawayPrice));
+
+        JPanel pricePanel2 = new JPanel(new GridLayout(1, 2, 10, 0));
+        pricePanel2.setOpaque(false);
+        pricePanel2.add(createInputWrapper("Giá ngày lễ:", txtHolidayPrice));
+        pricePanel2.add(createInputWrapper("Thuế VAT (%):", txtVat));
+        
+        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2; leftPanel.add(pricePanel1, gbc);
+        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2; leftPanel.add(pricePanel2, gbc);
         
         JPanel imgPanel = new JPanel(new GridBagLayout());
         imgPanel.setOpaque(false);
         GridBagConstraints imgGbc = new GridBagConstraints();
-        imgGbc.anchor = GridBagConstraints.WEST;
-        imgGbc.insets = new Insets(0, 0, 0, 15);
+        imgGbc.anchor = GridBagConstraints.WEST; imgGbc.insets = new Insets(0, 0, 0, 15);
         
         lblImagePlaceholder = new JLabel("Hình ảnh mẫu", SwingConstants.CENTER);
-        lblImagePlaceholder.setPreferredSize(new Dimension(100, 100));
+        lblImagePlaceholder.setPreferredSize(new Dimension(100, 140));
         lblImagePlaceholder.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220)));
-        
         btnUpload = new JButton("Tải ảnh lên");
-        btnUpload.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnUpload.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
-        imgGbc.gridx = 0; imgGbc.gridy = 0;
-        imgPanel.add(lblImagePlaceholder, imgGbc);
-        imgGbc.gridx = 1; imgGbc.gridy = 0;
-        imgPanel.add(btnUpload, imgGbc);
+        imgGbc.gridx = 0; imgGbc.gridy = 0; imgPanel.add(lblImagePlaceholder, imgGbc);
+        imgGbc.gridx = 1; imgGbc.gridy = 0; imgPanel.add(btnUpload, imgGbc);
         
-        gbc.gridx = 0; gbc.gridy = 3; gbc.weightx = 0.0;
-        leftPanel.add(new JLabel("Hình ảnh:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 3; gbc.weightx = 1.0;
-        leftPanel.add(imgPanel, gbc);
+        gbc.gridwidth = 1;
+        gbc.gridx = 0; gbc.gridy = 4; gbc.weightx = 0.0; leftPanel.add(new JLabel("Hình ảnh:"), gbc);
+        gbc.gridx = 1; gbc.gridy = 4; gbc.weightx = 1.0; leftPanel.add(imgPanel, gbc);
         
-        gbc.gridx = 0; gbc.gridy = 4; gbc.weightx = 0.0; gbc.weighty = 0.0;
-        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.gridx = 0; gbc.gridy = 5; gbc.weightx = 0.0; gbc.anchor = GridBagConstraints.NORTHWEST;
         leftPanel.add(new JLabel("Mô tả:"), gbc);
-        
-        gbc.gridx = 1; gbc.gridy = 4; gbc.weightx = 1.0; gbc.weighty = 1.0; 
-        gbc.fill = GridBagConstraints.BOTH; 
+        gbc.gridx = 1; gbc.gridy = 5; gbc.weightx = 1.0; gbc.fill = GridBagConstraints.BOTH; 
         leftPanel.add(new JScrollPane(txtDescription), gbc);
 
+        // ==== RIGHT PANEL (Biến Thể & Topping) ====
         JPanel rightContainer = new JPanel(new GridBagLayout());
         rightContainer.setOpaque(false);
         GridBagConstraints rightGbc = new GridBagConstraints();
-        rightGbc.fill = GridBagConstraints.BOTH;
-        rightGbc.weightx = 1.0;
-        rightGbc.insets = new Insets(0, 0, 10, 0);
+        rightGbc.fill = GridBagConstraints.BOTH; rightGbc.weightx = 1.0; rightGbc.insets = new Insets(0, 0, 10, 0);
 
-        optionsPanel = createSectionPanel("Tùy chọn & Biến thể");
-        optionsPanel.setLayout(new GridBagLayout());
+        // 1. Quản lý Size (BIEN_THE)
+        JPanel variantPanel = createSectionPanel("Biến thể (Size & 3 Loại Giá)");
+        variantPanel.setLayout(new BorderLayout(0, 5));
         
+        btnAddVariant = new JButton("+ Thêm Size");
+        JPanel varCtrlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        varCtrlPanel.setOpaque(false); varCtrlPanel.add(btnAddVariant);
+        
+        // [SỬA LẠI] Model có 6 cột: ID, Tên Size, Tại quán, Mang về, Ngày lễ, Xóa
+        String[] varCols = {"ID", "Tên Size (M, L...)", "Tại quán", "Mang về", "Ngày lễ", "Xóa"};
+        variantModel = new DefaultTableModel(varCols, 0) { 
+            @Override 
+            public boolean isCellEditable(int r, int c) { 
+                return c == 1 || c == 2 || c == 3 || c == 4 || c == 5; 
+            } 
+        };
+        variantTable = new JTable(variantModel); 
+        variantTable.setRowHeight(30);
+
+        // Ẩn cột ID đi
+        variantTable.removeColumn(variantTable.getColumnModel().getColumn(0));
+        
+        // [SỬA LẠI] Cột Xóa bây giờ là cột thứ 4 trên giao diện (sau khi ẩn ID)
+        TableColumn delCol = variantTable.getColumnModel().getColumn(4);
+        delCol.setCellRenderer(new DeleteActionButtonRenderer(new DeleteActionPanel()));
+        delCol.setCellEditor(new DeleteActionButtonEditor(row -> {
+            if (variantTable.isEditing()) {
+                variantTable.getCellEditor().stopCellEditing();
+            }
+            if (variantDeleteListener != null) {
+                variantDeleteListener.onDelete(row);
+            } else {
+                if (row >= 0 && row < variantModel.getRowCount()) variantModel.removeRow(row);
+            }
+        }, new DeleteActionPanel()));
+        
+        // Thêm dòng mặc định (Truyền đủ 6 giá trị)
+        btnAddVariant.addActionListener(e -> variantModel.addRow(new Object[]{0, "", "0", "0", "0", "Xóa"}));
+        
+        JScrollPane scrollVar = new JScrollPane(variantTable);
+        scrollVar.setPreferredSize(new Dimension(0, 120));
+        variantPanel.add(varCtrlPanel, BorderLayout.NORTH);
+        variantPanel.add(scrollVar, BorderLayout.CENTER);
+
+        // 2. Chọn Topping
+        toppingsPanel = createSectionPanel("Topping khả dụng");
+        toppingsPanel.setLayout(new WrapLayout(FlowLayout.LEFT, 10, 10)); 
+        
+        // 3. Trạng thái
         JPanel statusPanel = createSectionPanel("Trạng thái");
         statusPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 8));
         rbOnSale = new JRadioButton("Đang bán", true);
@@ -188,150 +232,78 @@ public class ProductDetailDialog extends JDialog {
         bg.add(rbOnSale); bg.add(rbOutOfStock); bg.add(rbStopSelling);
         statusPanel.add(rbOnSale); statusPanel.add(rbOutOfStock); statusPanel.add(rbStopSelling);
 
-        rightGbc.gridy = 0; rightGbc.weighty = 1.0; 
-        rightContainer.add(optionsPanel, rightGbc);
-        rightGbc.gridy = 1; rightGbc.weighty = 0.0; 
-        rightGbc.insets = new Insets(0, 0, 0, 0);
-        rightContainer.add(statusPanel, rightGbc);
+        rightGbc.gridy = 0; rightGbc.weighty = 0.4; rightContainer.add(variantPanel, rightGbc);
+        rightGbc.gridy = 1; rightGbc.weighty = 0.5; rightContainer.add(new JScrollPane(toppingsPanel), rightGbc);
+        rightGbc.gridy = 2; rightGbc.weighty = 0.1; rightGbc.insets = new Insets(0, 0, 0, 0); rightContainer.add(statusPanel, rightGbc);
 
         tabInfo.add(leftPanel, BorderLayout.WEST);
         tabInfo.add(rightContainer, BorderLayout.CENTER);
     }
 
-    // =====================================================================
-    // NÂNG CẤP TAB 3: LOẠI SP CÓ NÚT HÀNH ĐỘNG
-    // =====================================================================
     private void initTabCategory() {
         tabCategory = new JPanel(new BorderLayout(15, 15));
-        tabCategory.setBackground(Color.WHITE);
-        tabCategory.setBorder(new EmptyBorder(20, 20, 20, 20));
+        tabCategory.setBackground(Color.WHITE); tabCategory.setBorder(new EmptyBorder(20, 20, 20, 20));
 
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         controlPanel.setOpaque(false);
         btnAddCategory = createModernButton("Thêm Loại SP", PRIMARY_COLOR, Color.WHITE);
         controlPanel.add(btnAddCategory);
 
-        // THÊM CỘT "Hành động"
-        String[] cols = {"Mã Loại", "Tên Loại Sản Phẩm", "Trạng Thái", "Hành động"};
+        String[] cols = {"Mã Loại", "Tên Loại Sản Phẩm", "Trạng Thái", "Thuế Mặc định (%)", "Hành động"};
         categoryModel = new DefaultTableModel(cols, 0) { 
-            @Override public boolean isCellEditable(int r, int c) { return c == 3; } // Chỉ cho click vào cột Hành động
+            @Override public boolean isCellEditable(int r, int c) { return c == 4; } 
         };
         categoryTable = new JTable(categoryModel); 
-        styleTable(categoryTable);
-        categoryTable.setRowHeight(45); // Tăng chiều cao để chứa nút
-        
-        // Căn chỉnh độ rộng
-        categoryTable.getColumnModel().getColumn(0).setPreferredWidth(100);
-        categoryTable.getColumnModel().getColumn(1).setPreferredWidth(400);
-        categoryTable.getColumnModel().getColumn(2).setPreferredWidth(200);
-        categoryTable.getColumnModel().getColumn(3).setPreferredWidth(140);
+        styleTable(categoryTable); categoryTable.setRowHeight(45); 
 
-        // NHÚNG NÚT SỬA/XÓA VÀO BẢNG
-        TableColumn actionCol = categoryTable.getColumnModel().getColumn(3);
+        TableColumn actionCol = categoryTable.getColumnModel().getColumn(4);
         actionCol.setCellRenderer(new ProductActionButtonRenderer(new ProductActionPanel()));
         actionCol.setCellEditor(new ProductActionButtonEditor(new ProductActionListener() {
-            @Override public void onEdit(int row) {
-                if (categoryTableListener != null) categoryTableListener.onEdit(row);
-            }
-            @Override public void onDelete(int row) {
-                if (categoryTableListener != null) categoryTableListener.onDelete(row);
-            }
+            @Override public void onEdit(int row) { if (categoryTableListener != null) categoryTableListener.onEdit(row); }
+            @Override public void onDelete(int row) { if (categoryTableListener != null) categoryTableListener.onDelete(row); }
         }, new ProductActionPanel()));
 
         tabCategory.add(controlPanel, BorderLayout.NORTH);
         tabCategory.add(new JScrollPane(categoryTable), BorderLayout.CENTER);
     }
 
-    // =====================================================================
-    // NÂNG CẤP TAB 4: NHÓM TÙY CHỌN CÓ NÚT HÀNH ĐỘNG
-    // =====================================================================
-    private void initTabOptionGroup() {
-        tabOptionGroup = new JPanel(new BorderLayout(15, 15));
-        tabOptionGroup.setBackground(Color.WHITE);
-        tabOptionGroup.setBorder(new EmptyBorder(20, 20, 20, 20));
+    private void initTabTopping() {
+        tabTopping = new JPanel(new BorderLayout(15, 15));
+        tabTopping.setBackground(Color.WHITE); tabTopping.setBorder(new EmptyBorder(20, 20, 20, 20));
 
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         controlPanel.setOpaque(false);
-        btnAddOptionGroup = createModernButton("Thêm Nhóm", PRIMARY_COLOR, Color.WHITE);
-        controlPanel.add(btnAddOptionGroup);
+        btnAddTopping = createModernButton("Thêm Topping", PRIMARY_COLOR, Color.WHITE);
+        controlPanel.add(btnAddTopping);
 
-        String[] cols = {"Mã Nhóm", "Tên Nhóm Tùy Chọn", "Hành động"};
-        optionGroupModel = new DefaultTableModel(cols, 0) { 
-            @Override public boolean isCellEditable(int r, int c) { return c == 2; } 
+        String[] cols = {"Mã", "Tên Topping", "Giá Bán", "Mã NL Trừ", "Hao hụt", "Thuế GTGT", "Hành động"};
+        toppingModel = new DefaultTableModel(cols, 0) { 
+            @Override public boolean isCellEditable(int r, int c) { return c == 6; } 
         };
-        optionGroupTable = new JTable(optionGroupModel); 
-        styleTable(optionGroupTable);
-        optionGroupTable.setRowHeight(45);
-        
-        optionGroupTable.getColumnModel().getColumn(0).setPreferredWidth(100);
-        optionGroupTable.getColumnModel().getColumn(1).setPreferredWidth(600);
-        optionGroupTable.getColumnModel().getColumn(2).setPreferredWidth(140);
+        toppingTable = new JTable(toppingModel); 
+        styleTable(toppingTable); toppingTable.setRowHeight(45); 
 
-        TableColumn actionCol = optionGroupTable.getColumnModel().getColumn(2);
+        TableColumn actionCol = toppingTable.getColumnModel().getColumn(6);
         actionCol.setCellRenderer(new ProductActionButtonRenderer(new ProductActionPanel()));
         actionCol.setCellEditor(new ProductActionButtonEditor(new ProductActionListener() {
-            @Override public void onEdit(int row) {
-                if (optionGroupTableListener != null) optionGroupTableListener.onEdit(row);
-            }
-            @Override public void onDelete(int row) {
-                if (optionGroupTableListener != null) optionGroupTableListener.onDelete(row);
-            }
+            @Override public void onEdit(int row) { if (toppingTableListener != null) toppingTableListener.onEdit(row); }
+            @Override public void onDelete(int row) { if (toppingTableListener != null) toppingTableListener.onDelete(row); }
         }, new ProductActionPanel()));
 
-        tabOptionGroup.add(controlPanel, BorderLayout.NORTH);
-        tabOptionGroup.add(new JScrollPane(optionGroupTable), BorderLayout.CENTER);
+        tabTopping.add(controlPanel, BorderLayout.NORTH);
+        tabTopping.add(new JScrollPane(toppingTable), BorderLayout.CENTER);
     }
 
-    // =====================================================================
-    // NÂNG CẤP TAB 5: CHI TIẾT TÙY CHỌN CÓ NÚT HÀNH ĐỘNG
-    // =====================================================================
-    private void initTabOption() {
-        tabOption = new JPanel(new BorderLayout(15, 15));
-        tabOption.setBackground(Color.WHITE);
-        tabOption.setBorder(new EmptyBorder(20, 20, 20, 20));
-
-        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        controlPanel.setOpaque(false);
-        btnAddOption = createModernButton("Thêm Tùy Chọn", PRIMARY_COLOR, Color.WHITE);
-        controlPanel.add(btnAddOption);
-
-        String[] cols = {"Mã Tùy Chọn", "Thuộc Nhóm", "Tên Tùy Chọn", "Phụ Thu", "Trạng Thái", "Hành động"};
-        optionModel = new DefaultTableModel(cols, 0) { 
-            @Override public boolean isCellEditable(int r, int c) { return c == 5; } 
-        };
-        optionTable = new JTable(optionModel); 
-        styleTable(optionTable);
-        optionTable.setRowHeight(45);
-        
-        optionTable.getColumnModel().getColumn(0).setPreferredWidth(80);
-        optionTable.getColumnModel().getColumn(1).setPreferredWidth(150);
-        optionTable.getColumnModel().getColumn(2).setPreferredWidth(250);
-        optionTable.getColumnModel().getColumn(3).setPreferredWidth(120);
-        optionTable.getColumnModel().getColumn(4).setPreferredWidth(100);
-        optionTable.getColumnModel().getColumn(5).setPreferredWidth(140);
-
-        TableColumn actionCol = optionTable.getColumnModel().getColumn(5);
-        actionCol.setCellRenderer(new ProductActionButtonRenderer(new ProductActionPanel()));
-        actionCol.setCellEditor(new ProductActionButtonEditor(new ProductActionListener() {
-            @Override public void onEdit(int row) {
-                if (optionTableListener != null) optionTableListener.onEdit(row);
-            }
-            @Override public void onDelete(int row) {
-                if (optionTableListener != null) optionTableListener.onDelete(row);
-            }
-        }, new ProductActionPanel()));
-
-        tabOption.add(controlPanel, BorderLayout.NORTH);
-        tabOption.add(new JScrollPane(optionTable), BorderLayout.CENTER);
-    }
-
-
-    // =====================================================================
-    // HÀM UI HELPER
-    // =====================================================================
     private JPanel createSectionPanel(String title) {
         JPanel p = new JPanel(); p.setBackground(Color.WHITE);
         p.setBorder(new TitledBorder(new LineBorder(new Color(230, 230, 230)), title, TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 14)));
+        return p;
+    }
+    
+    private JPanel createInputWrapper(String label, JComponent comp) {
+        JPanel p = new JPanel(new BorderLayout(0, 5)); p.setOpaque(false);
+        JLabel l = new JLabel(label); l.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        p.add(l, BorderLayout.NORTH); p.add(comp, BorderLayout.CENTER);
         return p;
     }
 
@@ -341,17 +313,12 @@ public class ProductDetailDialog extends JDialog {
         return tf;
     }
 
-    private void addComponent(JPanel p, Component c, int x, int y, GridBagConstraints gbc) {
-        gbc.gridx = x; gbc.gridy = y; p.add(c, gbc);
-    }
-
     private JButton createModernButton(String text, Color bg, Color fg) {
         JButton btn = new JButton(text) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getBackground());
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                g2.setColor(getBackground()); g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
                 g2.dispose(); super.paintComponent(g);
             }
         };
@@ -370,181 +337,163 @@ public class ProductDetailDialog extends JDialog {
         table.setSelectionBackground(new Color(PRIMARY_COLOR.getRed(), PRIMARY_COLOR.getGreen(), PRIMARY_COLOR.getBlue(), 30));
     }
 
-    // =====================================================================
-    // PUBLIC API - LOAD DỮ LIỆU VÀ CẬP NHẬT THÊM NÚT "SỬA / XÓA"
-    // =====================================================================
-
+    // ==== PUBLIC API DÀNH CHO CONTROLLER ====
     public void loadCategoryData(ProductCategoryListModel dataList) {
-        categoryModel.setRowCount(0);
-        cbOption.removeAllItems();
-        
+        categoryModel.setRowCount(0); cbCategory.removeAllItems();
         if (dataList != null && dataList.getProductCategoryList() != null) {
             for (CategoryModel cat : dataList.getProductCategoryList()) {
                 categoryModel.addRow(new Object[]{
-                    cat.getCategoryID(),
-                    cat.getCategoryName(),
-                    cat.getCategoryStatus(),
-                    "Sửa / Xóa" // Cột Hành động
+                    cat.getCategoryID(), cat.getCategoryName(), cat.getCategoryStatus(), cat.getDefaultVat(), "Sửa / Xóa"
                 });
-                cbOption.addItem(cat.getCategoryName());
+                cbCategory.addItem(cat.getCategoryName());
             }
         }
     }
 
-    public void loadOptionGroupData(ArrayList<OptionGroupModel> groupList) {
-        optionGroupModel.setRowCount(0);
-        if (groupList != null) {
-            for (OptionGroupModel group : groupList) {
-                optionGroupModel.addRow(new Object[]{ 
-                    group.getOptionGroupID(),
-                    group.getOptionGroupName(),
-                    "Sửa / Xóa" // Cột Hành động
+    public void loadToppingData(ArrayList<ToppingModel> toppingList) {
+        toppingModel.setRowCount(0);
+        toppingsPanel.removeAll();
+        toppingCheckboxMap.clear();
+
+        if (toppingList != null) {
+            for (ToppingModel top : toppingList) {
+                toppingModel.addRow(new Object[]{ 
+                    top.getToppingID(), top.getToppingName(), top.getPrice(), top.getIngredientID(), top.getLossAmount(), top.getVat(), "Sửa / Xóa" 
                 });
-            }
-        }
-    }
-
-    public void loadOptionData(HashMap<String, ArrayList<OptionModel>> optionsMap) {
-        optionModel.setRowCount(0);
-        if (optionsMap != null) {
-            for (Map.Entry<String, ArrayList<OptionModel>> entry : optionsMap.entrySet()) {
-                String groupName = entry.getKey();
-                for (OptionModel item : entry.getValue()) {
-                    String phuThuFormatted = String.format("%,.0f VNĐ", item.getExtraPrice());
-                    optionModel.addRow(new Object[]{
-                        item.getOptionID(),
-                        groupName,
-                        item.getOptionName(),
-                        phuThuFormatted,
-                        item.getOptionStatus(),
-                        "Sửa / Xóa" // Cột Hành động
-                    });
-                }
-            }
-        }
-        
-        this.currentOptionGroups = optionsMap;
-        optionsPanel.removeAll();
-        optionCheckboxMap.clear();
-
-        if (optionsMap == null) return;
-        GridBagConstraints optGbc = new GridBagConstraints();
-        optGbc.fill = GridBagConstraints.HORIZONTAL;
-        optGbc.insets = new Insets(8, 10, 8, 10);
-        optGbc.anchor = GridBagConstraints.NORTHWEST;
-
-        int row = 0;
-        for (Map.Entry<String, ArrayList<OptionModel>> entry : optionsMap.entrySet()) {
-            
-            optGbc.gridx = 0; optGbc.gridy = row; optGbc.weightx = 0.0;
-            JLabel lblGroup = new JLabel(entry.getKey() + ":");
-            lblGroup.setFont(new Font("Segoe UI", Font.BOLD, 13));
-            optionsPanel.add(lblGroup, optGbc);
-
-            JPanel itemsPanel = new JPanel(new WrapLayout(FlowLayout.LEFT, 10, 5));
-            itemsPanel.setOpaque(false);
-
-            for (OptionModel item : entry.getValue()) {
-                JCheckBox cb = new JCheckBox(item.getLabel());
+                JCheckBox cb = new JCheckBox(top.getLabel());
                 cb.setFont(new Font("Segoe UI", Font.PLAIN, 13)); cb.setOpaque(false);
-                cb.setSelected("Đang sử dụng".equals(item.getOptionStatus())); 
-                optionCheckboxMap.put(item.getOptionID(), cb);
-                itemsPanel.add(cb);
+                toppingCheckboxMap.put(top.getToppingID(), cb);
+                toppingsPanel.add(cb);
             }
-
-            optGbc.gridx = 1; optGbc.weightx = 1.0;
-            optionsPanel.add(itemsPanel, optGbc);
-            row++;
         }
-
-        optGbc.gridx = 0; optGbc.gridy = row; optGbc.gridwidth = 2; optGbc.weighty = 1.0;
-        optionsPanel.add(Box.createVerticalGlue(), optGbc);
-        optionsPanel.revalidate(); optionsPanel.repaint();
+        toppingsPanel.revalidate(); toppingsPanel.repaint();
+    }
+    
+    public void loadVariantData(List<VariantModel> variants) {
+        variantModel.setRowCount(0);
+        if(variants != null) {
+            for(VariantModel v : variants) {
+                // Đổ đủ 6 trường vào model
+                variantModel.addRow(new Object[]{ 
+                    v.getVariantID(), 
+                    v.getSizeName(), 
+                    String.format("%,d", v.getDineInPrice()), 
+                    String.format("%,d", v.getTakeawayPrice()), 
+                    String.format("%,d", v.getHolidayPrice()), 
+                    "Xóa" 
+                });
+            }
+        }
     }
 
-    public HashMap<String, List<String>> getSelectedOptionNamesByGroup() {
-        HashMap<String, List<String>> result = new HashMap<>();
-        if (currentOptionGroups == null || currentOptionGroups.isEmpty()) return result;
-
-        for (Map.Entry<String, ArrayList<OptionModel>> entry : currentOptionGroups.entrySet()) {
-            String groupName = entry.getKey();
-            List<String> selectedNamesInGroup = new ArrayList<>();
-
-            for (OptionModel item : entry.getValue()) {
-                JCheckBox cb = optionCheckboxMap.get(item.getOptionID());
-                if (cb != null && cb.isSelected()) {
-                    selectedNamesInGroup.add(item.getOptionName());
-                }
-            }
-            if (!selectedNamesInGroup.isEmpty()) result.put(groupName, selectedNamesInGroup);
+    public List<Integer> getSelectedToppingIds() {
+        List<Integer> result = new ArrayList<>();
+        for (Map.Entry<Integer, JCheckBox> entry : toppingCheckboxMap.entrySet()) {
+            if (entry.getValue().isSelected()) result.add(entry.getKey());
         }
         return result;
+    }
+    
+    public List<VariantModel> getVariantsFromTable() {
+        List<VariantModel> list = new ArrayList<>();
+        for(int i = 0; i < variantModel.getRowCount(); i++) {
+            
+            // 1. Lấy ID an toàn
+            int id = 0;
+            try {
+                if (variantModel.getValueAt(i, 0) != null) {
+                    id = Integer.parseInt(variantModel.getValueAt(i, 0).toString().trim());
+                }
+            } catch (Exception e) { id = 0; }
+            
+            // 2. Lấy Tên 
+            String name = "";
+            if (variantModel.getValueAt(i, 1) != null) {
+                name = variantModel.getValueAt(i, 1).toString().trim();
+            }
+            
+            // 3. Lấy 3 loại giá
+            long dineInPrice = 0, takeawayPrice = 0, holidayPrice = 0;
+            try { 
+                if (variantModel.getValueAt(i, 2) != null) dineInPrice = Long.parseLong(variantModel.getValueAt(i, 2).toString().trim().replace(",", "")); 
+                if (variantModel.getValueAt(i, 3) != null) takeawayPrice = Long.parseLong(variantModel.getValueAt(i, 3).toString().trim().replace(",", "")); 
+                if (variantModel.getValueAt(i, 4) != null) holidayPrice = Long.parseLong(variantModel.getValueAt(i, 4).toString().trim().replace(",", "")); 
+            } catch(Exception e){}
+            
+            if(!name.isEmpty()) {
+                list.add(new VariantModel(id, 0, name, dineInPrice, takeawayPrice, holidayPrice));
+            }
+        }
+        return list;
     }
 
     public void setImage(ImageIcon icon) {
         if (icon != null) {
-            Image img = icon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
-            lblImagePlaceholder.setIcon(new ImageIcon(img));
-            lblImagePlaceholder.setText("");
+            Image img = icon.getImage().getScaledInstance(100, 140, Image.SCALE_SMOOTH);
+            lblImagePlaceholder.setIcon(new ImageIcon(img)); lblImagePlaceholder.setText("");
         } else {
             lblImagePlaceholder.setIcon(null); lblImagePlaceholder.setText("Hình ảnh mẫu");
         }
     }
+    
+    public void removeVariantRow(int row) {
+        if (row >= 0 && row < variantModel.getRowCount()) {
+            variantModel.removeRow(row);
+        }
+    }
 
-    // =====================================================================
-    // CÁC HÀM GETTERS / LISTENERS
-    // =====================================================================
+    // GETTERS & LISTENERS
     public void addChooseImageListener(ActionListener listener) { btnUpload.addActionListener(listener); }
     public void addSaveListener(ActionListener listener) { btnSave.addActionListener(listener); }
-    
     public void addAddCategoryListener(ActionListener listener) { btnAddCategory.addActionListener(listener); }
-    public void addAddOptionGroupListener(ActionListener listener) { btnAddOptionGroup.addActionListener(listener); }
-    public void addAddOptionListener(ActionListener listener) { btnAddOption.addActionListener(listener); }
+    public void addAddToppingListener(ActionListener listener) { btnAddTopping.addActionListener(listener); }
     
-    // Gắn Listener từ Controller vào các Bảng để bắt sự kiện Sửa/Xóa
     public void setCategoryTableListener(ProductActionListener listener) { this.categoryTableListener = listener; }
-    public void setOptionGroupTableListener(ProductActionListener listener) { this.optionGroupTableListener = listener; }
-    public void setOptionTableListener(ProductActionListener listener) { this.optionTableListener = listener; }
-
+    public void setToppingTableListener(ProductActionListener listener) { this.toppingTableListener = listener; }
+    
     public String getProductName() { return txtProductName.getText().trim(); }
-    public double getPrice() {
-        try { return Double.parseDouble(txtPrice.getText().trim().replace(".", "").replace(",", "")); } 
+    
+    // [SỬA] Đổi getPrice thành 3 hàm Getter cho từng loại giá
+    public long getDineInPrice() {
+        try { return Long.parseLong(txtDineInPrice.getText().trim().replace(".", "").replace(",", "")); } 
         catch (Exception e) { return 0; }
     }
-    public String getCategory() { return (String) cbOption.getSelectedItem(); }
+    public long getTakeawayPrice() {
+        try { return Long.parseLong(txtTakeawayPrice.getText().trim().replace(".", "").replace(",", "")); } 
+        catch (Exception e) { return 0; }
+    }
+    public long getHolidayPrice() {
+        try { return Long.parseLong(txtHolidayPrice.getText().trim().replace(".", "").replace(",", "")); } 
+        catch (Exception e) { return 0; }
+    }
+
+    public double getVat() {
+        try { return Double.parseDouble(txtVat.getText().trim()); } catch (Exception e) { return 8.0; }
+    }
+    public String getCategory() { return (String) cbCategory.getSelectedItem(); }
     public String getStatus() {
         if (rbOnSale.isSelected()) return "Đang bán";
         if (rbOutOfStock.isSelected()) return "Tạm hết";
         return "Ngừng bán";
     }
-    
-    public String getDescription (){
-        return txtDescription.getText().trim();
-    }
+    public String getDescription (){ return txtDescription.getText().trim(); }
 
-    // Lấy ID khi bấm vào dòng của Bảng để Sửa/Xóa
     public int getCategoryIdAt(int row) { return (int) categoryModel.getValueAt(row, 0); }
     public String getCategoryNameAt(int row) { return (String) categoryModel.getValueAt(row, 1); }
+    public int getToppingIdAt(int row) { return (int) toppingModel.getValueAt(row, 0); }
+    public String getToppingNameAt(int row) { return (String) toppingModel.getValueAt(row, 1); }
+    public long getToppingPriceAt(int row) { return (long) toppingModel.getValueAt(row, 2); }
+    public int getToppingIngredientIdAt(int row) { return (int) toppingModel.getValueAt(row, 3); }
+    public double getToppingLossAmountAt(int row) { return (double) toppingModel.getValueAt(row, 4); }
+    public double getToppingVatAt(int row) { return (double) toppingModel.getValueAt(row, 5); }
     
-    public int getOptionGroupIdAt(int row) { return (int) optionGroupModel.getValueAt(row, 0); }
-    public String getOptionGroupNameAt(int row) { return (String) optionGroupModel.getValueAt(row, 1); }
-    
-    public int getOptionIdAt(int row) { return (int) optionModel.getValueAt(row, 0); }
-    public String getOptionNameAt(int row) { return (String) optionModel.getValueAt(row, 2); }
-    
-    public void clearForm() {
-        if(txtProductName == null) return;
-        txtProductName.setText(""); txtPrice.setText(""); txtDescription.setText("");
-        if(cbOption.getItemCount() > 0) cbOption.setSelectedIndex(0); 
-        rbOnSale.setSelected(true);
-        lblImagePlaceholder.setIcon(null); lblImagePlaceholder.setText("Hình ảnh mẫu");
-        for (JCheckBox cb : optionCheckboxMap.values()) cb.setSelected(false);
+    public String getVariantNameAt(int row) {
+        Object val = variantModel.getValueAt(row, 1);
+        return val != null ? val.toString().trim() : "";
     }
     
-    // =====================================================================
-    // CÁC CLASS HỖ TRỢ BÊN TRONG (LAYOUT & NÚT TRÊN JTABLE)
-    // =====================================================================
     class WrapLayout extends FlowLayout {
+        // ... (Giữ nguyên WrapLayout của bạn)
         public WrapLayout(int align, int hgap, int vgap) { super(align, hgap, vgap); }
         @Override public Dimension preferredLayoutSize(Container target) { return layoutSize(target, true); }
         @Override public Dimension minimumLayoutSize(Container target) {
@@ -576,10 +525,7 @@ public class ProductDetailDialog extends JDialog {
         }
     }
 
-    public interface ProductActionListener {
-        void onEdit(int row);
-        void onDelete(int row);
-    }
+    public interface ProductActionListener { void onEdit(int row); void onDelete(int row); }
 
     class ProductActionPanel extends JPanel {
         protected JButton btnEdit = new JButton("Sửa");
@@ -602,8 +548,7 @@ public class ProductDetailDialog extends JDialog {
         protected JPanel panel;
         public ProductActionButtonRenderer(JPanel panel) { this.panel = panel; }
         @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
-            return panel;
+            panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE); return panel;
         }
     }
 
@@ -620,5 +565,76 @@ public class ProductDetailDialog extends JDialog {
             currentRow = row; panel.setBackground(table.getSelectionBackground()); return panel;
         }
         @Override public Object getCellEditorValue() { return ""; }
+    }
+    
+    public interface DeleteActionListener { void onDelete(int row); }
+
+    class DeleteActionPanel extends JPanel {
+        protected JButton btnDelete = new JButton("Thu hồi");
+        public DeleteActionPanel() {
+            setLayout(new FlowLayout(FlowLayout.CENTER, 0, 4)); setOpaque(true);
+            btnDelete.setFont(new Font("Segoe UI", Font.BOLD, 11)); 
+            btnDelete.setForeground(new Color(255, 59, 48));
+            btnDelete.setBackground(Color.WHITE);
+            btnDelete.setBorder(BorderFactory.createLineBorder(new Color(255, 59, 48), 1));
+            btnDelete.setFocusPainted(false); btnDelete.setPreferredSize(new Dimension(50, 20)); 
+            btnDelete.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            add(btnDelete);
+        }
+    }
+
+    class DeleteActionButtonRenderer implements TableCellRenderer {
+        protected DeleteActionPanel panel; 
+        public DeleteActionButtonRenderer(DeleteActionPanel panel) { this.panel = panel; }
+        @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
+            panel.btnDelete.setVisible(hasDeletePermission); return panel;
+        }
+    }
+
+    class DeleteActionButtonEditor extends DefaultCellEditor {
+        protected DeleteActionPanel panel; protected DeleteActionListener listener; protected int currentRow;
+        public DeleteActionButtonEditor(DeleteActionListener listener, DeleteActionPanel panel) {
+            super(new JCheckBox()); this.listener = listener; this.panel = panel;
+            this.panel.btnDelete.addActionListener(e -> { stopCellEditing(); listener.onDelete(currentRow); });
+        }
+        @Override public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            currentRow = row; panel.setBackground(table.getSelectionBackground());
+            panel.btnDelete.setVisible(hasDeletePermission); return panel;
+        }
+        @Override public Object getCellEditorValue() { return ""; }
+    }
+    
+    public void clearForm() {
+        if(txtProductName == null) return;
+        
+        txtProductName.setText(""); 
+        
+        // [SỬA] Xóa trắng 3 ô giá
+        txtDineInPrice.setText("0"); 
+        txtTakeawayPrice.setText("0"); 
+        txtHolidayPrice.setText("0"); 
+        
+        txtVat.setText("8");
+        txtDescription.setText("");
+        
+        if(cbCategory.getItemCount() > 0) cbCategory.setSelectedIndex(0); 
+        rbOnSale.setSelected(true);
+        setImage(null);
+        
+        if (variantModel != null) variantModel.setRowCount(0);
+        if (toppingCheckboxMap != null) {
+            for (JCheckBox cb : toppingCheckboxMap.values()) cb.setSelected(false);
+        }
+    }
+    
+    public void setActionPermissions(boolean canEdit, boolean canDelete) {
+        this.hasEditPermission = canEdit;
+        this.hasDeletePermission = canDelete;
+        this.repaint(); 
+    }
+    
+    public void setVariantDeleteListener(DeleteActionListener listener) {
+        this.variantDeleteListener = listener;
     }
 }

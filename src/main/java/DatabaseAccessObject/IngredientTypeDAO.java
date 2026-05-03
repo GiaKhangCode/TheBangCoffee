@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -36,5 +37,25 @@ public class IngredientTypeDAO {
             e.printStackTrace(); 
         }
         return list;
+    }
+    
+    public boolean insertIngredientType(String typeName) throws SQLException, ClassNotFoundException {
+        String sql = "INSERT INTO LOAI_NGUYEN_LIEU (TenLoaiNguyenLieu) VALUES (?)";
+        try (Connection conn = getMyConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, typeName);
+            int rowAffected = ps.executeUpdate();
+            return rowAffected > 0;
+
+        } catch (SQLException e) {
+            // Bắt lỗi Duplicate nếu tên bị trùng (Do bảng có ràng buộc UNIQUE)
+            if (e.getErrorCode() == 1) { 
+                JOptionPane.showMessageDialog(null, "Tên loại nguyên liệu này đã tồn tại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            } else {
+                e.printStackTrace();
+            }
+            return false;
+        }
     }
 }

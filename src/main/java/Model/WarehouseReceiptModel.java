@@ -7,58 +7,39 @@ package Model;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- *
- * @author Kiet
- */
 public class WarehouseReceiptModel {
     private int receiptID;
     private int accountID;
     private LocalDate importingDate;
     private long total;
-    //private List<WarehouseReceiptDetailModel> danhSach;
-    //private WarehouseReceiptDAO phieuNhapKhoDAO;
     private String userName;
     
-    public WarehouseReceiptModel(int accountID, List<WarehouseReceiptDetailModel> danhSach, LocalDate importingDate, long total){
-        this.importingDate = importingDate;
+    // [MỚI] Thêm Ghi chú
+    private String note;
+    
+    // Constructor cho lúc TẠO PHIẾU
+    public WarehouseReceiptModel(int accountID, LocalDate importingDate, long total, String note){
         this.accountID = accountID;
-        //this.danhSach = danhSach;
+        this.importingDate = importingDate;
         this.total = total;
-        //this.phieuNhapKhoDAO = new WarehouseReceiptDAO();
+        this.note = note;
         this.userName = "";
     }
     
-    public WarehouseReceiptModel(int receiptID, LocalDate importingDate, int accountID, long total, String userName){
+    // Constructor cho lúc LẤY LỊCH SỬ TỪ DB LÊN
+    public WarehouseReceiptModel(int receiptID, LocalDate importingDate, int accountID, long total, String userName, String note){
         this.receiptID = receiptID;
         this.importingDate = importingDate;
         this.accountID = accountID;
         this.total = total;
-        //this.phieuNhapKhoDAO = new WarehouseReceiptDAO();
         this.userName = userName;
-    }
-    
-
-    public int getReceiptID() {
-        return receiptID;
+        this.note = note;
     }
 
-    public int getAccountID() {
-        return accountID;
-    }
-
-    public LocalDate getImportingDate() {
-        return importingDate;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-    
-    
-
-    public long getTotal() {
-        return total;
-    }
+    public int getReceiptID() { return receiptID; }
+    public int getAccountID() { return accountID; }
+    public LocalDate getImportingDate() { return importingDate; }
+    public long getTotal() { return total; }
+    public String getUserName() { return userName; }
+    public String getNote() { return note; }
 }
-    

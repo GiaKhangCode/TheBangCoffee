@@ -5,10 +5,11 @@
 package Service;
 
 import DatabaseAccessObject.RecipeDAO;
+import Model.RecipeModel;
+import java.sql.SQLException;
 import java.util.List;
 
 /**
- *
  * @author FAKK
  */
 public class RecipeService {
@@ -18,12 +19,17 @@ public class RecipeService {
         recipeDAO = new RecipeDAO();
     }
     
-    public List<Model.RecipeModel> getRecipeByProductId(int productId){
-        return recipeDAO.getRecipeByProductId(productId);
+    // [SỬA] Đổi tham số thành VariantID
+    public List<RecipeModel> getRecipeByVariantId(int variantId){
+        return recipeDAO.getRecipeByVariantId(variantId);
     }
     
-    public boolean upsertRecipe(int productId, int ingredientId, String unit, double quantitative) {
-        return recipeDAO.upsertRecipe(productId, ingredientId, unit, quantitative);
+    // [SỬA] Đổi tham số thành VariantID và bỏ tham số unit
+    public boolean upsertRecipe(int variantId, int ingredientId, double quantityRequired) throws SQLException, ClassNotFoundException {
+        return recipeDAO.upsertRecipe(variantId, ingredientId, quantityRequired);
     }
     
+    public boolean deleteRecipe(int variantId, int ingredientId) {
+        return recipeDAO.deleteRecipe(variantId, ingredientId);
+    }
 }

@@ -1,27 +1,29 @@
 package Model;
 
 public class RecipeModel {
+    private int variantID; // [SỬA LỚN] Ánh xạ vào MaBienThe
     private int ingredientID;
     private String ingredientName;
     private String unit;
-    private double quantitative;
-    private double price;
+    private double quantityRequired; // SoLuongCan
 
     public RecipeModel() {
         this.ingredientName = this.unit = "";
+        this.variantID = -1;
         this.ingredientID = -1;
-        this.quantitative = this.price = 0.0;
+        this.quantityRequired = 0.0;
     }
 
-    public RecipeModel(int ingredientID, String ingredientName, String unit, double quantitative, double price) {
+    public RecipeModel(int variantID, int ingredientID, String ingredientName, String unit, double quantityRequired) {
+        this.variantID = variantID;
         this.ingredientID = ingredientID;
         this.ingredientName = ingredientName;
         this.unit = unit;
-        this.quantitative = quantitative;
-        this.price = price;
+        this.quantityRequired = quantityRequired;
     }
 
-    
+    public int getVariantID() { return variantID; }
+    public void setVariantID(int variantID) { this.variantID = variantID; }
 
     public int getIngredientID() { return ingredientID; }
     public void setIngredientID(int ingredientID) { this.ingredientID = ingredientID; }
@@ -32,9 +34,6 @@ public class RecipeModel {
     public String getUnit() { return unit; }
     public void setUnit(String unit) { this.unit = unit; }
 
-    public double getQuantitative() { return quantitative; }
-    public void setQuantitative(double quantitative) { this.quantitative = quantitative; }
-
-    public double getPrice() { return price; }
-    public void setPrice(double price) { this.price = price; }
+    public double getQuantityRequired() { return quantityRequired; }
+    public void setQuantityRequired(double quantityRequired) { this.quantityRequired = quantityRequired; }
 }

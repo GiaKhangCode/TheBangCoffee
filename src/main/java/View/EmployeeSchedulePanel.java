@@ -1,5 +1,6 @@
 package View;
 
+import static Common.ComponentUI.createModernButton;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
@@ -12,19 +13,52 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 public class EmployeeSchedulePanel extends JPanel {
+    private final Color PRIMARY_COLOR = new Color(67, 142, 104); 
+    private final Color LIGHT_PRIMARY_COLOR = new Color(161, 198, 179); 
+    
     private JComboBox<String> cbMonth;
     private JSpinner spYear;
     private JPanel calendarContainer;
+    
+    // --- KHAI BÁO CÁC INTERFACE LẮNG NGHE SỰ KIỆN CHO CONTROLLER ---
+    private AddShiftListener addShiftListener;
+    private FilterChangeListener filterChangeListener;
+    private ShiftActionUpdateListener shiftActionUpdateListener;
+    
+    public interface AddShiftListener {
+        void onAddShift(LocalDate date, String shiftType);
+    }
+   
+    public interface FilterChangeListener {
+        void onFilterChanged(int year, int month);
+    }
+
+    public void setAddShiftListener(AddShiftListener listener) {
+        this.addShiftListener = listener;
+    }
+
+    public void setFilterChangeListener(FilterChangeListener listener) {
+        this.filterChangeListener = listener;
+    }
+    
+    public interface ShiftActionUpdateListener {
+        void onEditShift(int maCa, int currentMaTaiKhoan, LocalDate date, String shiftType);
+        void onDeleteShift(int maCa);
+        void onAddMoreEmployee(LocalDate date, String shiftType); 
+    }
+
+    public void setShiftActionUpdateListener(ShiftActionUpdateListener listener) {
+        this.shiftActionUpdateListener = listener;
+    }
+    // ---------------------------------------------------------------
 
     public EmployeeSchedulePanel() {
         initComponents();
-        updateCalendar();
+        // Không tự động render ở đây nữa, Controller sẽ gọi renderCalendar() khi khởi tạo
     }
 
     private void initComponents() {
@@ -36,10 +70,20 @@ public class EmployeeSchedulePanel extends JPanel {
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setOpaque(false);
 
+        JPanel titleContainer = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        titleContainer.setOpaque(false);
+
         JLabel titleLabel = new JLabel("Lịch Làm Việc Nhân Viên");
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
         titleLabel.setForeground(AppColor.TEXT_DARK);
-        topPanel.add(titleLabel, BorderLayout.WEST);
+        
+        JLabel noteLabel = new JLabel("(Sáng: 08:00 - 12:00 | Chiều: 13:00 - 17:00)");
+        noteLabel.setFont(new Font("SansSerif", Font.ITALIC, 14));
+        noteLabel.setForeground(new Color(150, 150, 150)); 
+
+        titleContainer.add(titleLabel);
+        titleContainer.add(noteLabel);
+        topPanel.add(titleContainer, BorderLayout.WEST);
 
         // Bộ lọc tháng năm
         JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
@@ -55,25 +99,34 @@ public class EmployeeSchedulePanel extends JPanel {
         cbMonth.setSelectedIndex(LocalDate.now().getMonthValue() - 1);
         cbMonth.setFont(new Font("SansSerif", Font.PLAIN, 14));
         cbMonth.setBackground(Color.WHITE);
-        cbMonth.addActionListener(e -> updateCalendar());
+        // Báo cho Controller khi đổi Tháng
+        cbMonth.addActionListener(e -> {
+            if (filterChangeListener != null) {
+                filterChangeListener.onFilterChanged((Integer) spYear.getValue(), cbMonth.getSelectedIndex() + 1);
+            }
+        });
         filterPanel.add(cbMonth);
 
         JLabel lblYear = new JLabel("Năm:");
         lblYear.setFont(new Font("SansSerif", Font.PLAIN, 14));
         filterPanel.add(lblYear);
-
+        
         spYear = new JSpinner(new SpinnerNumberModel(LocalDate.now().getYear(), 2020, 2050, 1));
         spYear.setEditor(new JSpinner.NumberEditor(spYear, "#"));
         spYear.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        // Đặt màu nền cho bộ quay năm
         JSpinner.DefaultEditor spinnerEditor = (JSpinner.DefaultEditor)spYear.getEditor();
         spinnerEditor.getTextField().setBackground(Color.WHITE);
-        spYear.addChangeListener(e -> updateCalendar());
+        // Báo cho Controller khi đổi Năm
+        spYear.addChangeListener(e -> {
+            if (filterChangeListener != null) {
+                filterChangeListener.onFilterChanged((Integer) spYear.getValue(), cbMonth.getSelectedIndex() + 1);
+            }
+        });
         filterPanel.add(spYear);
 
         topPanel.add(filterPanel, BorderLayout.EAST);
         add(topPanel, BorderLayout.NORTH);
-
+        
         // Vùng chứa Lịch
         calendarContainer = new JPanel(new BorderLayout()) {
             @Override
@@ -84,7 +137,6 @@ public class EmployeeSchedulePanel extends JPanel {
                 g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 16, 16);
                 g2.dispose();
             }
-
             @Override
             protected void paintChildren(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -94,7 +146,6 @@ public class EmployeeSchedulePanel extends JPanel {
                 super.paintChildren(g2);
                 g2.dispose();
             }
-
             @Override
             protected void paintBorder(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -108,7 +159,6 @@ public class EmployeeSchedulePanel extends JPanel {
         calendarContainer.setBackground(Color.WHITE);
         calendarContainer.setBorder(new EmptyBorder(1, 1, 1, 1));
 
-        // Tiêu đề các thứ trong tuần
         JPanel dowPanel = new JPanel(new GridLayout(1, 7));
         dowPanel.setBackground(AppColor.PRIMARY);
         String[] dows = {"Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"};
@@ -124,14 +174,8 @@ public class EmployeeSchedulePanel extends JPanel {
         add(calendarContainer, BorderLayout.CENTER);
     }
 
-    private void updateCalendar() {
-        if (cbMonth == null || spYear == null) return;
-        
-        int year = (Integer) spYear.getValue();
-        int month = cbMonth.getSelectedIndex() + 1;
-
-        Map<LocalDate, DaySchedule> data = generateDummyData(year, month);
-
+    // --- HÀM NÀY ĐƯỢC CONTROLLER GỌI ĐỂ VẼ LỊCH VỚI DỮ LIỆU ĐÃ XỬ LÝ ---
+    public void renderCalendar(int year, int month, Map<LocalDate, DaySchedule> data) {
         JPanel gridPanel = new JPanel(new GridLayout(0, 7, 1, 1)) {
             @Override
             public Dimension getPreferredSize() {
@@ -142,28 +186,25 @@ public class EmployeeSchedulePanel extends JPanel {
                 return pref;
             }
         };
-        gridPanel.setBackground(AppColor.LINE_LIGHT); // Tạo viền bằng khoảng cách nền
+        gridPanel.setBackground(AppColor.LINE_LIGHT); 
 
         YearMonth ym = YearMonth.of(year, month);
         int daysInMonth = ym.lengthOfMonth();
         DayOfWeek firstDay = ym.atDay(1).getDayOfWeek();
-        int startOffset = firstDay.getValue() - 1; // Thứ 2 = 0
+        int startOffset = firstDay.getValue() - 1; 
 
-        // Các ô trống của tháng trước
         for (int i = 0; i < startOffset; i++) {
             JPanel empty = new JPanel();
             empty.setBackground(AppColor.BG_LIGHT);
             gridPanel.add(empty);
         }
 
-        // Các ngày trong tháng
         for (int i = 1; i <= daysInMonth; i++) {
             LocalDate date = ym.atDay(i);
             DayCellPanel cell = new DayCellPanel(date, data.get(date));
             gridPanel.add(cell);
         }
 
-        // Các ô trống của tháng sau
         int remaining = (startOffset + daysInMonth) % 7;
         if (remaining > 0) {
             for (int i = remaining; i < 7; i++) {
@@ -189,52 +230,25 @@ public class EmployeeSchedulePanel extends JPanel {
         calendarContainer.repaint();
     }
 
+    
     // -- DATA CLASSES --
     public static class ShiftDetail {
-        String employeeName;
-        double hours;
+        public int maCa;           // Thêm mã ca
+        public int maTaiKhoan;     // Thêm mã tài khoản
+        public String employeeName;
+        public double hours;
 
-        public ShiftDetail(String name, double h) {
+        public ShiftDetail(int maCa, int maTaiKhoan, String name, double h) {
+            this.maCa = maCa;
+            this.maTaiKhoan = maTaiKhoan;
             this.employeeName = name;
             this.hours = h;
         }
     }
 
     public static class DaySchedule {
-        List<ShiftDetail> morningShifts = new ArrayList<>();
-        List<ShiftDetail> afternoonShifts = new ArrayList<>();
-    }
-
-    // TẠO DỮ LIỆU MẪU ĐỂ CHẠY THỬ
-    private Map<LocalDate, DaySchedule> generateDummyData(int year, int month) {
-        Map<LocalDate, DaySchedule> data = new HashMap<>();
-        YearMonth ym = YearMonth.of(year, month);
-        // Sử dụng seed để dữ liệu không bị nhảy lung tung mỗi khi refresh lại tháng
-        Random r = new Random(year * 100 + month); 
-        String[] employees = {"Nguyễn Văn A", "Trần Thị Cẩm", "Lê Phương C", "Phạm Quốc Dũng", "Hoàng Văn Tiến", "Vũ Thị Nhi"};
-
-        for (int i = 1; i <= ym.lengthOfMonth(); i++) {
-            LocalDate date = ym.atDay(i);
-            
-            // Random cho hiển thị khoảng 80% có ca làm việc
-            if (r.nextDouble() > 0.2) { 
-                DaySchedule ds = new DaySchedule();
-                
-                // Ca sáng
-                int numMorning = 1 + r.nextInt(2); // 1-2 NV
-                for (int m = 0; m < numMorning; m++) {
-                    ds.morningShifts.add(new ShiftDetail(employees[r.nextInt(employees.length)], 4.0 + r.nextInt(2)));
-                }
-
-                // Ca chiều
-                int numAfternoon = 1 + r.nextInt(2); // 1-2 NV
-                for (int a = 0; a < numAfternoon; a++) {
-                    ds.afternoonShifts.add(new ShiftDetail(employees[r.nextInt(employees.length)], 4.0 + r.nextInt(2)));
-                }
-                data.put(date, ds);
-            }
-        }
-        return data;
+        public List<ShiftDetail> morningShifts = new ArrayList<>();
+        public List<ShiftDetail> afternoonShifts = new ArrayList<>();
     }
 
     // -- INNER UI CLASSES --
@@ -264,37 +278,50 @@ public class EmployeeSchedulePanel extends JPanel {
             lblDate.setFont(new Font("SansSerif", Font.BOLD, 14));
             
             if (date.equals(LocalDate.now())) {
-                // Highlight hôm nay
                 lblDate.setForeground(Color.WHITE);
-                lblDate.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8)); // padding cho border box
+                lblDate.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8)); 
             } else {
                 lblDate.setForeground(AppColor.TEXT_DARK);
                 lblDate.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8));
             }
-            
             headerPanel.add(lblDate);
             add(headerPanel, BorderLayout.NORTH);
-
-            // Container ca làm việc
+            
+            // Container ca làm việc (GridLayout chia 2 nửa đều nhau)
             JPanel shiftsPanel = new JPanel();
-            shiftsPanel.setLayout(new BoxLayout(shiftsPanel, BoxLayout.Y_AXIS));
+            shiftsPanel.setLayout(new GridLayout(2, 1, 0, 4));
             shiftsPanel.setOpaque(false);
-            shiftsPanel.setBorder(new EmptyBorder(2, 2, 2, 2));
+            shiftsPanel.setBorder(new EmptyBorder(2, 4, 4, 4));
 
-            if (schedule != null) {
-                if (!schedule.morningShifts.isEmpty()) {
-                    // Ca Sáng: nền xanh dương nhẹ
-                    Color bgMorning = new Color(225, 240, 255);
-                    Color fgMorning = new Color(0, 80, 160);
-                    shiftsPanel.add(createShiftPanel("Sáng", schedule.morningShifts, bgMorning, fgMorning, date));
-                    shiftsPanel.add(Box.createRigidArea(new Dimension(0, 3)));
-                }
-                if (!schedule.afternoonShifts.isEmpty()) {
-                    // Ca Chiều: nền cam nhạt
-                    Color bgAfternoon = new Color(255, 245, 225);
-                    Color fgAfternoon = new Color(180, 100, 0);
-                    shiftsPanel.add(createShiftPanel("Chiều", schedule.afternoonShifts, bgAfternoon, fgAfternoon, date));
-                }
+            Color bgMorning = new Color(225, 240, 255);
+            Color fgMorning = new Color(0, 80, 160);
+            Color bgAfternoon = new Color(255, 245, 225);
+            Color fgAfternoon = new Color(180, 100, 0);
+            
+            // --- XỬ LÝ KHUNG CA SÁNG ---
+            if (schedule != null && !schedule.morningShifts.isEmpty()) {
+                shiftsPanel.add(createShiftPanel("Sáng", schedule.morningShifts, bgMorning, fgMorning, date));
+            } else {
+                JButton btnAddMorning = createModernButton("+ Thêm Ca Sáng", bgMorning, fgMorning);
+                btnAddMorning.setFont(new Font("SansSerif", Font.PLAIN, 11));
+                btnAddMorning.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                btnAddMorning.addActionListener(e -> {
+                    if (addShiftListener != null) addShiftListener.onAddShift(date, "Sáng");
+                });
+                shiftsPanel.add(btnAddMorning);
+            }
+            
+            // --- XỬ LÝ KHUNG CA CHIỀU ---
+            if (schedule != null && !schedule.afternoonShifts.isEmpty()) {
+                shiftsPanel.add(createShiftPanel("Chiều", schedule.afternoonShifts, bgAfternoon, fgAfternoon, date));
+            } else {
+                JButton btnAddAfternoon = createModernButton("+ Thêm Ca Chiều", bgAfternoon, fgAfternoon);
+                btnAddAfternoon.setFont(new Font("SansSerif", Font.PLAIN, 11));
+                btnAddAfternoon.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                btnAddAfternoon.addActionListener(e -> {
+                    if (addShiftListener != null) addShiftListener.onAddShift(date, "Chiều");
+                });
+                shiftsPanel.add(btnAddAfternoon);
             }
 
             add(shiftsPanel, BorderLayout.CENTER);
@@ -318,7 +345,7 @@ public class EmployeeSchedulePanel extends JPanel {
 
             StringBuilder names = new StringBuilder("<html><b style='color: rgb(" + fgColor.getRed() + "," + fgColor.getGreen() + "," + fgColor.getBlue() + ")'>" + title + ":</b><br/>");
             for (int i = 0; i < shifts.size(); i++) {
-                names.append("<span style='color: " + toHex(AppColor.TEXT_DARK) + "'>• ").append(shifts.get(i).employeeName).append("</span>");
+                names.append("<span style='color: ").append(toHex(AppColor.TEXT_DARK)).append("'>• ").append(shifts.get(i).employeeName).append("</span>");
                 if (i < shifts.size() - 1) names.append("<br/>");
             }
             names.append("</html>");
@@ -333,7 +360,6 @@ public class EmployeeSchedulePanel extends JPanel {
                 public void mouseClicked(MouseEvent e) {
                     showDetailDialog(title, date, shifts);
                 }
-                
                 @Override
                 public void mouseEntered(MouseEvent e) {
                      p.setBorder(BorderFactory.createCompoundBorder(
@@ -341,7 +367,6 @@ public class EmployeeSchedulePanel extends JPanel {
                          new EmptyBorder(2, 3, 2, 3)
                      ));
                 }
-
                 @Override
                 public void mouseExited(MouseEvent e) {
                      p.setBorder(new EmptyBorder(3, 4, 3, 4));
@@ -351,7 +376,6 @@ public class EmployeeSchedulePanel extends JPanel {
             return p;
         }
 
-        // Helper method cho màu html
         private String toHex(Color c) {
             return String.format("#%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue());
         }
@@ -382,8 +406,9 @@ public class EmployeeSchedulePanel extends JPanel {
             }
 
             JTable table = new JTable(model);
-            table.setRowHeight(35); // Tăng chiều cao để đọc dễ hơn
+            table.setRowHeight(35); 
             table.setFont(new Font("SansSerif", Font.PLAIN, 14));
+            table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); // Chỉ cho chọn 1 dòng
             
             JTableHeader header = table.getTableHeader();
             header.setFont(new Font("SansSerif", Font.BOLD, 14));
@@ -395,51 +420,76 @@ public class EmployeeSchedulePanel extends JPanel {
             scrollSpace.getViewport().setBackground(Color.WHITE);
             dialog.add(scrollSpace, BorderLayout.CENTER);
 
-            JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+           // --- THÊM PHẦN NÚT BẤM DƯỚI CÙNG ---
+            JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
             bottomPanel.setBackground(Color.WHITE);
-            JButton btnClose = new JButton("Đóng") {
-                @Override
-                protected void paintComponent(Graphics g) {
-                    Graphics2D g2 = (Graphics2D) g.create();
-                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    g2.setColor(getBackground());
-                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
-                    g2.dispose();
-                    super.paintComponent(g);
-                }
-            };
-            btnClose.setContentAreaFilled(false);
-            btnClose.setFont(new Font("SansSerif", Font.BOLD, 14));
+
+            JButton btnAddMore = new JButton("+ Thêm NV");
+            btnAddMore.setBackground(new Color(40, 167, 69)); // Xanh lá
+            btnAddMore.setForeground(Color.WHITE);
+            btnAddMore.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+            JButton btnEdit = new JButton("Sửa");
+            btnEdit.setBackground(new Color(255, 193, 7)); // Vàng
+            btnEdit.setForeground(Color.BLACK);
+            btnEdit.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btnEdit.setEnabled(false);
+
+            JButton btnDelete = new JButton("Xóa");
+            btnDelete.setBackground(new Color(220, 53, 69)); // Đỏ
+            btnDelete.setForeground(Color.WHITE);
+            btnDelete.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btnDelete.setEnabled(false);
+
+            JButton btnClose = new JButton("Đóng");
             btnClose.setBackground(AppColor.TEXT_MUTED);
             btnClose.setForeground(Color.WHITE);
-            btnClose.setFocusPainted(false);
-            btnClose.setBorder(new EmptyBorder(8, 20, 8, 20));
             btnClose.setCursor(new Cursor(Cursor.HAND_CURSOR));
             btnClose.addActionListener(e -> dialog.dispose());
+
+            // Mở khóa Sửa/Xóa khi click vào bảng
+            table.getSelectionModel().addListSelectionListener(e -> {
+                boolean hasSelection = table.getSelectedRow() != -1;
+                btnEdit.setEnabled(hasSelection);
+                btnDelete.setEnabled(hasSelection);
+            });
+
+            // Sự kiện Xóa
+            btnDelete.addActionListener(e -> {
+                int row = table.getSelectedRow();
+                if (row >= 0 && shiftActionUpdateListener != null) {
+                    dialog.dispose(); 
+                    shiftActionUpdateListener.onDeleteShift(shifts.get(row).maCa);
+                }
+            });
+
+            // Sự kiện Sửa
+            btnEdit.addActionListener(e -> {
+                int row = table.getSelectedRow();
+                if (row >= 0 && shiftActionUpdateListener != null) {
+                    ShiftDetail sd = shifts.get(row);
+                    dialog.dispose(); 
+                    shiftActionUpdateListener.onEditShift(sd.maCa, sd.maTaiKhoan, date, shiftName);
+                }
+            });
+
+            // Sự kiện Thêm NV mới vào ca này
+            btnAddMore.addActionListener(e -> {
+                dialog.dispose(); 
+                if (shiftActionUpdateListener != null) {
+                    shiftActionUpdateListener.onAddMoreEmployee(date, shiftName);
+                }
+            });
+
+            bottomPanel.add(btnAddMore);
+            bottomPanel.add(btnDelete);
+            bottomPanel.add(btnEdit);
             bottomPanel.add(btnClose);
             
             dialog.add(bottomPanel, BorderLayout.SOUTH);
-
-            dialog.setSize(500, 350);
+            dialog.setSize(550, 400); 
             dialog.setLocationRelativeTo(parent);
             dialog.setVisible(true);
         }
-    }
-
-    // HÀM MAIN ĐỂ CHẠY THỬ ĐỘC LẬP THEO YÊU CẦU
-    public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {}
-
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Giao Diện Quản Lý Nhân Viên - Lịch Làm Việc");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1100, 750);
-            frame.setLocationRelativeTo(null);
-            
-            frame.add(new EmployeeSchedulePanel());
-            frame.setVisible(true);
-        });
     }
 }

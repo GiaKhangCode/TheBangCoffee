@@ -11,7 +11,6 @@ import java.util.List;
 import javax.swing.table.DefaultTableModel;
 
 /**
- *
  * @author Kiet
  */
 public class WarehouseReceiptService {
@@ -27,7 +26,7 @@ public class WarehouseReceiptService {
     
     
     public boolean createReceipt(int accountID, List<WarehouseReceiptDetailModel> listDetails) throws Exception{
-        int rowAffected = warehouseReceiptDAO.insertPhieuNhap(accountID, listDetails);
+        int rowAffected = warehouseReceiptDAO.insertWarehouseReceipt(accountID, listDetails);
         
         if (rowAffected > 0){
             return true;
@@ -39,7 +38,8 @@ public class WarehouseReceiptService {
         long total = 0;
         for (int i = 0; i < model.getRowCount(); i++) {
             try {
-                String strTotal = model.getValueAt(i, 5).toString().trim();
+                // [SỬA] Đổi index từ 5 thành 7 vì cột Thành tiền ở Model Table mới là cột số 7
+                String strTotal = model.getValueAt(i, 7).toString().trim(); 
                 if (strTotal.isEmpty()) 
                     continue;
                 total += Long.parseLong(strTotal);
@@ -57,5 +57,4 @@ public class WarehouseReceiptService {
     public String getDetailReceipt(int receiptID){
         return warehouseReceiptDAO.getReceiptDetail(receiptID);
     }
-  
 }

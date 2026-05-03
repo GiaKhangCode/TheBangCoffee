@@ -21,7 +21,6 @@ public class MainFrame extends JFrame {
 
     private SidebarPanel sidebar;
     private JPanel mainContainer; 
-    private HeaderPanel header;
     private JPanel contentArea;
     private CardLayout cardLayout;
     private StockPanel stockPanel;
@@ -29,7 +28,11 @@ public class MainFrame extends JFrame {
     private Map<String, NavButton> navButtons;
     private NavButton activeButton;
     private RolePanel rolePanel;
-    private EmployeeSchedulePanel staffPanel;
+    private EmployeeSchedulePanel shiftPanel;
+    private PosPanel posPanel; 
+    
+    // [MỚI] Thêm OrderPanel để quản lý hóa đơn
+    private OrderPanel orderPanel; 
     
     public MainFrame() throws SQLException {
         initComponents();
@@ -53,18 +56,18 @@ public class MainFrame extends JFrame {
 
         // 1. Sidebar Panel (Light Minimalist)
         sidebar = new SidebarPanel();
-        int sidebarWidth = (int) (screenWidth * 0.18); // Khoảng 280px
+        int sidebarWidth = (int) (screenWidth * 0.18); 
         sidebar.setPreferredSize(new Dimension(sidebarWidth, screenHeight)); 
         
         // Logo Section
         JLabel logoTitle = new JLabel("The Bang Coffee");
-        int logoFontSize = Math.max(18, (int) (screenWidth * 0.014)); // Khoảng 22px
+        int logoFontSize = Math.max(18, (int) (screenWidth * 0.014)); 
         logoTitle.setFont(new Font("Segoe UI", Font.BOLD, logoFontSize));
         logoTitle.setForeground(AppColor.TEXT_DARK);
         
-        int logoPaddingTop = (int) (screenHeight * 0.046); // Khoảng 40px
-        int logoPaddingLeft = (int) (screenWidth * 0.016); // Khoảng 25px
-        int logoPaddingBottom = (int) (screenHeight * 0.035); // Khoảng 30px
+        int logoPaddingTop = (int) (screenHeight * 0.046); 
+        int logoPaddingLeft = (int) (screenWidth * 0.016); 
+        int logoPaddingBottom = (int) (screenHeight * 0.035); 
         logoTitle.setBorder(new EmptyBorder(logoPaddingTop, logoPaddingLeft, logoPaddingBottom, 0)); 
         logoTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
         
@@ -72,7 +75,8 @@ public class MainFrame extends JFrame {
 
         // Menu Nút điều hướng
         navButtons = new HashMap<>();
-        addMenuButton("Bán hàng", "POS", "Order");
+        addMenuButton("Tạo đơn", "POS", "Order");
+        addMenuButton("Quản lý đơn hàng", "BILL", "OrderList");
         addMenuButton("Menu đồ uống", "MENU", "Menu");
         addMenuButton("Quản lý kho", "STOCK", "Stock");
         addMenuButton("Quản lý nhân viên", "STAFF", "Staff");
@@ -83,53 +87,46 @@ public class MainFrame extends JFrame {
         sidebar.add(Box.createVerticalGlue());
         addMenuButton("Đăng xuất", "EXIT", "Logout");
         
-        int bottomGap = (int) (screenHeight * 0.029); // Khoảng 25px
+        int bottomGap = (int) (screenHeight * 0.029); 
         sidebar.add(Box.createRigidArea(new Dimension(0, bottomGap)));
 
         // 2. Main Container
         mainContainer = new JPanel(new BorderLayout());
         mainContainer.setOpaque(false);
         
-        int mainPaddingTop = (int) (screenHeight * 0.023); // Khoảng 20px
-        int mainPaddingSide = (int) (screenWidth * 0.020); // Khoảng 30px
-        int mainPaddingBottom = (int) (screenHeight * 0.035); // Khoảng 30px
+        int mainPaddingTop = (int) (screenHeight * 0.023); 
+        int mainPaddingSide = (int) (screenWidth * 0.020); 
+        int mainPaddingBottom = (int) (screenHeight * 0.035); 
         mainContainer.setBorder(new EmptyBorder(mainPaddingTop, mainPaddingSide, mainPaddingBottom, mainPaddingSide));
 
-        // Header
-        header = new HeaderPanel("Tổng quan hôm nay");
-        mainContainer.add(header, BorderLayout.NORTH);
 
         // Content Area
         cardLayout = new CardLayout(0, 0);
         contentArea = new JPanel(cardLayout);
         contentArea.setOpaque(false);
 
-        // Thêm các Panel chức năng
+        // Khởi tạo các Panel chức năng
         contentArea.add(new DashboardPanel(), "Stats"); 
-        contentArea.add(new ContentBasePanel("Giao diện Bán hàng", "Thực hiện order và thanh toán."), "Order");
-        contentArea.add(new MenuPanel(), "Menu");
-        //------------------------------------------------------------------------
-        this.stockPanel = new StockPanel(); 
+        
+        this.posPanel = new PosPanel();
+        contentArea.add(this.posPanel, "Order");
+        
+        // [MỚI] Khởi tạo và gắn OrderPanel vào CardLayout
+        this.orderPanel = new OrderPanel();
+        contentArea.add(this.orderPanel, "OrderList");
+        
         this.menuPanel = new MenuPanel();
-        this.rolePanel = new RolePanel();
-        contentArea.add(this.stockPanel, "Stock"); 
         contentArea.add(this.menuPanel, "Menu"); 
-//        try {
-//            DatabaseAccessObject.NguyenLieuDAO dao = new DatabaseAccessObject.NguyenLieuDAO();
-//            java.util.List<Model.NguyenLieu> data = dao.getNguyenLieu();
-//            this.stockPanel.displayData(data);
-//        } catch (Exception e) {
-//            System.out.println("Loi: " + e.getMessage());
-//        }
         
-//        DatabaseAccessObject.PhieuNhapKhoDAO phieuDao = new DatabaseAccessObject.PhieuNhapKhoDAO();
-//            java.util.List<Model.PhieuNhapKho> lsPhieu = phieuDao.getPhieuNhapKho();
-//            this.stockPanel.displayPhieuNhapKhoData(lsPhieu);
+        this.stockPanel = new StockPanel(); 
+        contentArea.add(this.stockPanel, "Stock"); 
         
-        //------------------------------------------------------------------------
-        this.staffPanel = new EmployeeSchedulePanel();
-        contentArea.add(this.staffPanel, "Staff");
-        contentArea.add(this.rolePanel, "Role"); // Giao diện Phân quyền
+        this.rolePanel = new RolePanel();
+        contentArea.add(this.rolePanel, "Role"); 
+        
+        this.shiftPanel = new EmployeeSchedulePanel();
+        contentArea.add(this.shiftPanel, "Staff");
+        
         contentArea.add(new ContentBasePanel("Cài đặt Hệ thống", "Tùy chỉnh các tham số vận hành."), "Settings");
 
         mainContainer.add(contentArea, BorderLayout.CENTER);
@@ -148,7 +145,7 @@ public class MainFrame extends JFrame {
         navButtons.put(cardName, btn);
         sidebar.add(btn);
         
-        int gapSmall = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.006); // Khoảng 5px
+        int gapSmall = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.006); 
         sidebar.add(Box.createRigidArea(new Dimension(0, gapSmall)));
         
         if (!cardName.equals("Logout")) {
@@ -177,32 +174,17 @@ public class MainFrame extends JFrame {
         activeButton = navButtons.get(cardName);
         if (activeButton != null) {
             activeButton.setActive(true);
-            String title = activeButton.getText();
-            if (cardName.equals("Stats")) title = "Tổng quan hôm nay";
-            header.setTitle(title);
             cardLayout.show(contentArea, cardName);
         }
     }
 
-    /**
-     * Đăng ký lắng nghe sự kiện Đăng xuất.
-     * (Chỉ duy nhất một phương thức này để tránh lỗi Duplicate)
-     */
     public void addLogoutListener(ActionListener listener) {
         if (navButtons != null && navButtons.containsKey("Logout")) {
             navButtons.get("Logout").addActionListener(listener);
         }
     }
 
-    public static void main(String[] args) {
-//        try {
-//            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-//        } catch (Exception ignored) {}
-//
-//        SwingUtilities.invokeLater(() -> {
-//            new MainFrame().setVisible(true);
-//        });
-    }
+    public static void main(String[] args) {}
     
     public StockPanel getStockPanel(){
         return stockPanel;
@@ -211,12 +193,22 @@ public class MainFrame extends JFrame {
     public MenuPanel getMenuPanel(){
         return menuPanel;
     }
+    
     public RolePanel getRolePanel(){
         return rolePanel;
     }
     
-    public EmployeeSchedulePanel getStaffPanel(){
-        return staffPanel;
+    public PosPanel getPosPanel(){
+        return posPanel;
+    }
+    
+    public EmployeeSchedulePanel getShiftPanel(){
+        return shiftPanel;
+    }
+    
+    // [MỚI] Getter để Controller có thể truy cập OrderPanel
+    public OrderPanel getOrderPanel() {
+        return orderPanel;
     }
     
     public void setRoleMenuVisible(boolean isVisible) {
@@ -224,7 +216,6 @@ public class MainFrame extends JFrame {
             NavButton roleBtn = navButtons.get("Role");
             roleBtn.setVisible(isVisible);
             
-            // Ép sidebar vẽ lại để cập nhật các khoảng trống nếu nút bị ẩn
             sidebar.revalidate();
             sidebar.repaint();
         }

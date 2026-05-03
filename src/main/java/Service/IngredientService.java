@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Service;
 
 import DatabaseAccessObject.IngredientDAO;
@@ -11,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
  * @author Kiet
  */
 public class IngredientService {
@@ -25,9 +20,9 @@ public class IngredientService {
             return ingredientDAO.getIngredient();
     }
     
-    // Thêm hàm này vào class IngredientService
-    public boolean updateIngredient(int maNL, String tenMoi, String dvtMoi, int tonKhoMoi, int nguongMoi, int maTaiKhoan, String lyDo) {
-        return ingredientDAO.updateIngredientWithLog(maNL, tenMoi, dvtMoi, tonKhoMoi, nguongMoi, maTaiKhoan, lyDo);
+    // [SỬA] Thêm tham số nhaCungCapMoi và thueMoi để khớp với DB mới
+    public boolean updateIngredient(int maNL, String tenMoi, String dvtMoi, int tonKhoMoi, int nguongMoi, String nhaCungCapMoi, double thueMoi, int maTaiKhoan, String lyDo) {
+        return ingredientDAO.updateIngredientWithLog(maNL, tenMoi, dvtMoi, tonKhoMoi, nguongMoi, nhaCungCapMoi, thueMoi, maTaiKhoan, lyDo);
     }
     
     public boolean deleteIngredient(int maNL, int currentUserID, String lyDo) {
@@ -41,10 +36,16 @@ public class IngredientService {
     public ArrayList<String> getIngredientNames(){
         return ingredientDAO.getIngredientNames();
     }
+    
     public int getIngredientIdByName (String name){
         return ingredientDAO.getIngredientIdByName(name);
     }
+    
+    public String getUnitByName(String ingredientName) {
+        return ingredientDAO.getUnitByName(ingredientName);
+    }
+    
+    public double getAveragePrice(int ingredientId) {
+        return ingredientDAO.getAveragePrice(ingredientId);
+    }
 }
-
-
-

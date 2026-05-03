@@ -1,5 +1,6 @@
 package View;
 
+import Common.AutoCompleteComboBox;
 import Common.ComponentUI;
 import Model.AccountModel;
 import Model.FunctionModel;
@@ -12,7 +13,9 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.util.Vector;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays; // Bổ sung thư viện này
 import java.util.List;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -34,25 +37,26 @@ public class RolePanel extends JPanel {
     private JButton btnAddScope;
     private JButton btnAssignRole;
     
-    private JComboBox<String> cbRoleGroup;
-    private JComboBox<String> cbRole;
-    private JComboBox<String> cbFunctions = new JComboBox<>();
+    // --- ĐỔI TOÀN BỘ SANG AUTOCOMPLETE COMBOBOX ---
+    private AutoCompleteComboBox cbRoleGroup;
+    private AutoCompleteComboBox cbRole;
+    private AutoCompleteComboBox cbFunctions = new AutoCompleteComboBox();
     
     private DefaultTableModel assignedRolesTableModel;
     private JTable assignedRolesTable;
     private JLabel lblAssignedRolesTitle;
     
     // --- THÊM CÁC BIẾN NÀY CHO TAB 3 ---
-    private JComboBox<String> cbAccount;
-    private JComboBox<String> cbAccountRoleGroup;
+    private AutoCompleteComboBox cbAccount;
+    private AutoCompleteComboBox cbAccountRoleGroup;
     private JButton btnAssignRoleGroupToAccount;
     
     private DefaultTableModel assignedAccountRolesTableModel;
     private JTable assignedAccountRolesTable;
     private JLabel lblAssignedAccountRolesTitle;
     
-    private JComboBox<String> cbAccountTab4;
-    private JComboBox<String> cbRoleTab4;
+    private AutoCompleteComboBox cbAccountTab4;
+    private AutoCompleteComboBox cbRoleTab4;
     private JButton btnAssignScopeToAccount;
     
     private DefaultTableModel assignedAccountScopesTableModel;
@@ -86,7 +90,6 @@ public class RolePanel extends JPanel {
     private int btnWidth = (int) (screenW * 0.104); // 160
     private int btnHeight = cbHeight;
 
-
     // Hàm này để Controller gọi và truyền quyền vào
     public void setActionPermissions(boolean canEdit, boolean canDelete) {
         this.hasEditPermission = canEdit;
@@ -117,6 +120,7 @@ public class RolePanel extends JPanel {
         tabbedPane.addTab("Cấu hình tài Khoản - phạm vi quyền riêng", createAccountScopeTab());
         tabbedPane.addTab("Quản lý nhóm quyền", createRoleGroupManagerTab());
         add(tabbedPane, BorderLayout.CENTER);
+        
     }
 
     // ==========================================================
@@ -174,10 +178,9 @@ public class RolePanel extends JPanel {
         columnModel.getColumn(5).setPreferredWidth(70); // Xóa
         columnModel.getColumn(6).setPreferredWidth(80); // Xuất file
         
-        // Cột 7: Cột Hành động chứa nút bấm (Bạn đã set trước đó là 140, ta gán lại cho đồng bộ)
+        // Cột 7: Cột Hành động chứa nút bấm
         columnModel.getColumn(7).setPreferredWidth(140);
         
-        // --- SỬA LẠI ĐOẠN CODE GẮN SỰ KIỆN CHO CỘT HÀNH ĐỘNG ---
         table.setRowHeight((int)(screenH * 0.052)); 
 
         // TÌM TỰ ĐỘNG CỘT "Hành động" DỰA VÀO TÊN TIÊU ĐỀ
@@ -229,29 +232,24 @@ public class RolePanel extends JPanel {
     }
 
     // ==========================================================
-    // TAB 2: GÁN PHẠM VI QUYỀN -> NHÓM QUYỀN (ĐÃ TỐI ƯU BỐ CỤC)
+    // TAB 2: GÁN PHẠM VI QUYỀN -> NHÓM QUYỀN
     // ==========================================================
     private JPanel createRoleAssignmentTab() {
-        // Giảm padding tổng thể của panel
         JPanel panel = new JPanel(new BorderLayout(0, 15));
         panel.setBackground(Color.WHITE);
         panel.setBorder(new EmptyBorder(20, 40, 20, 40)); 
 
-        // 1. TIÊU ĐỀ
         JLabel lblTitle = new JLabel("Thiết Lập Và Gán Phạm Vi Quyền Cho Nhóm");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, titleFont));
         lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
         lblTitle.setForeground(PRIMARY_COLOR);
         panel.add(lblTitle, BorderLayout.NORTH);
 
-        // 2. KHU VỰC TRUNG TÂM (CHỨA FORM TRÊN VÀ BẢNG DƯỚI)
         JPanel wrapper = new JPanel(new BorderLayout(0, 15)); 
         wrapper.setOpaque(false);
         
-        // --- 2.1 BẢNG ĐIỀU KHIỂN (FORM) ĐƯỢC THU GỌN ---
         JPanel topControlsPanel = new JPanel(new GridBagLayout());
         topControlsPanel.setOpaque(false);
-        // Thêm một khung viền nhẹ để phân tách khu vực form và bảng
         topControlsPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.LIGHT_GRAY), 
                 "Bảng điều khiển", 
@@ -260,29 +258,29 @@ public class RolePanel extends JPanel {
                 TEXT_DARK));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 15, 10, 15); // Ép khoảng cách giữa các hàng/cột nhỏ lại
+        gbc.insets = new Insets(10, 15, 10, 15); 
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
 
-        // Dòng 1: Chọn Nhóm Quyền + Nút Thêm Mới
         JLabel lblRoleGroup = new JLabel("Chọn Nhóm Quyền:");
         lblRoleGroup.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
-        this.cbRoleGroup = new JComboBox<>();
+        // --- KHỞI TẠO RỖNG ---
+        this.cbRoleGroup = new AutoCompleteComboBox();
         cbRoleGroup.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
-        cbRoleGroup.setPreferredSize(new Dimension(cbWidth, cbHeight)); // Giảm chiều cao xuống 35
+        cbRoleGroup.setPreferredSize(new Dimension(cbWidth, cbHeight)); 
 
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0; topControlsPanel.add(lblRoleGroup, gbc);
         gbc.gridx = 1; gbc.gridy = 0; gbc.weightx = 0.8; topControlsPanel.add(cbRoleGroup, gbc);
-        // Thay nút bấm bằng một khoảng trống để giao diện đồng bộ với các Tab khác
         gbc.gridx = 2; gbc.gridy = 0; gbc.weightx = 0; topControlsPanel.add(Box.createRigidArea(new Dimension(btnWidth, btnHeight)), gbc);
-        // Dòng 2: Gán Phạm Vi Quyền + Nút Gán
+        
         JLabel lblScope = new JLabel("Gán Phạm Vi Quyền:");
         lblScope.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
-        this.cbRole = new JComboBox<>();
+        // --- KHỞI TẠO RỖNG ---
+        this.cbRole = new AutoCompleteComboBox();
         cbRole.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
-        cbRole.setPreferredSize(new Dimension(cbWidth, cbHeight)); // Giảm chiều cao xuống 35
+        cbRole.setPreferredSize(new Dimension(cbWidth, cbHeight)); 
 
         this.btnAssignRole = ComponentUI.createModernButton("Gán Quyền", PRIMARY_COLOR, Color.WHITE);
         this.btnAssignRole.setPreferredSize(new Dimension(btnWidth, btnHeight));
@@ -291,14 +289,12 @@ public class RolePanel extends JPanel {
         gbc.gridx = 1; gbc.gridy = 1; topControlsPanel.add(cbRole, gbc);
         gbc.gridx = 2; gbc.gridy = 1; topControlsPanel.add(this.btnAssignRole, gbc);
 
-        // Gom Form vào giữa theo chiều ngang
         JPanel formWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
         formWrapper.setOpaque(false);
         formWrapper.add(topControlsPanel);
         
-        wrapper.add(formWrapper, BorderLayout.NORTH); // Form đặt sát lên trên
+        wrapper.add(formWrapper, BorderLayout.NORTH); 
 
-        // --- 2.2 KHU VỰC BẢNG (CHIẾM TOÀN BỘ KHÔNG GIAN BÊN DƯỚI) ---
         JPanel tablePanel = new JPanel(new BorderLayout(0, 10));
         tablePanel.setOpaque(false);
 
@@ -315,7 +311,7 @@ public class RolePanel extends JPanel {
         
         this.assignedRolesTable.getColumnModel().getColumn(0).setPreferredWidth(50);
         this.assignedRolesTable.getColumnModel().getColumn(1).setPreferredWidth(600);
-        this.assignedRolesTable.setRowHeight((int)(screenH * 0.040)); // Thu nhỏ chiều cao từng dòng để hiển thị được nhiều hơn
+        this.assignedRolesTable.setRowHeight((int)(screenH * 0.040)); 
 
         this.assignedRolesTable.getColumnModel().getColumn(0).setPreferredWidth(50);
         this.assignedRolesTable.getColumnModel().getColumn(1).setPreferredWidth(450);
@@ -330,7 +326,7 @@ public class RolePanel extends JPanel {
         tablePanel.add(this.lblAssignedRolesTitle, BorderLayout.NORTH);
         tablePanel.add(new JScrollPane(this.assignedRolesTable), BorderLayout.CENTER);
 
-        wrapper.add(tablePanel, BorderLayout.CENTER); // Bảng tự động giãn chiếm hết chỗ còn lại
+        wrapper.add(tablePanel, BorderLayout.CENTER); 
         
         panel.add(wrapper, BorderLayout.CENTER);
 
@@ -338,25 +334,22 @@ public class RolePanel extends JPanel {
     }
     
     // ==========================================================
-    // TAB 3: TÀI KHOẢN -> NHÓM QUYỀN (ĐÃ TỐI ƯU BỐ CỤC NHƯ TAB 2)
+    // TAB 3: TÀI KHOẢN -> NHÓM QUYỀN 
     // ==========================================================
     private JPanel createAccountRoleTab() {
         JPanel panel = new JPanel(new BorderLayout(0, 15));
         panel.setBackground(Color.WHITE);
         panel.setBorder(new EmptyBorder(20, 40, 20, 40)); 
 
-        // 1. TIÊU ĐỀ
         JLabel lblTitle = new JLabel("Thiết Lập Nhóm Quyền Cho Tài Khoản");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, titleFont));
         lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
         lblTitle.setForeground(PRIMARY_COLOR);
         panel.add(lblTitle, BorderLayout.NORTH);
 
-        // 2. KHU VỰC TRUNG TÂM (CHỨA FORM TRÊN VÀ BẢNG DƯỚI)
         JPanel wrapper = new JPanel(new BorderLayout(0, 15)); 
         wrapper.setOpaque(false);
         
-        // --- 2.1 BẢNG ĐIỀU KHIỂN (FORM) ---
         JPanel topControlsPanel = new JPanel(new GridBagLayout());
         topControlsPanel.setOpaque(false);
         topControlsPanel.setBorder(BorderFactory.createTitledBorder(
@@ -371,32 +364,31 @@ public class RolePanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
 
-        // Dòng 1: Chọn Tài Khoản (Không có nút "Thêm mới" vì tài khoản lấy từ module Nhân sự/User)
         JLabel lblAcc = new JLabel("Chọn Tài Khoản:");
         lblAcc.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
-        this.cbAccount = new JComboBox<>(new String[]{
+        // --- KHỞI TẠO VỚI DỮ LIỆU MOCK ---
+        this.cbAccount = new AutoCompleteComboBox(Arrays.asList(
             "1 - Lê Quốc Kiệt", 
             "2 - Bành Xuân Phúc", 
             "3 - Lâm Nguyên Phát"
-        });
+        ));
         cbAccount.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
         cbAccount.setPreferredSize(new Dimension(cbWidth, cbHeight)); 
 
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0; topControlsPanel.add(lblAcc, gbc);
         gbc.gridx = 1; gbc.gridy = 0; gbc.weightx = 0.8; topControlsPanel.add(cbAccount, gbc);
-        // Cột 3 để trống cho cân đối với dòng dưới
         gbc.gridx = 2; gbc.gridy = 0; gbc.weightx = 0; topControlsPanel.add(Box.createRigidArea(new Dimension(btnWidth, btnHeight)), gbc); 
 
-        // Dòng 2: Chọn Nhóm Quyền Cần Gán + Nút Gán
         JLabel lblRole = new JLabel("Gán Nhóm Quyền:");
         lblRole.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
-        this.cbAccountRoleGroup = new JComboBox<>(new String[]{
+        // --- KHỞI TẠO VỚI DỮ LIỆU MOCK ---
+        this.cbAccountRoleGroup = new AutoCompleteComboBox(Arrays.asList(
             "1 - Quản lý", 
             "2 - Nhân viên Bán hàng", 
             "3 - Quản lý kho"
-        });
+        ));
         cbAccountRoleGroup.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
         cbAccountRoleGroup.setPreferredSize(new Dimension(cbWidth, cbHeight)); 
 
@@ -407,14 +399,12 @@ public class RolePanel extends JPanel {
         gbc.gridx = 1; gbc.gridy = 1; topControlsPanel.add(cbAccountRoleGroup, gbc);
         gbc.gridx = 2; gbc.gridy = 1; topControlsPanel.add(this.btnAssignRoleGroupToAccount, gbc);
 
-        // Gom Form vào giữa
         JPanel formWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
         formWrapper.setOpaque(false);
         formWrapper.add(topControlsPanel);
         
         wrapper.add(formWrapper, BorderLayout.NORTH); 
 
-        // --- 2.2 KHU VỰC BẢNG HIỂN THỊ VAI TRÒ HIỆN TẠI CỦA TÀI KHOẢN ---
         JPanel tablePanel = new JPanel(new BorderLayout(0, 10));
         tablePanel.setOpaque(false);
 
@@ -450,38 +440,37 @@ public class RolePanel extends JPanel {
         
         panel.add(wrapper, BorderLayout.CENTER);
 
-        // Xử lý sự kiện tạm thời để test UI (Khi đổi tài khoản sẽ đổi title)
         cbAccount.addActionListener(e -> {
             if (cbAccount.getSelectedItem() != null) {
-                String accName = cbAccount.getSelectedItem().toString().split(" - ")[1];
-                lblAssignedAccountRolesTitle.setText("Nhóm quyền hiện tại của tài khoản: " + accName);
+                String selected = cbAccount.getSelectedItem().toString();
+                if(selected.contains(" - ")) {
+                    String accName = selected.split(" - ")[1];
+                    lblAssignedAccountRolesTitle.setText("Nhóm quyền hiện tại của tài khoản: " + accName);
+                }
             }
         });
-        cbAccount.setSelectedIndex(0); // Trigger chạy lần đầu
+        cbAccount.setSelectedIndex(0);
 
         return panel;
     }
 
     // ==========================================================
-    // TAB 4: TÀI KHOẢN -> PHẠM VI QUYỀN (Quyền riêng đặc biệt)
+    // TAB 4: TÀI KHOẢN -> PHẠM VI QUYỀN 
     // ==========================================================
     private JPanel createAccountScopeTab() {
         JPanel panel = new JPanel(new BorderLayout(0, 15));
         panel.setBackground(Color.WHITE);
         panel.setBorder(new EmptyBorder(20, 40, 20, 40)); 
 
-        // 1. TIÊU ĐỀ
         JLabel lblTitle = new JLabel("Cấp Thêm Phạm Vi Quyền Riêng Cho Tài Khoản");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, titleFont));
         lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
         lblTitle.setForeground(PRIMARY_COLOR);
         panel.add(lblTitle, BorderLayout.NORTH);
 
-        // 2. KHU VỰC TRUNG TÂM (CHỨA FORM TRÊN VÀ BẢNG DƯỚI)
         JPanel wrapper = new JPanel(new BorderLayout(0, 15)); 
         wrapper.setOpaque(false);
         
-        // --- 2.1 BẢNG ĐIỀU KHIỂN (FORM) ---
         JPanel topControlsPanel = new JPanel(new GridBagLayout());
         topControlsPanel.setOpaque(false);
         topControlsPanel.setBorder(BorderFactory.createTitledBorder(
@@ -496,11 +485,11 @@ public class RolePanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
 
-        // Dòng 1: Chọn Tài Khoản
         JLabel lblAcc = new JLabel("Chọn Tài Khoản:");
         lblAcc.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
-        this.cbAccountTab4 = new JComboBox<>();
+        // --- KHỞI TẠO RỖNG ---
+        this.cbAccountTab4 = new AutoCompleteComboBox();
         cbAccountTab4.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
         cbAccountTab4.setPreferredSize(new Dimension(cbWidth, cbHeight)); 
 
@@ -508,11 +497,11 @@ public class RolePanel extends JPanel {
         gbc.gridx = 1; gbc.gridy = 0; gbc.weightx = 0.8; topControlsPanel.add(cbAccountTab4, gbc);
         gbc.gridx = 2; gbc.gridy = 0; gbc.weightx = 0; topControlsPanel.add(Box.createRigidArea(new Dimension(btnWidth, btnHeight)), gbc); 
 
-        // Dòng 2: Chọn Phạm Vi Quyền (Role)
         JLabel lblScope = new JLabel("Cấp Quyền Riêng:");
         lblScope.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
-        this.cbRoleTab4 = new JComboBox<>();
+        // --- KHỞI TẠO RỖNG ---
+        this.cbRoleTab4 = new AutoCompleteComboBox();
         cbRoleTab4.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
         cbRoleTab4.setPreferredSize(new Dimension(cbWidth, cbHeight)); 
 
@@ -523,14 +512,12 @@ public class RolePanel extends JPanel {
         gbc.gridx = 1; gbc.gridy = 1; topControlsPanel.add(cbRoleTab4, gbc);
         gbc.gridx = 2; gbc.gridy = 1; topControlsPanel.add(this.btnAssignScopeToAccount, gbc);
 
-        // Gom Form vào giữa
         JPanel formWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
         formWrapper.setOpaque(false);
         formWrapper.add(topControlsPanel);
         
         wrapper.add(formWrapper, BorderLayout.NORTH); 
 
-        // --- 2.2 KHU VỰC BẢNG HIỂN THỊ QUYỀN RIÊNG CỦA TÀI KHOẢN ---
         JPanel tablePanel = new JPanel(new BorderLayout(0, 10));
         tablePanel.setOpaque(false);
 
@@ -570,7 +557,6 @@ public class RolePanel extends JPanel {
         wrapper.add(tablePanel, BorderLayout.CENTER); 
         panel.add(wrapper, BorderLayout.CENTER);
 
-        // Xử lý sự kiện tạm thời để test UI (Đổi title khi đổi account)
         cbAccountTab4.addActionListener(e -> {
             Object selected = cbAccountTab4.getSelectedItem();
             if (selected != null && selected.toString().contains(" - ")) {
@@ -583,7 +569,7 @@ public class RolePanel extends JPanel {
     }
     
     // ==========================================================
-    // TAB 5: QUẢN LÝ NHÓM QUYỀN (THÊM / SỬA / XÓA)
+    // TAB 5: QUẢN LÝ NHÓM QUYỀN
     // ==========================================================
     private JPanel createRoleGroupManagerTab() {
         JPanel panel = new JPanel(new BorderLayout(15, 15));
@@ -597,12 +583,11 @@ public class RolePanel extends JPanel {
         lblTarget.setFont(new Font("Segoe UI", Font.BOLD, labelFont));
         lblTarget.setForeground(PRIMARY_COLOR);
 
-        // Bảng chỉ có Tên nhóm và Hành động
         String[] columns = {"STT", "Tên nhóm quyền", "Hành động"};
         this.roleGroupTableModel = new DefaultTableModel(null, columns) {
             @Override
             public boolean isCellEditable(int r, int c) {
-                return c == 2; // Chỉ cho phép click cột Hành động
+                return c == 2; 
             }
         };
 
@@ -674,7 +659,7 @@ public class RolePanel extends JPanel {
     }
     
     public void loadRolesToTab1Table(List<RoleModel> roles) {
-        tableModel.setRowCount(0); // Xóa dữ liệu cũ trên bảng
+        tableModel.setRowCount(0); 
         if (roles != null) {
             for (RoleModel role : roles) { 
                 boolean add = role.getAdd() > 0 ? true : false;
@@ -687,53 +672,48 @@ public class RolePanel extends JPanel {
         }
     }
     
-    // Hàm này giúp Controller đẩy dữ liệu Nhóm Quyền vào ComboBox
+    // --- ĐÃ NÂNG CẤP DÙNG LIST + SETDATA() ---
     public void loadRoleGroupsToTab2ComboBox(List<RoleGroupModel> roleGroups) {
-        cbRoleGroup.removeAllItems(); // Xóa sạch dữ liệu cũ
-        
+        List<String> itemsToLoad = new ArrayList<>();
         if (roleGroups != null) {
             for (RoleGroupModel group : roleGroups) {
-                String displayItem = group.getRoleGroupId() + " - " + group.getRoleGroupName();
-                cbRoleGroup.addItem(displayItem);
+                itemsToLoad.add(group.getRoleGroupId() + " - " + group.getRoleGroupName());
             }
         }
+        cbRoleGroup.setData(itemsToLoad);
     }
     
-    // Hàm này giúp Controller đẩy dữ liệu phạm vi quyền vào ComboBox (Tab 2)
+    // --- ĐÃ NÂNG CẤP DÙNG LIST + SETDATA() ---
     public void loadRolesToTab2ComboBox(List<RoleModel> roles) {
-        cbRole.removeAllItems(); 
+        List<String> itemsToLoad = new ArrayList<>(); 
         
         if (roles != null && !roles.isEmpty()) {
             for (RoleModel role : roles) {
-                String displayItem = role.getRoleId() + " - " + role.getRoleName();
-                cbRole.addItem(displayItem);
+                itemsToLoad.add(role.getRoleId() + " - " + role.getRoleName());
             }
-            if (btnAssignRole != null) {
-                btnAssignRole.setEnabled(true);
-            }
+            if (btnAssignRole != null) btnAssignRole.setEnabled(true);
         } 
         else {
-            cbRole.addItem("Tất cả các quyền đã được cấp cho nhóm này");
-            if (btnAssignRole != null) {
-                btnAssignRole.setEnabled(false);
-            }
+            itemsToLoad.add("Tất cả các quyền đã được cấp cho nhóm này");
+            if (btnAssignRole != null) btnAssignRole.setEnabled(false);
         }
+        cbRole.setData(itemsToLoad); 
     }
     
+    // --- ĐÃ NÂNG CẤP DÙNG LIST + SETDATA() ---
     public void loadFunctionsToComboBox(List<FunctionModel> functions) {
-        cbFunctions.removeAllItems(); // Xóa sạch dữ liệu cũ
-        
+        List<String> itemsToLoad = new ArrayList<>();
         if (functions != null) {
             for (FunctionModel function : functions) {
-                String displayItem = function.getFunctionId() + " - " + function.getFunctionName();
-                cbFunctions.addItem(displayItem);
+                itemsToLoad.add(function.getFunctionId() + " - " + function.getFunctionName());
             }
         }
+        cbFunctions.setData(itemsToLoad);
     }
     
     public void loadConfiguredRolesToTab2Table(String groupName, List<RoleModel> assignedRoles) {
         lblAssignedRolesTitle.setText("Danh sách quyền hiện tại của nhóm: " + groupName);
-        assignedRolesTableModel.setRowCount(0); // Xóa dữ liệu cũ
+        assignedRolesTableModel.setRowCount(0); 
         
         if (assignedRoles != null) {
             int stt = 1;
@@ -747,46 +727,36 @@ public class RolePanel extends JPanel {
         }
     }
     
-    // Hàm đẩy dữ liệu tài khoản vào ComboBox Tab 3
-    // (Lưu ý: Bạn import class AccountModel vào nhé)
+    // --- ĐÃ NÂNG CẤP DÙNG LIST + SETDATA() ---
     public void loadAccountsToTab3ComboBox(List<AccountModel> accounts) {
-        cbAccount.removeAllItems();
+        List<String> itemsToLoad = new ArrayList<>();
         if (accounts != null) {
-            for (AccountModel acccount : accounts) {
-                // Giả sử AccountModel có hàm getAccountId() và getUsername() / getFullName()
-                cbAccount.addItem(acccount.getAccountID() + " - " + acccount.getUsername());
+            for (AccountModel account : accounts) {
+                itemsToLoad.add(account.getAccountID() + " - " + account.getUsername());
             }
         }
+        cbAccount.setData(itemsToLoad);
     }
 
-    // Hàm đẩy dữ liệu Nhóm quyền vào ComboBox Tab 3
-    // Hàm đẩy dữ liệu Nhóm quyền vào ComboBox Tab 3
+    // --- ĐÃ NÂNG CẤP DÙNG LIST + SETDATA() ---
     public void loadRoleGroupsToTab3ComboBox(List<RoleGroupModel> roleGroups) {
-        cbAccountRoleGroup.removeAllItems();
-        
-        // Nếu danh sách khác null VÀ có chứa phần tử
+        List<String> itemsToLoad = new ArrayList<>();
         if (roleGroups != null && !roleGroups.isEmpty()) {
             for (RoleGroupModel group : roleGroups) {
-                cbAccountRoleGroup.addItem(group.getRoleGroupId() + " - " + group.getRoleGroupName());
+                itemsToLoad.add(group.getRoleGroupId() + " - " + group.getRoleGroupName());
             }
-            // Mở khóa nút Cập nhật
-            if (btnAssignRoleGroupToAccount != null) {
-                btnAssignRoleGroupToAccount.setEnabled(true);
-            }
+            if (btnAssignRoleGroupToAccount != null) btnAssignRoleGroupToAccount.setEnabled(true);
         } 
-        // Nếu danh sách trống (tài khoản đã có đủ mọi nhóm quyền)
         else {
-            cbAccountRoleGroup.addItem("Tài khoản này đã được cấp tất cả các nhóm quyền");
-            // Khóa nút Cập nhật
-            if (btnAssignRoleGroupToAccount != null) {
-                btnAssignRoleGroupToAccount.setEnabled(false);
-            }
+            itemsToLoad.add("Tài khoản này đã được cấp tất cả các nhóm quyền");
+            if (btnAssignRoleGroupToAccount != null) btnAssignRoleGroupToAccount.setEnabled(false);
         }
+        cbAccountRoleGroup.setData(itemsToLoad);
     }
 
     public void loadAssignedGroupsToTab3Table(String accountName, List<RoleGroupModel> assignedGroups) {
         lblAssignedAccountRolesTitle.setText("Nhóm quyền hiện tại của tài khoản: " + accountName);
-        assignedAccountRolesTableModel.setRowCount(0); // Xóa dữ liệu cũ
+        assignedAccountRolesTableModel.setRowCount(0); 
         
         if (assignedGroups != null) {
             int stt = 1;
@@ -800,44 +770,36 @@ public class RolePanel extends JPanel {
         }
     }
     
-    // Load dữ liệu Account vào ComboBox của Tab 4
+    // --- ĐÃ NÂNG CẤP DÙNG LIST + SETDATA() ---
     public void loadAccountsToTab4ComboBox(List<AccountModel> accounts) {
-        cbAccountTab4.removeAllItems();
+        List<String> itemsToLoad = new ArrayList<>();
         if (accounts != null) {
             for (AccountModel account : accounts) {
-                cbAccountTab4.addItem(account.getAccountID() + " - " + account.getUsername());
+                itemsToLoad.add(account.getAccountID() + " - " + account.getUsername());
             }
         }
+        cbAccountTab4.setData(itemsToLoad);
     }
 
-    // Load dữ liệu Phạm vi quyền vào ComboBox của Tab 4
+    // --- ĐÃ NÂNG CẤP DÙNG LIST + SETDATA() ---
     public void loadRolesToTab4ComboBox(List<RoleModel> roles) {
-        cbRoleTab4.removeAllItems();
-        
-        // Nếu danh sách khác null VÀ có chứa phần tử
+        List<String> itemsToLoad = new ArrayList<>();
         if (roles != null && !roles.isEmpty()) {
             for (RoleModel role : roles) {
-                cbRoleTab4.addItem(role.getRoleId() + " - " + role.getRoleName());
+                itemsToLoad.add(role.getRoleId() + " - " + role.getRoleName());
             }
-            // Mở khóa nút Cấp quyền
-            if (btnAssignScopeToAccount != null) {
-                btnAssignScopeToAccount.setEnabled(true);
-            }
+            if (btnAssignScopeToAccount != null) btnAssignScopeToAccount.setEnabled(true);
         } 
-        // Nếu danh sách trống (tài khoản đã có đủ mọi quyền riêng)
         else {
-            cbRoleTab4.addItem("Tài khoản này đã được cấp tất cả các quyền");
-            // Khóa nút Cấp quyền
-            if (btnAssignScopeToAccount != null) {
-                btnAssignScopeToAccount.setEnabled(false);
-            }
+            itemsToLoad.add("Tài khoản này đã được cấp tất cả các quyền");
+            if (btnAssignScopeToAccount != null) btnAssignScopeToAccount.setEnabled(false);
         }
+        cbRoleTab4.setData(itemsToLoad);
     }
 
-    // Đẩy dữ liệu quyền riêng lên Bảng của Tab 4
     public void loadAssignedRolesToTab4Table(String accountName, List<RoleModel> assignedScopes) {
         lblAssignedAccountScopesTitle.setText("Danh sách quyền riêng của tài khoản: " + accountName);
-        assignedAccountScopesTableModel.setRowCount(0); // Xóa dữ liệu cũ
+        assignedAccountScopesTableModel.setRowCount(0); 
         
         if (assignedScopes != null) {
             int stt = 1;
@@ -874,7 +836,6 @@ public class RolePanel extends JPanel {
     }
     
     public void addRoleGroupSelectionListener(java.awt.event.ItemListener listener) {
-        // Xóa các listener cũ để tránh bị lặp sự kiện nếu gọi hàm này nhiều lần
         for (java.awt.event.ItemListener l : cbRoleGroup.getItemListeners()) {
             cbRoleGroup.removeItemListener(l);
         }
@@ -908,28 +869,28 @@ public class RolePanel extends JPanel {
     }
     
     
-    
-    public JComboBox<String> getRoleGroupComboBox(){
+    // --- SỬA KIỂU TRẢ VỀ CỦA CÁC GETTERS ---
+    public AutoCompleteComboBox getRoleGroupComboBox(){
         return cbRoleGroup;
     }
     
-    public JComboBox<String> getRoleComboBox(){
+    public AutoCompleteComboBox getRoleComboBox(){
         return cbRole;
     }
     
-    public JComboBox<String> getAccountComboBox() {
+    public AutoCompleteComboBox getAccountComboBox() {
         return cbAccount;
     }
 
-    public JComboBox<String> getAccountRoleGroupComboBox() {
+    public AutoCompleteComboBox getAccountRoleGroupComboBox() {
         return cbAccountRoleGroup;
     }
     
-    public JComboBox<String> getAccountTab4ComboBox() {
+    public AutoCompleteComboBox getAccountTab4ComboBox() {
         return cbAccountTab4;
     }
 
-    public JComboBox<String> getRoleTab4ComboBox() {
+    public AutoCompleteComboBox getRoleTab4ComboBox() {
         return cbRoleTab4;
     }
     
@@ -937,23 +898,23 @@ public class RolePanel extends JPanel {
     // GETTERS CHO CÁC NÚT BẤM (DÙNG ĐỂ CHECK QUYỀN)
     // =========================================
     public JButton getAddScopeButton() {
-        return btnAddScope; // Nút thêm phạm vi quyền ở Tab 1
+        return btnAddScope; 
     }
     
     public JButton getAssignRoleButton() {
-        return btnAssignRole; // Nút Gán quyền ở Tab 2
+        return btnAssignRole; 
     }
     
     public JButton getAssignRoleGroupToAccountButton() {
-        return btnAssignRoleGroupToAccount; // Nút Cập nhật vai trò ở Tab 3
+        return btnAssignRoleGroupToAccount; 
     }
     
     public JButton getAssignScopeToAccountButton() {
-        return btnAssignScopeToAccount; // Nút Cấp quyền riêng ở Tab 4
+        return btnAssignScopeToAccount; 
     }
     
     public JButton getAddRoleGroupTab5Button() {
-        return btnAddRoleGroupTab5; // Nút thêm nhóm quyền ở Tab 5
+        return btnAddRoleGroupTab5; 
     }
     
     public void setRoleTableListener(RoleActionListener listener) {
@@ -970,9 +931,7 @@ public class RolePanel extends JPanel {
     // ==========================================================
     // DIALOG: THÊM PHẠM VI QUYỀN MỚI
     // ==========================================================
-    // Đổi kiểu trả về từ void thành RoleModel (hoặc tạo một class DTO riêng)
     public RoleModel showAddScopeDialog() {
-        // 1. Tạo Panel chứa các thành phần của Form (giữ nguyên như cũ)
         JPanel dialogPanel = new JPanel(new BorderLayout(10, 15));
         dialogPanel.setPreferredSize(new Dimension(450, 150));
 
@@ -1002,7 +961,6 @@ public class RolePanel extends JPanel {
         dialogPanel.add(inputPanel, BorderLayout.NORTH);
         dialogPanel.add(checkboxPanel, BorderLayout.CENTER);
 
-        // 2. Hiển thị JOptionPane
         int result = JOptionPane.showConfirmDialog(
                 this, 
                 dialogPanel, 
@@ -1011,37 +969,32 @@ public class RolePanel extends JPanel {
                 JOptionPane.PLAIN_MESSAGE
         );
 
-        // 3. Xử lý khi bấm OK -> Gói dữ liệu vào RoleModel và trả về
         if (result == JOptionPane.OK_OPTION) {
             String scopeName = txtScopeName.getText().trim();
             if (scopeName.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Tên phạm vi không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return null; // Trả về null nếu validate trượt
+                return null; 
             }
 
             String funcId = cbFunctions.getSelectedItem().toString().split(" - ")[0];
 
             RoleModel newRole = new RoleModel();
             newRole.setRoleName(scopeName);
-            newRole.setFunctionId(Integer.parseInt(funcId)); // Giả sử model nhận string, nếu int thì Integer.parseInt(funcId)
+            newRole.setFunctionId(Integer.parseInt(funcId)); 
             
-            // Ép kiểu boolean sang int (1 hoặc 0) tùy theo cách bạn định nghĩa trong DB
             newRole.setView(chkView.isSelected() ? 1 : 0);
             newRole.setAdd(chkAdd.isSelected() ? 1 : 0);
             newRole.setEdit(chkEdit.isSelected() ? 1 : 0);
             newRole.setDelete(chkDelete.isSelected() ? 1 : 0);
             newRole.setExportFile(chkExport.isSelected() ? 1 : 0);
 
-            // KHÔNG xử lý bảng ở đây nữa. Chỉ return data.
             return newRole; 
         }
 
-        // Bấm Cancel hoặc tắt hộp thoại
         return null;
     }
     
     public RoleGroupModel showAddRoleGroupDialog() {
-        // 1. Tạo Panel chứa các thành phần của Form (giữ nguyên như cũ)
         JPanel dialogPanel = new JPanel(new BorderLayout(10, 15));
         dialogPanel.setPreferredSize(new Dimension(350, 100));
 
@@ -1055,7 +1008,6 @@ public class RolePanel extends JPanel {
 
         dialogPanel.add(inputPanel, BorderLayout.CENTER);
 
-        // 2. Hiển thị JOptionPane
         int result = JOptionPane.showConfirmDialog(
                 this, 
                 dialogPanel, 
@@ -1064,22 +1016,19 @@ public class RolePanel extends JPanel {
                 JOptionPane.PLAIN_MESSAGE
         );
 
-        // 3. Xử lý khi bấm OK -> Gói dữ liệu vào RoleGroupModel và trả về
         if (result == JOptionPane.OK_OPTION) {
             String roleGroupName = txtRoleGroupName.getText().trim();
             if (roleGroupName.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Tên nhóm quyền không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return null; // Trả về null nếu validate trượt
+                return null; 
             }
 
             RoleGroupModel newRoleGroup = new RoleGroupModel();
             newRoleGroup.setRoleGroupName(roleGroupName);
             
-            // KHÔNG xử lý bảng ở đây nữa. Chỉ return data.
             return newRoleGroup; 
         }
 
-        // Bấm Cancel hoặc tắt hộp thoại
         return null;
     }
     
@@ -1093,13 +1042,10 @@ public class RolePanel extends JPanel {
         JPanel inputPanel = new JPanel(new GridLayout(2, 2, 10, 10));
         
         JLabel lblName = new JLabel("Tên phạm vi quyền:");
-        // Đổ dữ liệu cũ vào TextField
         JTextField txtScopeName = new JTextField(currentRole.getRoleName()); 
 
         JLabel lblFunction = new JLabel("Chọn chức năng:");
-        // (Combobox this.cbFunctions đã được Controller nạp data trước khi gọi hàm này)
 
-        // Tìm và chọn đúng chức năng mà Role này đang giữ
         for (int i = 0; i < cbFunctions.getItemCount(); i++) {
             if (cbFunctions.getItemAt(i).startsWith(currentRole.getFunctionId() + " - ")) {
                 cbFunctions.setSelectedIndex(i);
@@ -1114,7 +1060,6 @@ public class RolePanel extends JPanel {
 
         JPanel checkboxPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
         
-        // Đổ trạng thái quyền cũ vào Checkbox
         JCheckBox chkView = new JCheckBox("Xem", currentRole.getView() > 0);
         JCheckBox chkAdd = new JCheckBox("Thêm", currentRole.getAdd() > 0);
         JCheckBox chkEdit = new JCheckBox("Sửa", currentRole.getEdit() > 0);
@@ -1145,10 +1090,8 @@ public class RolePanel extends JPanel {
 
             String funcIdStr = cbFunctions.getSelectedItem().toString().split(" - ")[0].trim();
 
-            // Tạo Object mới chứa dữ liệu cập nhật
             RoleModel updatedRole = new RoleModel();
             
-            // CỰC KỲ QUAN TRỌNG: Giữ lại ID cũ để DB biết đang sửa dòng nào
             updatedRole.setRoleId(currentRole.getRoleId()); 
             
             updatedRole.setRoleName(scopeName);
@@ -1204,14 +1147,16 @@ public class RolePanel extends JPanel {
     }
 
     class RoleActionPanel extends JPanel {
-        protected JButton btnEdit = new JButton("Sửa");
-        protected JButton btnDelete = new JButton("Xóa");
+        URL editIconUrl = getClass().getResource("/images/edit-247.png");
+        URL deleteIconUrl = getClass().getResource("/images/delete-icon.png");
+        protected JButton btnEdit = new JButton("<html><img src='" + editIconUrl + "' width='14' height='14'> Sửa</html>");
+        protected JButton btnDelete = new JButton("<html><img src='" + deleteIconUrl + "' width='14' height='14'> Xoá</html>");
 
         public RoleActionPanel() {
-            setLayout(new FlowLayout(FlowLayout.CENTER, 4, 4)); // Giảm gap
+            setLayout(new FlowLayout(FlowLayout.CENTER, 4, 4)); 
             setOpaque(true);
-            styleButton(btnEdit, new Color(0, 122, 255), 50, 26); // Kích thước nhỏ hơn
-            styleButton(btnDelete, new Color(255, 59, 48), 50, 26); // Kích thước nhỏ hơn
+            styleButton(btnEdit, new Color(0, 122, 255), 50, 26); 
+            styleButton(btnDelete, new Color(255, 59, 48), 50, 26); 
             add(btnEdit);
             add(btnDelete);
         }
@@ -1228,7 +1173,7 @@ public class RolePanel extends JPanel {
     }
 
     class RoleActionButtonRenderer implements TableCellRenderer {
-        protected RoleActionPanel panel; // Đổi JPanel thành RoleActionPanel
+        protected RoleActionPanel panel; 
 
         public RoleActionButtonRenderer(RoleActionPanel panel) {
             this.panel = panel;
@@ -1237,7 +1182,6 @@ public class RolePanel extends JPanel {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
-            // CHECK QUYỀN VÀ ẨN HIỆN NÚT
             panel.btnEdit.setVisible(hasEditPermission);
             panel.btnDelete.setVisible(hasDeletePermission);
             return panel;
@@ -1262,7 +1206,6 @@ public class RolePanel extends JPanel {
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
             currentRow = row;
             panel.setBackground(table.getSelectionBackground());
-            // CHECK QUYỀN VÀ ẨN HIỆN NÚT
             panel.btnEdit.setVisible(hasEditPermission);
             panel.btnDelete.setVisible(hasDeletePermission);
             return panel;
@@ -1285,12 +1228,12 @@ public class RolePanel extends JPanel {
             setLayout(new FlowLayout(FlowLayout.CENTER, 0, 4));
             setOpaque(true);
             
-            btnDelete.setFont(new Font("Segoe UI", Font.BOLD, 11)); // Font nhỏ hơn xíu
+            btnDelete.setFont(new Font("Segoe UI", Font.BOLD, 11)); 
             btnDelete.setForeground(new Color(255, 59, 48));
             btnDelete.setBackground(Color.WHITE);
             btnDelete.setBorder(BorderFactory.createLineBorder(new Color(255, 59, 48), 1));
             btnDelete.setFocusPainted(false);
-            btnDelete.setPreferredSize(new Dimension(70, 26)); // Kích thước nhỏ hơn
+            btnDelete.setPreferredSize(new Dimension(50, 20)); 
             btnDelete.setCursor(new Cursor(Cursor.HAND_CURSOR));
             
             add(btnDelete);
@@ -1298,12 +1241,11 @@ public class RolePanel extends JPanel {
     }
 
     class DeleteActionButtonRenderer implements TableCellRenderer {
-        protected DeleteActionPanel panel; // Đổi JPanel thành DeleteActionPanel
+        protected DeleteActionPanel panel; 
         public DeleteActionButtonRenderer(DeleteActionPanel panel) { this.panel = panel; }
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
-            // CHECK QUYỀN XÓA (Thu hồi)
             panel.btnDelete.setVisible(hasDeletePermission);
             return panel;
         }
@@ -1325,12 +1267,9 @@ public class RolePanel extends JPanel {
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
             currentRow = row;
             panel.setBackground(table.getSelectionBackground());
-            // CHECK QUYỀN XÓA (Thu hồi)
             panel.btnDelete.setVisible(hasDeletePermission);
             return panel;
         }
         @Override public Object getCellEditorValue() { return ""; }
     }
 }
-
-

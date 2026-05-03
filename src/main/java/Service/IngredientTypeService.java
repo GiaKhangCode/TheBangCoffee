@@ -10,7 +10,6 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- *
  * @author Kiet
  */
 public class IngredientTypeService {
@@ -22,5 +21,9 @@ public class IngredientTypeService {
     
     public List<IngredientTypeModel> getIngredientTypes() throws SQLException {
         return ingredientTypeDAO.getIngredientTypes();
+    }
+    
+    public boolean addIngredientType(String typeName) throws SQLException, ClassNotFoundException {
+        return ingredientTypeDAO.insertIngredientType(typeName);
     }
 }
