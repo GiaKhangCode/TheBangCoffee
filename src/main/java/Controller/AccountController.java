@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Controller;
 
 import Common.EmailUtil;
@@ -19,14 +15,7 @@ import View.RegisterFrame;
 import java.sql.SQLException;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
-import javax.swing.JTextField;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.DefaultTableModel;
-/**
- *
- * @author Kiet
- */
+
 public class AccountController {
     private AccountModel accountModel;
     private LoginFrame loginFrame;
@@ -38,8 +27,16 @@ public class AccountController {
     private SessionService sessionService;
     private RoleController roleController;
     
+    // --> THÊM MỚI: Liên kết với ShiftController
+    private ShiftController shiftController; 
+    
     public void setRoleController(RoleController roleController) {
         this.roleController = roleController;
+    }
+
+    // --> THÊM MỚI: Setter cho ShiftController
+    public void setShiftController(ShiftController shiftController) {
+        this.shiftController = shiftController;
     }
     // ----------------------------------------------------------
     
@@ -137,13 +134,19 @@ public class AccountController {
             JDialog dialog = optionPane.createDialog("Đăng ký");
             dialog.setAlwaysOnTop(true);
             dialog.setVisible(true);
+            
             if(result.equals("Thành công")){
                 registerFrame.setVisible(false);
                 loginFrame.setVisible(true);
                 
-                // --> GỌI LỆNH LÀM MỚI COMBOBOX BÊN PHÂN QUYỀN <--
+                // --> GỌI LỆNH LÀM MỚI CHO CÁC MODULE KHÁC <--
                 if (this.roleController != null) {
                     this.roleController.refreshAccountList();
+                }
+                
+                // --> THÊM MỚI: Đồng bộ danh sách với phần xếp lịch
+                if (this.shiftController != null) {
+                    this.shiftController.refreshEmployeeList();
                 }
                 // ------------------------------------------------
             }
@@ -159,18 +162,8 @@ public class AccountController {
                     forgotPasswordFrame.setVisible(false);
                     loginFrame.setVisible(true);
                 });
-               
-                
             }
         });
-        
-//        this.registerFrame.addForgotPasswordListener(new java.awt.event.MouseAdapter() {
-//            @Override
-//            public void mouseClicked(java.awt.event.MouseEvent e) {
-//                registerFrame.setVisible(false);
-//                forgotPasswordFrame.setVisible(true);
-//            }
-//        });
         
         this.forgotPasswordFrame.addSendOtpListener(e -> {
             String email = forgotPasswordFrame.getEmail();
@@ -197,7 +190,6 @@ public class AccountController {
             String email = forgotPasswordFrame.getEmail();
             String otp = forgotPasswordFrame.getOtp();
             String newPass = forgotPasswordFrame.getNewPassword();
-            
             
             if (!OtpService.verifyOTP(email, otp, OtpService.OtpType.RESET_PASSWORD)) {
                 JOptionPane optionPane = new JOptionPane("OTP không đúng", JOptionPane.ERROR_MESSAGE);
@@ -229,6 +221,7 @@ public class AccountController {
             loginFrame.setVisible(true);
         });
     }
+
     private void openMainFrame() throws SQLException {
         this.mainFrame = new MainFrame();
         
@@ -247,7 +240,12 @@ public class AccountController {
             roleController.hiddenButton();
             new ProductController(mainFrame);
             new PosController(mainFrame);
-            new ShiftController(mainFrame);
+            new DashboardController(mainFrame);
+            
+            // --> THAY ĐỔI: Gán biến ShiftController và set vào class này
+            ShiftController newShiftCtrl = new ShiftController(mainFrame);
+            this.setShiftController(newShiftCtrl);
+            
             this.setRoleController(roleController);
         } catch (SQLException ex) {
             ex.printStackTrace();

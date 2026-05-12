@@ -69,6 +69,27 @@ public class MenuPanel extends JPanel {
         txtSearch = new JTextField(25);
         txtSearch.setPreferredSize(new Dimension(300, 40));
         txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        txtSearch.setText("Tìm kiếm tên món...");
+        txtSearch.setForeground(Color.GRAY);
+
+        // [MỚI] Hiệu ứng ẩn/hiện chữ mờ khi click chuột
+        txtSearch.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                if (txtSearch.getText().equals("Tìm kiếm tên món...")) {
+                    txtSearch.setText("");
+                    txtSearch.setForeground(TEXT_DARK);
+                }
+            }
+            @Override
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                if (txtSearch.getText().trim().isEmpty()) {
+                    txtSearch.setForeground(Color.GRAY);
+                    txtSearch.setText("Tìm kiếm tên món...");
+                }
+            }
+        });
+        
         leftPanel.add(txtSearch);
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
@@ -189,6 +210,9 @@ public class MenuPanel extends JPanel {
     public void addAddProductListener(java.awt.event.ActionListener listener) { btnAddProduct.addActionListener(listener); }
     public void setProductClickListener(ProductClickListener listener) { this.productClickListener = listener; }
     public String getSearchText() { return txtSearch.getText(); }
+    public void addSearchListener(java.awt.event.KeyListener listener) {
+        txtSearch.addKeyListener(listener);
+    }
 
     public interface ProductClickListener {
         void onClick(ProductModel product);

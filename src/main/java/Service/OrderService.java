@@ -20,13 +20,14 @@ public class OrderService {
     }
 
     // [SỬA] Thêm isTakeaway và isHoliday vào tham số
-    public boolean createOrder(int accountId, List<CartItemModel> cart, long finalTotal, double totalVat, String status, boolean isTakeaway, boolean isHoliday) {
-        // Có thể thêm các rule Validate ở đây trước khi đẩy xuống DAO
+    public boolean createOrder(int accountId, Integer maKhachHang, List<CartItemModel> cart, long finalTotal, double totalVat, String status, boolean isTakeaway, boolean isHoliday) {
+        
         if (cart == null || cart.isEmpty()) {
             return false;
         }
-        
-        return orderDAO.createOrder(accountId, cart, finalTotal, totalVat, status, isTakeaway, isHoliday);
+
+        // Truyền maKhachHang xuống tầng DAO
+        return orderDAO.createOrder(accountId, maKhachHang, cart, finalTotal, totalVat, status, isTakeaway, isHoliday);
     }
     
     public String validateInventory(List<CartItemModel> cart) {

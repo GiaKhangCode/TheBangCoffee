@@ -1,254 +1,259 @@
 package Controller;
 
-import View.EmployeeSchedulePanel;
-import DatabaseAccessObject.AccountDAO;
-import Service.ShiftService; // ĐỔI SANG SỬ DỤNG SERVICE
-import Model.AccountModel;
 import Model.ShiftModel;
+import Model.AccountModel;
+import Service.AccountService;
+import Service.ShiftService;
+import View.EmployeeSchedulePanel;
 import View.MainFrame;
-
+import javax.swing.JOptionPane;
+import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.swing.JOptionPane;
-import java.awt.*;
-import javax.swing.*;
 
 public class ShiftController {
+    private MainFrame mainFrame;
+    private EmployeeSchedulePanel view;
+    private ShiftService shiftService;
+    private AccountService accountService;
 
-    private EmployeeSchedulePanel shiftView;
-    private AccountDAO accountDAO;
-    private ShiftService shiftService; // DÙNG SERVICE THAY VÌ DAO
-    private MainFrame mainframe;
-
-    private int currentYear;
-    private int currentMonth;
-
-    private Map<LocalDate, EmployeeSchedulePanel.DaySchedule> currentScheduleMap;
-    
-    public ShiftController(MainFrame mainframe) {
-        this.mainframe = mainframe;
-        this.shiftView = mainframe.getShiftPanel();
-        this.accountDAO = new AccountDAO();
-        this.shiftService = new ShiftService(); 
-        initController();
-    }
-
-    private void initController() {
-        this.shiftView.setAddShiftListener((LocalDate date, String shiftType) -> {
-            handleAddShift(date, shiftType);
-        });
-
-        this.shiftView.setFilterChangeListener((int year, int month) -> {
-            loadScheduleData(year, month);
-        });
-
-        // --- LẮNG NGHE SỰ KIỆN SỬA/XÓA TỪ VIEW ---
-        this.shiftView.setShiftActionUpdateListener(new EmployeeSchedulePanel.ShiftActionUpdateListener() {
-            @Override
-            public void onEditShift(int maCa, int currentMaTaiKhoan, LocalDate date, String shiftType) {
-                handleEditShift(maCa, currentMaTaiKhoan, date, shiftType);
-            }
-
-            @Override
-            public void onDeleteShift(int maCa) {
-                handleDeleteShift(maCa);
-            }
-
-            // --- BẮT LỆNH THÊM NV TỪ CỬA SỔ CHI TIẾT ---
-            @Override
-            public void onAddMoreEmployee(LocalDate date, String shiftType) {
-                handleAddShift(date, shiftType); // Gọi lại form thêm như bình thường
-            }
-        });
-
-        LocalDate today = LocalDate.now();
-        loadScheduleData(today.getYear(), today.getMonthValue());
-    }
-
-    private void loadScheduleData(int year, int month) {
-        this.currentYear = year;
-        this.currentMonth = month;
-
-        List<ShiftModel> dbShifts = shiftService.getShiftsByMonthYear(month, year);
+    public ShiftController(MainFrame sharedMainFrame) {
+        this.mainFrame = sharedMainFrame;
+        this.view = mainFrame.getShiftPanel(); 
+        this.shiftService = new ShiftService();
+        this.accountService = new AccountService();
         
-        // --- SỬA DÒNG NÀY ---
-        this.currentScheduleMap = new HashMap<>();
-
-        for (ShiftModel shift : dbShifts) {
-            LocalDate date = shift.getNgayLam();
-            
-            // --- SỬA currentScheduleMap Ở ĐÂY ---
-            currentScheduleMap.putIfAbsent(date, new EmployeeSchedulePanel.DaySchedule());
-            EmployeeSchedulePanel.DaySchedule daySchedule = currentScheduleMap.get(date);
-
-            EmployeeSchedulePanel.ShiftDetail detail = new EmployeeSchedulePanel.ShiftDetail(
-                    shift.getMaCa(), 
-                    shift.getMaTaiKhoan(), 
-                    shift.getTenTaiKhoan(), 
-                    shift.getSoGioLamViec()
-            );
-
-            if ("Sáng".equalsIgnoreCase(shift.getBuoiLamViec())) {
-                daySchedule.morningShifts.add(detail);
-            } else if ("Chiều".equalsIgnoreCase(shift.getBuoiLamViec())) {
-                daySchedule.afternoonShifts.add(detail);
-            }
-        }
-        
-        // --- ĐẨY currentScheduleMap XUỐNG VIEW ---
-        shiftView.renderCalendar(year, month, currentScheduleMap);
-    }
-    
-    // --- HÀM THÊM CA (GIỮ NGUYÊN NHƯ CŨ, CHỈ ĐỔI GỌI SERVICE) ---
-    private void handleAddShift(LocalDate date, String shiftType) {
-        showShiftDialog(0, "Thêm Ca Làm Việc", date, shiftType, -1);
-    }
-
-    // --- HÀM SỬA CA MỚI ---
-    private void handleEditShift(int maCa, int currentMaTaiKhoan, LocalDate date, String shiftType) {
-        showShiftDialog(maCa, "Sửa Ca Làm Việc", date, shiftType, currentMaTaiKhoan);
-    }
-
-    // --- HÀM XÓA CA MỚI ---
-    private void handleDeleteShift(int maCa) {
-        int confirm = JOptionPane.showConfirmDialog(shiftView, "Bạn có chắc chắn muốn xóa ca làm việc này không?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
-            boolean isSuccess = shiftService.deleteShift(maCa);
-            if (isSuccess) {
-                JOptionPane.showMessageDialog(shiftView, "Đã xóa thành công!");
-                loadScheduleData(currentYear, currentMonth); // Tự động Refresh
-            } else {
-                JOptionPane.showMessageDialog(shiftView, "Xóa thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
+        if (this.view != null) {
+            initEvents();
+            reloadShiftCards(); 
+            view.loadEmployeesToSchedule(accountService.getAccountList());
+            loadData();          
         }
     }
 
-    private void showShiftDialog(int maCa, String title, LocalDate date, String shiftType, int selectedMaTaiKhoan) {
-        
-        // 1. TÌM XEM CA NÀY ĐÃ CÓ NHỮNG AI LÀM RỒI
-        java.util.Set<Integer> assignedAccountIds = new java.util.HashSet<>();
-        if (currentScheduleMap != null && currentScheduleMap.containsKey(date)) {
-            EmployeeSchedulePanel.DaySchedule ds = currentScheduleMap.get(date);
-            List<EmployeeSchedulePanel.ShiftDetail> shiftsForType = 
-                    "Sáng".equalsIgnoreCase(shiftType) ? ds.morningShifts : ds.afternoonShifts;
-            
-            for (EmployeeSchedulePanel.ShiftDetail detail : shiftsForType) {
-                assignedAccountIds.add(detail.maTaiKhoan);
-            }
-        }
+    private void reloadShiftCards() {
+        try {
+            List<ShiftModel> all = shiftService.getAllShifts();
+            view.setAvailableShifts(all); 
+            view.loadShiftCards(all); 
+        } catch (Exception e) { e.printStackTrace(); }
+    }
 
-        // 2. LẤY TẤT CẢ TÀI KHOẢN VÀ LỌC RA NHỮNG NGƯỜI CHƯA CÓ LỊCH
-        List<AccountModel> allAccounts = accountDAO.getAccountList();
-        List<AccountModel> availableAccounts = new java.util.ArrayList<>();
-        int preSelectedIndex = -1;
-        
-        for (AccountModel acc : allAccounts) {
-            int accId = acc.getAccountID();
-            // Nếu người này CHƯA có lịch HOẶC chính là người đang được chọn để "Sửa", thì mới cho vào list
-            if (!assignedAccountIds.contains(accId) || accId == selectedMaTaiKhoan) {
-                availableAccounts.add(acc);
-                if (accId == selectedMaTaiKhoan) {
-                    preSelectedIndex = availableAccounts.size() - 1; // Nhớ vị trí để bôi xanh sẵn khi Sửa
-                }
-            }
-        }
+    private void loadData() {
+        try {
+            List<AccountModel> accounts = view.getCurrentAccounts();
+            if (accounts == null || accounts.isEmpty()) return;
 
-        // 3. NẾU TẤT CẢ NHÂN VIÊN ĐỀU ĐÃ ĐƯỢC XẾP VÀO CA NÀY -> CHẶN KHÔNG CHO MỞ FORM
-        if (availableAccounts.isEmpty()) {
-            JOptionPane.showMessageDialog(shiftView, "Tất cả nhân viên đã được xếp lịch vào ca " + shiftType + " ngày " + date + "!\nKhông còn nhân viên trống.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-            return; 
-        }
+            LocalDate start = view.getCurrentStartOfWeek();
+            boolean isMonthView = view.isMonthViewActive();
 
-        // --- BẮT ĐẦU VẼ GIAO DIỆN FORM VỚI DANH SÁCH ĐÃ LỌC ---
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(shiftView), title, Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(450, 350);
-        dialog.setLocationRelativeTo(shiftView);
-        dialog.setLayout(new BorderLayout());
-        dialog.getContentPane().setBackground(Color.WHITE);
-
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        mainPanel.setBackground(Color.WHITE);
-
-        JLabel lblHeader = new JLabel(title + " " + shiftType + " - Ngày " + date.toString());
-        lblHeader.setFont(new Font("SansSerif", Font.BOLD, 14));
-        mainPanel.add(lblHeader, BorderLayout.NORTH);
-
-        JPanel contentPanel = new JPanel(new BorderLayout(5, 5));
-        contentPanel.setOpaque(false);
-        JLabel lblEmp = new JLabel(maCa == 0 ? "Chọn nhân viên (Giữ phím Ctrl để chọn nhiều):" : "Chọn nhân viên để đổi:");
-        lblEmp.setFont(new Font("SansSerif", Font.ITALIC, 13));
-        contentPanel.add(lblEmp, BorderLayout.NORTH);
-
-        // Chuyển mảng danh sách từ object sang mảng String để hiển thị
-        String[] employeeNames = new String[availableAccounts.size()];
-        for (int i = 0; i < availableAccounts.size(); i++) {
-            employeeNames[i] = availableAccounts.get(i).getUsername(); 
-        }
-
-        JList<String> listEmployee = new JList<>(employeeNames);
-        listEmployee.setFont(new Font("SansSerif", Font.PLAIN, 15));
-        
-        if (maCa == 0) {
-            listEmployee.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        } else {
-            listEmployee.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-            if (preSelectedIndex != -1) listEmployee.setSelectedIndex(preSelectedIndex);
-        }
-        
-        JScrollPane scrollList = new JScrollPane(listEmployee);
-        contentPanel.add(scrollList, BorderLayout.CENTER);
-        mainPanel.add(contentPanel, BorderLayout.CENTER);
-
-        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        actionPanel.setOpaque(false);
-
-        JButton btnCancel = new JButton("Hủy");
-        btnCancel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnCancel.addActionListener(e -> dialog.dispose());
-
-        JButton btnSave = new JButton("Lưu Danh Sách");
-        btnSave.setBackground(new Color(67, 142, 104));
-        btnSave.setForeground(Color.WHITE);
-        btnSave.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        btnSave.addActionListener(e -> {
-            int[] selectedIndices = listEmployee.getSelectedIndices();
-            if (selectedIndices.length == 0) {
-                JOptionPane.showMessageDialog(dialog, "Vui lòng chọn ít nhất 1 nhân viên!");
-                return;
-            }
-            
-            boolean allSuccess = true;
-            
-            for (int idx : selectedIndices) {
-                // Lấy Account từ mảng đã lọc (availableAccounts) thay vì allAccounts cũ
-                AccountModel acc = availableAccounts.get(idx);
-                ShiftModel newShift = new ShiftModel(maCa, acc.getAccountID(), acc.getUsername(), shiftType, date, 4.0);
+            if (isMonthView) {
+                // TẢI DỮ LIỆU CHO THÁNG
+                LocalDate startOfMonth = start.withDayOfMonth(1);
+                LocalDate endOfMonth = YearMonth.from(startOfMonth).atEndOfMonth();
                 
-                if (maCa == 0) { 
-                    if (!shiftService.insertShift(newShift)) allSuccess = false;
-                } else { 
-                    if (!shiftService.updateShift(newShift)) allSuccess = false;
+                List<String[]> dbData = shiftService.getWeeklySchedules(startOfMonth, endOfMonth);
+                
+                // Gom nhóm dữ liệu theo Ngày để View dễ vẽ Lịch
+                Map<LocalDate, List<String>> monthDataMap = new HashMap<>();
+                for (String[] row : dbData) {
+                    int maTk = Integer.parseInt(row[0]);
+                    LocalDate date = LocalDate.parse(row[1]);
+                    String tenCa = row[2];
+                    
+                    // Tìm tên nhân viên
+                    String empName = "";
+                    for(AccountModel acc : accounts) {
+                        if (acc.getAccountID() == maTk) { empName = acc.getUsername(); break; }
+                    }
+                    
+                    monthDataMap.computeIfAbsent(date, k -> new ArrayList<>())
+                                .add("<b>" + empName + "</b>: " + tenCa);
                 }
+                view.renderMonthView(monthDataMap); 
+                
+            } else {
+                // TẢI DỮ LIỆU CHO TUẦN (Mảng 2D)
+                LocalDate end = start.plusDays(6);
+                List<String[]> dbData = shiftService.getWeeklySchedules(start, end);
+                
+                String[][] grid = new String[accounts.size()][7];
+                for(int i=0; i<accounts.size(); i++) for(int j=0; j<7; j++) grid[i][j] = "";
+
+                for (String[] row : dbData) {
+                    int maTk = Integer.parseInt(row[0]);
+                    LocalDate date = LocalDate.parse(row[1]);
+                    
+                    int r = -1;
+                    for(int i=0; i<accounts.size(); i++) if(accounts.get(i).getAccountID()==maTk) { r=i; break; }
+                    
+                    if (r != -1) {
+                        int c = (int) java.time.temporal.ChronoUnit.DAYS.between(start, date);
+                        if (c >= 0 && c < 7) {
+                            grid[r][c] = grid[r][c].isEmpty() ? row[2] : grid[r][c] + "\n" + row[2];
+                        }
+                    }
+                }
+                view.applyScheduleData(grid);
             }
             
-            if (allSuccess) {
-                JOptionPane.showMessageDialog(dialog, "Thao tác thành công!");
-                dialog.dispose();
-                loadScheduleData(currentYear, currentMonth); 
-            } else {
-                JOptionPane.showMessageDialog(dialog, "Có lỗi xảy ra trong quá trình lưu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
+            view.markWeekLoadedFromDB(start);
+        } catch (Exception ex) { ex.printStackTrace(); }
+    }
+
+    public void refreshEmployeeList() {
+        if (view != null && accountService != null) {
+            view.loadEmployeesToSchedule(accountService.getAccountList());
+            loadData();
+        }
+    }
+
+    private void initEvents() {
+        view.addWeekNavigationListener(e -> loadData());
+
+        view.addSaveShiftListener(e -> {
+            try {
+                int maCa = view.getMaCa();
+                String ten = view.getTenCa().trim(), bd = view.getGioBatDau().trim(), kt = view.getGioKetThuc().trim();
+                if (ten.isEmpty() || bd.isEmpty() || kt.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Vui lòng nhập đầy đủ thôngkiem (Tên ca, giờ)!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                
+                if (!bd.matches("^([01]\\d|2[0-3]):([0-5]\\d)$") || !kt.matches("^([01]\\d|2[0-3]):([0-5]\\d)$")) {
+                    JOptionPane.showMessageDialog(null, "Định dạng giờ không hợp lệ!\nVui lòng nhập theo định dạng 24h: HH:mm (Ví dụ: 08:30, 15:00)", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                
+                if (kt.compareTo(bd) <= 0) {
+                    JOptionPane.showMessageDialog(null, "Giờ kết thúc phải lớn hơn Giờ bắt đầu", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                    return; 
+                }
+
+                if (maCa == 0) {
+                    if (shiftService.isShiftNameExists(ten)) {
+                        JOptionPane.showMessageDialog(null, "Tên ca này đang được sử dụng, vui lòng chọn tên khác", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                        return; 
+                    }
+                    if (shiftService.addShift(new ShiftModel(0, ten, bd, kt, "Đang sử dụng"))) {
+                        view.clearShiftForm(); reloadShiftCards(); 
+                        view.forceReloadCurrentWeek(); loadData();
+                        JOptionPane.showMessageDialog(null, "Đã lưu mẫu ca mới thành công!");
+                    }
+                } else {
+                    if (shiftService.isShiftNameExistsExcludeCurrent(ten, maCa)) {
+                        JOptionPane.showMessageDialog(null, "Tên ca này đang được sử dụng, vui lòng chọn tên khác", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                        return; 
+                    }
+                    if (shiftService.checkUpdateConflict(maCa, bd, kt)) {
+                        JOptionPane.showMessageDialog(null, "Không thể cập nhật giờ!\nThay đổi này gây trùng lặp thời gian với các ca khác mà nhân viên đã được phân công.", "Lỗi Xung Đột", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    if (shiftService.updateShift(new ShiftModel(maCa, ten, bd, kt, "Đang sử dụng"))) {
+                        view.clearShiftForm(); reloadShiftCards(); 
+                        view.forceReloadCurrentWeek(); loadData();
+                        JOptionPane.showMessageDialog(null, "Đã cập nhật thay đổi thành công!");
+                    }
+                }
+            } catch (Exception ex) { ex.printStackTrace(); }
         });
 
-        actionPanel.add(btnCancel);
-        actionPanel.add(btnSave);
-        mainPanel.add(actionPanel, BorderLayout.SOUTH);
+        view.addDeleteShiftListener(e -> {
+            try {
+                int id = view.getSelectedMaCa();
+                if (id <= 0) return;
+                int confirm = JOptionPane.showConfirmDialog(null, "Bạn có chắc chắn muốn ngưng sử dụng ca này không?\nCác lịch phân công ca này từ hôm nay trở đi sẽ bị ẩn lập tức.", "Cảnh báo", JOptionPane.YES_NO_OPTION);
+                if (confirm == JOptionPane.YES_OPTION && shiftService.disableShift(id)) {
+                    view.clearShiftForm(); reloadShiftCards();
+                    view.forceReloadCurrentWeek(); loadData();
+                    JOptionPane.showMessageDialog(null, "Đã ngưng sử dụng mẫu ca!");
+                }
+            } catch (Exception ex) { ex.printStackTrace(); }
+        });
 
-        dialog.add(mainPanel, BorderLayout.CENTER);
-        dialog.setVisible(true);
+        view.setConfirmAssignListener(e -> {
+            try {
+                List<ShiftModel> sel = view.getSelectedShifts();
+                int row = view.getEditingRow();
+                int col = view.getEditingCol();
+                
+                for (int i = 0; i < sel.size(); i++) {
+                    for (int j = i + 1; j < sel.size(); j++) {
+                        if (view.isConflict(sel.get(i), sel.get(j))) {
+                            JOptionPane.showMessageDialog(view.getDialog(), "Lỗi: Ca '" + sel.get(i).getTenCa() + "' và '" + sel.get(j).getTenCa() + "' bị trùng lặp thời gian với nhau!", "Xung đột ca", JOptionPane.ERROR_MESSAGE);
+                            return; 
+                        }
+                    }
+                }
+                
+                LocalDate date = view.getCurrentStartOfWeek().plusDays(col - 1);
+                int maTk = view.getCurrentAccounts().get(row).getAccountID();
+                
+                shiftService.deleteSchedules(date, date, java.util.Collections.singletonList(maTk));
+                for(ShiftModel s : sel) shiftService.insertSchedule(date, s.getMaCa(), maTk);
+                view.setSchedule(row, col, sel);
+            } catch (Exception ex) { ex.printStackTrace(); }
+        });
+
+        view.addSaveScheduleListener(e -> {
+            try {
+                if (!view.isRepeatChecked()) {
+                    JOptionPane.showMessageDialog(null, "Bạn muốn 'Lặp lại lịch' cho các tuần tiếp theo ?", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+
+                LocalDate startOfWeek = view.getCurrentStartOfWeek();
+                int repeatWeeks = view.getRepeatWeeks();
+                
+                List<AccountModel> accounts = view.getCurrentAccounts();
+                String[][] gridData = view.getCurrentScheduleData();
+                List<ShiftModel> availableShifts = view.getAvailableShifts();
+                
+                if (accounts == null || accounts.isEmpty()) return;
+
+                List<Integer> accountIds = new ArrayList<>();
+                for (AccountModel acc : accounts) accountIds.add(acc.getAccountID()); 
+                
+                for (int w = 1; w <= repeatWeeks; w++) {
+                    LocalDate targetStart = startOfWeek.plusWeeks(w);
+                    LocalDate targetEnd = targetStart.plusDays(6);
+                    
+                    shiftService.deleteSchedules(targetStart, targetEnd, accountIds);
+                    
+                    for (int r = 0; r < accounts.size(); r++) {
+                        int maTaiKhoan = accounts.get(r).getAccountID(); 
+                        for (int c = 0; c < 7; c++) {
+                            String cellText = gridData[r][c];
+                            if (cellText == null || cellText.trim().isEmpty()) continue;
+                            
+                            LocalDate workDate = targetStart.plusDays(c);
+                            String[] shiftNames = cellText.split("\n");
+                            
+                            for (String shiftName : shiftNames) {
+                                shiftName = shiftName.trim();
+                                if (shiftName.isEmpty()) continue;
+                                
+                                int maCa = -1;
+                                for (ShiftModel sm : availableShifts) {
+                                    if (sm.getTenCa().equalsIgnoreCase(shiftName)) { maCa = sm.getMaCa(); break; }
+                                }
+                                if (maCa != -1) shiftService.insertSchedule(workDate, maCa, maTaiKhoan);
+                            }
+                        }
+                    }
+                }
+                view.cloneScheduleToNextWeeks(repeatWeeks);
+                
+                // THÔNG BÁO LẶP LỊCH THÀNH CÔNG RÕ RÀNG HƠN
+                JOptionPane.showMessageDialog(null, "Đã sao chép và lưu lịch cho " + repeatWeeks + " tuần tiếp theo thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
     }
 }

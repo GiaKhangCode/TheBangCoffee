@@ -23,7 +23,6 @@ public class ProductDAO {
     public ProductListModel getAllProduct() {
         ProductListModel productList = new ProductListModel();
         
-        // [SỬA] Cập nhật truy vấn 3 cột giá
         String sqlProduct = "SELECT SP.MaSanPham, SP.TenSanPham, SP.TenAnhSanPham, SP.KieuDuLieuAnh, " +
                             "SP.TrangThai AS TrangThaiSP, LSP.TenLoaiSanPham, LSP.TrangThai AS TrangThaiLoai, " +
                             "SP.GiaTaiQuan, SP.GiaMangVe, SP.GiaNgayLe, SP.DuLieuAnh, SP.MoTa, SP.Thue_GTGT " +
@@ -32,13 +31,13 @@ public class ProductDAO {
                             "ORDER BY SP.MaSanPham DESC";
 
         try (Connection conn = getMyConnection();
-             Statement stmtProd = conn.createStatement();
-             ResultSet rsProd = stmtProd.executeQuery(sqlProduct)) { 
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sqlProduct)) { 
             
-            while(rsProd.next()){
+            while(rs.next()){
                 ImageIcon imageIcon = null;
                 try {
-                    InputStream is = rsProd.getBinaryStream("DuLieuAnh");
+                    InputStream is = rs.getBinaryStream("DuLieuAnh");
                     if (is != null) {
                         byte[] bytes = is.readAllBytes();
                         ImageIcon original = new ImageIcon(bytes);
@@ -47,22 +46,22 @@ public class ProductDAO {
                     }
                 } catch (Exception e) { e.printStackTrace(); }
                 
-                ProductModel prod = new ProductModel(
-                        rsProd.getInt("MaSanPham"), rsProd.getString("TenSanPham"),
-                        rsProd.getString("TenAnhSanPham"), rsProd.getString("KieuDuLieuAnh"),
-                        rsProd.getString("TrangThaiSP"), rsProd.getString("TenLoaiSanPham"),
-                        rsProd.getString("TrangThaiLoai"), 
-                        rsProd.getLong("GiaTaiQuan"), rsProd.getLong("GiaMangVe"), rsProd.getLong("GiaNgayLe"),
-                        rsProd.getDouble("Thue_GTGT"), imageIcon, rsProd.getString("MoTa")
+                ProductModel product = new ProductModel(
+                        rs.getInt("MaSanPham"), rs.getString("TenSanPham"),
+                        rs.getString("TenAnhSanPham"), rs.getString("KieuDuLieuAnh"),
+                        rs.getString("TrangThaiSP"), rs.getString("TenLoaiSanPham"),
+                        rs.getString("TrangThaiLoai"), 
+                        rs.getLong("GiaTaiQuan"), rs.getLong("GiaMangVe"), rs.getLong("GiaNgayLe"),
+                        rs.getDouble("Thue_GTGT"), imageIcon, rs.getString("MoTa")
                 );
                 
                 // [SỬA] Cập nhật truy vấn Size lấy 3 cột giá
                 try (PreparedStatement psVariant = conn.prepareStatement("SELECT MaBienThe, TenSize, GiaTaiQuan, GiaMangVe, GiaNgayLe FROM BIEN_THE WHERE MaSanPham = ?")) {
-                    psVariant.setInt(1, prod.getProductID());
+                    psVariant.setInt(1, product.getProductID());
                     try (ResultSet rsVar = psVariant.executeQuery()) {
                         while (rsVar.next()) {
-                            prod.addVariant(new VariantModel(
-                                rsVar.getInt("MaBienThe"), prod.getProductID(),
+                            product.addVariant(new VariantModel(
+                                rsVar.getInt("MaBienThe"), product.getProductID(),
                                 rsVar.getString("TenSize"), 
                                 rsVar.getLong("GiaTaiQuan"), rsVar.getLong("GiaMangVe"), rsVar.getLong("GiaNgayLe")
                             ));
@@ -70,7 +69,7 @@ public class ProductDAO {
                     }
                 }
                 
-                productList.addProductList(prod);
+                productList.addProduct(product);
             }
         } catch (Exception e){
             e.printStackTrace();
@@ -78,12 +77,10 @@ public class ProductDAO {
         return productList;
     }
     
-    // [LƯU Ý]: Bạn phải sửa lại SP_INSERT_SAN_PHAM trong Database để nhận 12 tham số!
     public void insertProduct(String categoryName, String productName, long dineInPrice, long takeawayPrice, long holidayPrice, double vat, File imageFile, 
                               String status, String description, List<VariantModel> listVariants, List<Integer> listToppingIds) {
         
         String sqlProduct = "{call SP_INSERT_SAN_PHAM(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}"; // 12 tham số (bao gồm cả OUT_MaSanPham)
-        // [SỬA] Câu lệnh Insert Size
         String sqlVariant = "INSERT INTO BIEN_THE (MaSanPham, TenSize, GiaTaiQuan, GiaMangVe, GiaNgayLe) VALUES (?, ?, ?, ?, ?)";
         String sqlTopping = "INSERT INTO SAN_PHAM_TOPPING (MaSanPham, MaTopping) VALUES (?, ?)";
 
@@ -160,7 +157,6 @@ public class ProductDAO {
         }
     }
     
-    // [LƯU Ý]: Bạn phải sửa lại SP_UPDATE_SAN_PHAM trong Database để nhận đủ 11 tham số!
     public void updateProduct(int productId, String categoryName, String productName, long dineInPrice, long takeawayPrice, long holidayPrice, double vat, File imageFile, 
                               String status, String description, List<VariantModel> listVariants, List<Integer> listToppingIds) {
         
@@ -231,7 +227,6 @@ public class ProductDAO {
                 }
 
                 // C. Cập nhật Size cũ đã sửa và Thêm Size mới
-                // [SỬA] Đổi GiaBan thành 3 cột giá
                 String sqlUpdateVar = "UPDATE BIEN_THE SET TenSize = ?, GiaTaiQuan = ?, GiaMangVe = ?, GiaNgayLe = ? WHERE MaBienThe = ?";
                 String sqlInsertVar = "INSERT INTO BIEN_THE (MaSanPham, TenSize, GiaTaiQuan, GiaMangVe, GiaNgayLe) VALUES (?, ?, ?, ?, ?)";
                 
@@ -323,5 +318,62 @@ public class ProductDAO {
                 throw e; 
             }
         }
+    }
+    
+    // Hàm lấy danh sách món ăn kết hợp Lọc theo Danh mục và Tìm kiếm theo tên
+    public List<ProductModel> searchProducts(int categoryId, String keyword) {
+        List<ProductModel> list = new ArrayList<>();
+        
+        // Xử lý keyword an toàn
+        if (keyword == null || keyword.equals("Tìm kiếm tên món...")) {
+            keyword = "";
+        }
+        
+        StringBuilder sql = new StringBuilder(
+            "SELECT sp.MaSanPham, lsp.TenLoaiSanPham, sp.TenSanPham, sp.GiaTaiQuan, sp.GiaMangVe, sp.GiaNgayLe, sp.DuLieuAnh " +
+            "FROM SAN_PHAM sp " +
+            "JOIN LOAI_SAN_PHAM lsp ON sp.MaLoaiSanPham = lsp.MaLoaiSanPham " +
+            "WHERE sp.TrangThai = N'Đang bán' " +
+            "AND LOWER(sp.TenSanPham) LIKE LOWER(?) "
+        );
+        
+        // Nếu có chọn danh mục cụ thể thì thêm điều kiện WHERE
+        if (categoryId > 0) {
+            sql.append("AND sp.MaLoaiSanPham = ? ");
+        }
+        
+        try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+             
+            // Gán param cho từ khóa (thêm % ở 2 đầu để tìm kiếm chứa chuỗi)
+            ps.setString(1, "%" + keyword + "%");
+            
+            if (categoryId > 0) {
+                ps.setInt(2, categoryId);
+            }
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ProductModel product = new ProductModel();
+                    product.setProductID(rs.getInt("MaSanPham"));
+                    
+                    // [ĐÃ SỬA] Set CategoryName thay vì CategoryID
+                    product.setCategoryName(rs.getString("TenLoaiSanPham")); 
+                    
+                    product.setProductName(rs.getString("TenSanPham"));
+                    product.setDineInPrice(rs.getLong("GiaTaiQuan"));
+                    product.setTakeawayPrice(rs.getLong("GiaMangVe"));
+                    product.setHolidayPrice(rs.getLong("GiaNgayLe"));
+                    
+                    // Xử lý hình ảnh (Nếu bạn có logic lấy ảnh từ Blob thì thêm vào đây)
+                    // ... 
+                    
+                    list.add(product);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 }

@@ -30,6 +30,7 @@ public class MainFrame extends JFrame {
     private RolePanel rolePanel;
     private EmployeeSchedulePanel shiftPanel;
     private PosPanel posPanel; 
+    private DashboardPanel dashboardPanel;
     
     // [MỚI] Thêm OrderPanel để quản lý hóa đơn
     private OrderPanel orderPanel; 
@@ -78,9 +79,9 @@ public class MainFrame extends JFrame {
         addMenuButton("Tạo đơn", "POS", "Order");
         addMenuButton("Quản lý đơn hàng", "BILL", "OrderList");
         addMenuButton("Menu đồ uống", "MENU", "Menu");
-        addMenuButton("Quản lý kho", "STOCK", "Stock");
-        addMenuButton("Quản lý nhân viên", "STAFF", "Staff");
-        addMenuButton("Phân quyền", "ROLE", "Role");
+        addMenuButton("Nhập kho", "STOCK", "Stock");
+        addMenuButton("Quản lý ca làm việc", "STAFF", "Staff");
+        addMenuButton("Tài khoản & Phân quyền", "ROLE", "Role");
         addMenuButton("Báo cáo & Thống kê", "CHART", "Stats");
         addMenuButton("Cài đặt", "SETTINGS", "Settings");
         
@@ -106,7 +107,8 @@ public class MainFrame extends JFrame {
         contentArea.setOpaque(false);
 
         // Khởi tạo các Panel chức năng
-        contentArea.add(new DashboardPanel(), "Stats"); 
+        this.dashboardPanel = new DashboardPanel();
+        contentArea.add(this.dashboardPanel, "Stats");
         
         this.posPanel = new PosPanel();
         contentArea.add(this.posPanel, "Order");
@@ -220,4 +222,9 @@ public class MainFrame extends JFrame {
             sidebar.repaint();
         }
     }
+        
+    public DashboardPanel getDashboardPanel(){
+        return dashboardPanel;
+    }
+
 }

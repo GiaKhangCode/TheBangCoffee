@@ -2,11 +2,13 @@ package Controller;
 
 import Model.CartItemModel;
 import Model.CategoryModel;
+import Model.CustomerModel;
 import Model.OrderDetailModel;
 import Model.OrderModel;
 import Model.ProductModel;
 import Model.ToppingModel;
 import Model.VariantModel;
+import Service.CustomerService;
 import Service.OrderService;
 import Service.ProductCategoryService;
 import Service.ProductService;
@@ -27,26 +29,31 @@ public class PosController {
 
     private MainFrame mainFrame;
     private PosPanel posPanel;
-    private OrderPanel orderPanel; // [MỚI] Giao diện quản lý đơn hàng
+    private OrderPanel orderPanel;
     
     private ProductService productService;
     private ProductCategoryService categoryService;
     private OrderService orderService;
     private VariantService variantService;
     private ToppingService toppingService;
-
+    private CustomerService customerService;
+    
     // Data cho POS
     private List<ProductModel> allProducts;
     private List<CartItemModel> currentCart;
     private String currentCategoryFilter = "Tất cả";
     
+    // [MỚI] Biến lưu trữ ID khách hàng hiện tại đang được chọn (null = khách vãng lai)
+    private Integer currentCustomerId = null; 
+    
     // Data cho Order Tracking
     private int currentSelectedOrderId = -1;
+    private int currentCategoryId = 0;
 
     public PosController(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
         this.posPanel = mainFrame.getPosPanel();
-        this.orderPanel = mainFrame.getOrderPanel(); // [MỚI]
+        this.orderPanel = mainFrame.getOrderPanel(); 
         
         this.productService = new ProductService();
         this.categoryService = new ProductCategoryService();
@@ -54,21 +61,19 @@ public class PosController {
         this.currentCart = new ArrayList<>();
         this.variantService = new VariantService();
         this.toppingService = new ToppingService();
+        this.customerService = new CustomerService();
         
         initView();
         initPosListeners();
-        initOrderPanelListeners(); // [MỚI]
+        initOrderPanelListeners(); 
     }
 
     private void initView() {
-        // --- VIEW POS ---
         loadCategories();
         allProducts = productService.getProductList().getProductList(); 
         displayProducts(allProducts);
         updateCartView();
-        
-        // --- VIEW ORDER TRACKING ---
-        loadOrderList(); // Gọi tải danh sách đơn hàng khi mở app
+        loadOrderList(); 
     }
 
     // =========================================================================
@@ -81,7 +86,45 @@ public class PosController {
                 filterProducts();
             }
         });
+        
+        posPanel.addCheckCustomerListener(e -> handleCheckCustomer());
+        
+        // Bấm nút [X]: Hủy chọn khách hàng
+        posPanel.addClearCustomerListener(e -> {
+            posPanel.clearCustomerInfo();
+            currentCustomerId = null; // Trở về khách vãng lai
+        });
+        
+        // Đăng ký khách hàng độc lập
+        posPanel.addRegisterCustomerListener(e -> {
+            String phone = posPanel.getCustomerPhone();
+            String name = posPanel.getCustomerName();
 
+            if (name.isEmpty()) {
+                JOptionPane.showMessageDialog(posPanel, "Vui lòng nhập tên để đăng ký thành viên!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            try {
+                Model.CustomerModel newCustomer = customerService.registerNewCustomer(phone, name);
+                
+                if (newCustomer != null) {
+                    JOptionPane.showMessageDialog(posPanel, "Đăng ký thành viên thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    String info = String.format("%s | Điểm: %d (%s)", 
+                        newCustomer.getTenKH(), newCustomer.getDiemTichLuy(), newCustomer.getHangThanhVien());
+                    posPanel.setCustomerStatus(info, false); 
+                    
+                    // Gán ID khách hàng vừa tạo vào hệ thống
+                    currentCustomerId = newCustomer.getMaKH();
+                } else {
+                    JOptionPane.showMessageDialog(posPanel, "Đăng ký thất bại, vui lòng thử lại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(posPanel, "Lỗi cơ sở dữ liệu khi đăng ký khách hàng!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
         posPanel.addClearCartListener(e -> {
             if (currentCart.isEmpty()) return;
             if (JOptionPane.showConfirmDialog(posPanel, "Bạn muốn hủy đơn hàng hiện tại?", "Xác nhận", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
@@ -96,17 +139,14 @@ public class PosController {
                 return;
             }
 
-            // 1. Validate tồn kho trước khi cho phép lưu
             String inventoryCheckMsg = orderService.validateInventory(currentCart);
             if (inventoryCheckMsg != null) {
                 JOptionPane.showMessageDialog(posPanel, 
                     "Không thể tạo đơn hàng do kho thiếu nguyên liệu:\n\n" + inventoryCheckMsg, 
-                    "Cảnh báo Hết Hàng", 
-                    JOptionPane.WARNING_MESSAGE);
+                    "Cảnh báo Hết Hàng", JOptionPane.WARNING_MESSAGE);
                 return; 
             }
             
-            // 2. Tính tiền
             long finalTotal = 0; 
             double totalVat = 0; 
             for (CartItemModel item : currentCart) {
@@ -116,19 +156,33 @@ public class PosController {
 
             int confirm = JOptionPane.showConfirmDialog(posPanel, 
                     "Bạn có chắc muốn tạo đơn hàng này?\nTổng tiền: " + String.format("%,d đ", finalTotal), 
-                    "Xác nhận tạo đơn", 
-                    JOptionPane.YES_NO_OPTION, 
-                    JOptionPane.QUESTION_MESSAGE);
+                    "Xác nhận tạo đơn", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
             if (confirm == JOptionPane.YES_OPTION) {
-                int currentAccountId = 1; // [HARDCODE] Cần đổi thành Session của nhân viên
+                int currentAccountId = 1; // [HARDCODE] 
                 boolean isTakeaway = posPanel.isTakeaway();
                 boolean isHoliday = posPanel.isHoliday();
 
-                // 3. Tạo đơn hàng vào CSDL
+                // Tạo Khách mới NẾU đang nhập lỡ dở ở màn hình (Thu ngân bấm Tạo đơn luôn thay vì bấm nút Đăng ký nhỏ)
+                if (currentCustomerId == null && !posPanel.getCustomerName().isEmpty() && !posPanel.getCustomerPhone().isEmpty()) {
+                    try {
+                        CustomerModel newCus = customerService.registerNewCustomer(posPanel.getCustomerPhone(), posPanel.getCustomerName());
+                        if (newCus != null) currentCustomerId = newCus.getMaKH();
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(posPanel, "Lỗi khi lưu khách hàng mới!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                }
+
                 boolean isSuccess = orderService.createOrder(
-                    currentAccountId, currentCart, finalTotal, Math.round(totalVat), 
-                    "Chờ tiếp nhận", isTakeaway, isHoliday
+                    currentAccountId, 
+                    currentCustomerId,       
+                    currentCart, 
+                    finalTotal, 
+                    Math.round(totalVat), 
+                    "Chờ tiếp nhận", 
+                    isTakeaway, 
+                    isHoliday
                 );
 
                 if (isSuccess) {
@@ -136,7 +190,10 @@ public class PosController {
                     currentCart.clear(); 
                     updateCartView();    
                     
-                    // [MỚI] Cập nhật lại danh sách đơn hàng bên tab Order Tracking
+                    // Reset Khách Hàng sau khi mua xong
+                    posPanel.clearCustomerInfo(); 
+                    currentCustomerId = null;
+                    
                     loadOrderList(); 
                 } else {
                     JOptionPane.showMessageDialog(posPanel, "Lỗi khi tạo đơn hàng. Vui lòng kiểm tra lại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -157,6 +214,33 @@ public class PosController {
             for (CartItemModel item : currentCart) item.setOrderType(isTakeaway, isHoliday);
             updateCartView();
         });
+    }
+    
+    private void handleCheckCustomer() {
+        String phone = posPanel.getCustomerPhone();
+        
+        if (phone.isEmpty()) {
+            posPanel.clearCustomerInfo();
+            currentCustomerId = null;
+            return;
+        }
+
+        if (!phone.matches("\\d{10,11}")) {
+            JOptionPane.showMessageDialog(posPanel, "Số điện thoại không hợp lệ!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        CustomerModel customer = customerService.findCustomerByPhone(phone);
+        
+        if (customer != null) {
+            String info = String.format("%s | Điểm: %d (%s)", 
+                    customer.getTenKH(), customer.getDiemTichLuy(), customer.getHangThanhVien());
+            posPanel.setCustomerStatus(info, false); 
+            currentCustomerId = customer.getMaKH(); // Cập nhật ID khách
+        } else {
+            posPanel.setCustomerStatus("Khách mới! Nhập tên để tạo TK:", true); 
+            currentCustomerId = null; // Khách vãng lai chờ đăng ký
+        }
     }
 
     private void loadCategories() {
@@ -250,7 +334,6 @@ public class PosController {
     // =========================================================================
     
     private void initOrderPanelListeners() {
-        // 1. Tìm kiếm và Lọc trạng thái
         orderPanel.addSearchListener(new java.awt.event.KeyAdapter() {
             @Override
             public void keyReleased(java.awt.event.KeyEvent e) {
@@ -261,12 +344,10 @@ public class PosController {
         orderPanel.addFilterListener(e -> loadOrderList());
         orderPanel.addRefreshListener(e -> loadOrderList());
 
-        // 2. Click chọn 1 dòng trên bảng đơn hàng -> Tải chi tiết
         orderPanel.addTableSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 int row = orderPanel.getSelectedOrderRow();
                 if (row >= 0) {
-                    // Lấy mã đơn hàng ở cột số 0
                     currentSelectedOrderId = Integer.parseInt(orderPanel.getOrderTableModel().getValueAt(row, 0).toString().replace("#", ""));
                     loadOrderDetails(currentSelectedOrderId);
                 } else {
@@ -276,12 +357,10 @@ public class PosController {
             }
         });
 
-        // 3. Xử lý các nút thay đổi trạng thái
         orderPanel.addAcceptListener(e -> changeOrderStatus("Đang pha chế"));
         orderPanel.addPayListener(e -> changeOrderStatus("Thành công"));
         orderPanel.addCancelListener(e -> changeOrderStatus("Thất bại"));
         
-        // Nút Hoàn thành sẽ kích hoạt Trừ kho
         orderPanel.addCompleteListener(e -> {
             if (currentSelectedOrderId <= 0) return;
 
@@ -290,7 +369,6 @@ public class PosController {
                 "Xác nhận Hoàn thành", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
             
             if (confirm == JOptionPane.YES_OPTION) {
-                // [HÀM CẦN THÊM VÀO ORDER SERVICE] Hàm này sẽ vừa đổi status thành "Hoàn thành", vừa gọi trừ kho
                 boolean isSuccess = orderService.completeOrderAndDeductInventory(currentSelectedOrderId);
                 if (isSuccess) {
                     JOptionPane.showMessageDialog(orderPanel, "Hoàn thành đơn và trừ kho thành công!");
@@ -308,7 +386,6 @@ public class PosController {
         if (keyword.equals("Tìm theo mã đơn...")) keyword = "";
         String statusFilter = orderPanel.getSelectedFilter();
 
-        // [HÀM CẦN THÊM VÀO ORDER SERVICE] Truy xuất danh sách OrderModel từ CSDL
         List<OrderModel> orders = orderService.getAllOrders(statusFilter, keyword);
         
         javax.swing.table.DefaultTableModel model = orderPanel.getOrderTableModel();
@@ -318,15 +395,14 @@ public class PosController {
             for (OrderModel o : orders) {
                 model.addRow(new Object[]{
                     "#" + o.getOrderId(),
-                    o.getOrderTime(),     // String dạng "DD/MM/YYYY HH:mm"
-                    o.getOrderTypeNote(), // "Dùng tại quán", "[LỄ] Mang đi"...
+                    o.getOrderTime(),     
+                    o.getOrderTypeNote(), 
                     o.getStatus(),
                     String.format("%,d đ", o.getFinalTotal())
                 });
             }
         }
         
-        // Tạm thời xóa lựa chọn hiện tại nếu có
         orderPanel.clearOrderInfo();
         currentSelectedOrderId = -1;
     }
@@ -344,7 +420,6 @@ public class PosController {
                 String.format("%,d đ", order.getFinalTotal())
             );
             
-            // Cập nhật trạng thái các nút
             orderPanel.updateActionButtons(order.getStatus());
             
             javax.swing.table.DefaultTableModel detailModel = orderPanel.getDetailTableModel();
@@ -352,7 +427,7 @@ public class PosController {
             
             for (OrderDetailModel d : details) {
                 detailModel.addRow(new Object[]{
-                    d.getDisplayName(), // VD: "Trà sữa thái xanh (Size L, Trân châu)"
+                    d.getDisplayName(), 
                     d.getQuantity(),
                     String.format("%,d đ", d.getTotalRowPrice())
                 });
@@ -370,8 +445,8 @@ public class PosController {
         if (confirm == JOptionPane.YES_OPTION) {
             boolean isSuccess = orderService.updateOrderStatus(currentSelectedOrderId, newStatus);
             if (isSuccess) {
-                loadOrderList(); // Render lại bảng
-                loadOrderDetails(currentSelectedOrderId); // Cập nhật lại UI chi tiết
+                loadOrderList(); 
+                loadOrderDetails(currentSelectedOrderId); 
             } else {
                 JOptionPane.showMessageDialog(orderPanel, "Không thể cập nhật trạng thái!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }

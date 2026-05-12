@@ -144,6 +144,11 @@ public class StockPanel extends JPanel {
         inventoryTable = new JTable(inventoryModel);
         ComponentUI.styleTable(inventoryTable, TEXT_DARK, TEXT_DARK, PRIMARY_COLOR);
         
+        InventoryStatusRenderer customRenderer = new InventoryStatusRenderer();
+        for (int i = 0; i < inventoryTable.getColumnCount() - 1; i++) {
+            inventoryTable.getColumnModel().getColumn(i).setCellRenderer(customRenderer);
+        }
+        
         TableColumn actionCol = inventoryTable.getColumnModel().getColumn(5);
         actionCol.setCellRenderer(new ActionButtonRenderer(true, true, true));
         actionCol.setCellEditor(new ActionButtonEditor(new ActionButtonListener() {
@@ -201,7 +206,7 @@ public class StockPanel extends JPanel {
         cbCategory.setBackground(Color.WHITE);
         
         txtIngredientName = new JTextField();
-        String[] units = {"kg", "gram", "lít", "ml"}; 
+        String[] units = {"kg", "gram", "lít", "ml", "cái"}; 
         cbUnit = new JComboBox<>(units); cbUnit.setBackground(Color.WHITE);
         
         txtUnitCapacity = new JTextField(); 
@@ -625,6 +630,40 @@ public class StockPanel extends JPanel {
         }
 
         @Override public Object getCellEditorValue() { return ""; }
+    }
+    
+    // ==========================================================
+    // CLASS CUSTOM RENDERER TÔ MÀU DÒNG CẢNH BÁO "HẾT HÀNG"
+    // ==========================================================
+    class InventoryStatusRenderer extends DefaultTableCellRenderer {
+        private final Color WARNING_COLOR = new Color(255, 230, 230); // Đỏ nhạt (Hồng nhạt)
+        private final Color WARNING_TEXT_COLOR = new Color(220, 53, 69); // Đỏ đậm
+        private final Color NORMAL_BG = Color.WHITE;
+        private final Color NORMAL_TEXT = TEXT_DARK;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+            // Cột 4 là cột Trạng thái ("Còn hàng", "Hết hàng", "Sắp hết")
+            String status = table.getValueAt(row, 4).toString();
+
+            if (!isSelected) { // Không tô màu đè lên dòng đang click chọn
+                if (status.equalsIgnoreCase("Hết hàng") || status.equalsIgnoreCase("Sắp hết")) {
+                    c.setBackground(WARNING_COLOR);
+                    // Có thể đổi màu chữ luôn cho nổi bật
+                    if(column == 4) c.setForeground(WARNING_TEXT_COLOR); 
+                    else c.setForeground(NORMAL_TEXT);
+                } else {
+                    c.setBackground(NORMAL_BG);
+                    c.setForeground(NORMAL_TEXT);
+                }
+            }
+            
+            // Xóa viền khi focus
+            setBorder(new EmptyBorder(0, 5, 0, 5));
+            return c;
+        }
     }
 
     public void addSubmitReceiptListener(ActionListener listener) {

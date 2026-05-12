@@ -179,7 +179,7 @@ public class OrderPanel extends JPanel {
         };
         detailTable = new JTable(detailTableModel);
         styleTable(detailTable);
-        detailTable.setRowHeight(45); // Cao hơn chút để chứa text dài
+        detailTable.setRowHeight(65); // Cao hơn chút để chứa text dài
 
         TableColumnModel dtcm = detailTable.getColumnModel();
         dtcm.getColumn(0).setPreferredWidth(250);

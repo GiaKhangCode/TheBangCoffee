@@ -1,101 +1,238 @@
 package DatabaseAccessObject;
 
-import ConnectDatabase.ConnectionUtils;
+import static ConnectDatabase.ConnectionUtils.getMyConnection;
 import Model.ShiftModel;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Date;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ShiftDAO {
-    
-    // 1. THÊM CA LÀM VIỆC
-    public boolean insertShift(ShiftModel shift) {
-        String sql = "INSERT INTO CA_LAM_VIEC (MaTaiKhoan, BuoiLamViec, NgayLam, SoGioLamViec) VALUES (?, ?, ?, ?)";
-        try (Connection con = ConnectionUtils.getMyConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            
-            ps.setInt(1, shift.getMaTaiKhoan());
-            ps.setString(2, shift.getBuoiLamViec());
-            ps.setDate(3, Date.valueOf(shift.getNgayLam())); // Chuyển LocalDate sang java.sql.Date
-            ps.setDouble(4, shift.getSoGioLamViec());
-            
-            return ps.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
 
-    // 2. CẬP NHẬT CA LÀM VIỆC (Đổi nhân viên, đổi giờ)
-    public boolean updateShift(ShiftModel shift) {
-        String sql = "UPDATE CA_LAM_VIEC SET MaTaiKhoan = ?, SoGioLamViec = ? WHERE MaCa = ?";
-        try (Connection con = ConnectionUtils.getMyConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            
-            ps.setInt(1, shift.getMaTaiKhoan());
-            ps.setDouble(2, shift.getSoGioLamViec());
-            ps.setInt(3, shift.getMaCa());
-            
-            return ps.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    // 3. XÓA CA LÀM VIỆC
-    public boolean deleteShift(int maCa) {
-        String sql = "DELETE FROM CA_LAM_VIEC WHERE MaCa = ?";
-        try (Connection con = ConnectionUtils.getMyConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            
-            ps.setInt(1, maCa);
-            return ps.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    // 4. LẤY DANH SÁCH CA TRONG 1 THÁNG (Để hiển thị lên View Lịch)
-    public List<ShiftModel> getShiftsByMonthYear(int month, int year) {
+    public List<ShiftModel> getAllShifts() throws SQLException, ClassNotFoundException {
         List<ShiftModel> list = new ArrayList<>();
-        // Truy vấn JOIN để lấy được tên tài khoản/nhân viên (kết với tài khoản và người dùng để lấy Họ tên người trực ca đó)
-        String sql = "SELECT C.MaCa, C.MaTaiKhoan, ND.HoTen AS TenNhanVien, C.BuoiLamViec, C.NgayLam, C.SoGioLamViec " +
-                     "FROM CA_LAM_VIEC C " +
-                     "JOIN TAI_KHOAN T ON C.MaTaiKhoan = T.MaTaiKhoan " +
-                     "JOIN NGUOI_DUNG ND ON T.MaNguoiDung = ND.MaNguoiDung " +
-                     "WHERE EXTRACT(MONTH FROM C.NgayLam) = ? AND EXTRACT(YEAR FROM C.NgayLam) = ?";
-                     
-        try (Connection con = ConnectionUtils.getMyConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            
-            ps.setInt(1, month);
-            ps.setInt(2, year);
-            ResultSet rs = ps.executeQuery();
-            
+        String sql = "SELECT MaCa, TenCa, GioBatDau, GioKetThuc, TrangThai FROM CA_LAM_VIEC " +
+                     "ORDER BY " +
+                     "  CASE WHEN TrangThai = N'Đang sử dụng' THEN 1 ELSE 2 END ASC, " +
+                     "  MaCa ASC";
+        
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+             
             while (rs.next()) {
                 ShiftModel shift = new ShiftModel(
                     rs.getInt("MaCa"),
-                    rs.getInt("MaTaiKhoan"),
-                    rs.getString("TenNhanVien"),
-                    rs.getString("BuoiLamViec"),
-                    rs.getDate("NgayLam").toLocalDate(),
-                    rs.getDouble("SoGioLamViec")
+                    rs.getString("TenCa"),
+                    rs.getString("GioBatDau"),
+                    rs.getString("GioKetThuc"),
+                    rs.getString("TrangThai")
                 );
                 list.add(shift);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
         return list;
     }
+
+    public boolean isShiftNameExists(String tenCa) throws SQLException, ClassNotFoundException {
+        String sql = "SELECT COUNT(*) FROM CA_LAM_VIEC WHERE UPPER(TenCa) = UPPER(?)";
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, tenCa);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
+    }
     
-    // 5. Lấy dữ liệu ca để hiển thị lên view
-   
+    public boolean isShiftNameExistsExcludeCurrent(String tenCa, int maCaHienTai) throws SQLException, ClassNotFoundException {
+        String sql = "SELECT COUNT(*) FROM CA_LAM_VIEC WHERE UPPER(TenCa) = UPPER(?) AND MaCa != ?";
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, tenCa);
+            ps.setInt(2, maCaHienTai);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean checkUpdateConflict(int maCa, String newGioBatDau, String newGioKetThuc) throws SQLException, ClassNotFoundException {
+        String sql = "SELECT COUNT(*) " +
+                     "FROM LICH_LAM_VIEC l1 " +
+                     "JOIN LICH_LAM_VIEC l2 ON l1.NgayLamViec = l2.NgayLamViec AND l1.MaTaiKhoan = l2.MaTaiKhoan " +
+                     "JOIN CA_LAM_VIEC c2 ON l2.MaCa = c2.MaCa " +
+                     "WHERE l1.MaCa = ? " +
+                     "  AND l2.MaCa != ? " +
+                     "  AND (? < c2.GioKetThuc AND c2.GioBatDau < ?) " +
+                     "  AND c2.TrangThai = N'Đang sử dụng'";
+                     
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, maCa);          
+            ps.setInt(2, maCa);          
+            ps.setString(3, newGioBatDau); 
+            ps.setString(4, newGioKetThuc);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0; 
+                }
+            }
+        }
+        return false; 
+    }
+
+    public boolean insertShift(ShiftModel shift) throws SQLException, ClassNotFoundException {
+        String sql = "INSERT INTO CA_LAM_VIEC (TenCa, GioBatDau, GioKetThuc, TrangThai) VALUES (?, ?, ?, N'Đang sử dụng')";
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, shift.getTenCa());
+            ps.setString(2, shift.getGioBatDau());
+            ps.setString(3, shift.getGioKetThuc());
+            
+            int result = ps.executeUpdate();
+            if(result > 0) {
+                try { conn.commit(); } catch (SQLException e) { }
+                return true;
+            }
+            return false;
+        }
+    }
+
+    public boolean updateShift(ShiftModel shift) throws SQLException, ClassNotFoundException {
+        String sql = "UPDATE CA_LAM_VIEC SET TenCa=?, GioBatDau=?, GioKetThuc=? WHERE MaCa=?";
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, shift.getTenCa());
+            ps.setString(2, shift.getGioBatDau());
+            ps.setString(3, shift.getGioKetThuc());
+            ps.setInt(4, shift.getMaCa());
+            
+            int result = ps.executeUpdate();
+            if(result > 0) {
+                try { conn.commit(); } catch (SQLException e) { }
+                return true;
+            }
+            return false;
+        }
+    }
+    
+    public List<ShiftModel> getActiveShift() throws SQLException, ClassNotFoundException{
+        List<ShiftModel> list = new ArrayList<>();
+        String sql = "SELECT MaCa, TenCa, GioBatDau, GioKetThuc, TrangThai FROM CA_LAM_VIEC "
+                + "WHERE TRANGTHAI = N'Đang sử dụng' ORDER BY MaCa ASC";
+        
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+             
+            while (rs.next()) {
+                ShiftModel shift = new ShiftModel(
+                    rs.getInt("MaCa"),
+                    rs.getString("TenCa"),
+                    rs.getString("GioBatDau"),
+                    rs.getString("GioKetThuc"),
+                    rs.getString("TrangThai")
+                );
+                list.add(shift);
+            }
+        }
+        return list;
+    }
+
+    public boolean disableShift(int maCa) throws SQLException, ClassNotFoundException {
+        String sql = "UPDATE CA_LAM_VIEC SET TrangThai = N'Ngừng sử dụng' WHERE MaCa = ?";
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, maCa);
+            
+            int result = ps.executeUpdate();
+            if(result > 0) {
+                try { conn.commit(); } catch (SQLException e) { }
+                return true;
+            }
+            return false;
+        }
+    }
+
+    public List<String[]> getWeeklySchedules(java.time.LocalDate startDate, java.time.LocalDate endDate) throws SQLException, ClassNotFoundException {
+        List<String[]> list = new ArrayList<>();
+        String sql = "SELECT l.MaTaiKhoan, TO_CHAR(l.NgayLamViec, 'YYYY-MM-DD') AS Ngay, c.TenCa " +
+                     "FROM LICH_LAM_VIEC l JOIN CA_LAM_VIEC c ON l.MaCa = c.MaCa " +
+                     "WHERE l.NgayLamViec >= ? AND l.NgayLamViec <= ? " +
+                     "AND (c.TrangThai = N'Đang sử dụng' OR l.NgayLamViec < TRUNC(SYSDATE))";
+                     
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+             
+            ps.setDate(1, java.sql.Date.valueOf(startDate));
+            ps.setDate(2, java.sql.Date.valueOf(endDate));
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while(rs.next()) {
+                    list.add(new String[]{
+                        String.valueOf(rs.getInt("MaTaiKhoan")),
+                        rs.getString("Ngay"),
+                        rs.getString("TenCa")
+                    });
+                }
+            }
+        }
+        return list;
+    }
+
+    public void deleteSchedules(java.time.LocalDate startDate, java.time.LocalDate endDate, List<Integer> accountIds) throws SQLException, ClassNotFoundException {
+        if (accountIds == null || accountIds.isEmpty()) return;
+        
+        StringBuilder placeholders = new StringBuilder();
+        for (int i = 0; i < accountIds.size(); i++) {
+            placeholders.append("?");
+            if (i < accountIds.size() - 1) placeholders.append(",");
+        }
+        
+        String sql = "DELETE FROM LICH_LAM_VIEC WHERE NgayLamViec >= ? AND NgayLamViec <= ? AND MaTaiKhoan IN (" + placeholders + ")";
+        
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+             
+            ps.setDate(1, java.sql.Date.valueOf(startDate));
+            ps.setDate(2, java.sql.Date.valueOf(endDate));
+            
+            int index = 3;
+            for (Integer id : accountIds) {
+                ps.setInt(index++, id);
+            }
+            
+            ps.executeUpdate();
+            try { conn.commit(); } catch (SQLException e) {} 
+        }
+    }
+
+    public void insertSchedule(java.time.LocalDate workDate, int maCa, int maTaiKhoan) throws SQLException, ClassNotFoundException {
+        String sql = "INSERT INTO LICH_LAM_VIEC (NgayLamViec, MaCa, MaTaiKhoan) VALUES (?, ?, ?)";
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+             
+            ps.setDate(1, java.sql.Date.valueOf(workDate));
+            ps.setInt(2, maCa);
+            ps.setInt(3, maTaiKhoan);
+            
+            ps.executeUpdate();
+            try { conn.commit(); } catch (SQLException e) {}
+            
+        } catch (SQLException ex) {
+            if (!ex.getMessage().contains("ORA-00001") && !ex.getMessage().contains("unique constraint")) { 
+                throw ex;
+            }
+        }
+    }
 }

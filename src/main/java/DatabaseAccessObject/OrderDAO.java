@@ -13,8 +13,9 @@ import java.util.List;
 
 public class OrderDAO {
 
-    public boolean createOrder(int accountId, List<CartItemModel> cart, long finalTotal, double totalVat, String status, boolean isTakeaway, boolean isHoliday) {
-        String insertOrderSQL = "INSERT INTO DON_HANG (MaTaiKhoan, TongTien, TongTienThue, ThanhTien, TrangThai, GhiChu) VALUES (?, ?, ?, ?, ?, ?)";
+    public boolean createOrder(int accountId, Integer maKhachHang, List<CartItemModel> cart, long finalTotal, double totalVat, String status, boolean isTakeaway, boolean isHoliday) {
+        // [SỬA] Thêm MaKhachHang vào câu lệnh INSERT và thêm 1 dấu ? tương ứng
+        String insertOrderSQL = "INSERT INTO DON_HANG (MaTaiKhoan, MaKhachHang, TongTien, TongTienThue, ThanhTien, TrangThai, GhiChu) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String insertOrderDetailSQL = "INSERT INTO CHI_TIET_DON_HANG (MaDonHang, MaBienThe, SoLuong, GiaTruocThue, TienThue, ThanhTien, GhiChuMon) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String insertToppingSQL = "INSERT INTO CHI_TIET_TOPPING (MaCTHD, MaTopping, SoLuong, GiaTruocThue, TienThue) VALUES (?, ?, ?, ?, ?)";
 
@@ -30,11 +31,21 @@ public class OrderDAO {
 
                 try (PreparedStatement psOrder = conn.prepareStatement(insertOrderSQL, new String[]{"MADONHANG"})) {
                     psOrder.setInt(1, accountId);
-                    psOrder.setLong(2, subTotal);
-                    psOrder.setLong(3, Math.round(totalVat));
-                    psOrder.setLong(4, finalTotal);
-                    psOrder.setString(5, status);
-                    psOrder.setString(6, orderTypeNote); 
+                    
+                    // [MỚI] Xử lý MaKhachHang: Nếu có thì lưu, nếu null (khách vãng lai) thì set Null
+                    if (maKhachHang != null) {
+                        psOrder.setInt(2, maKhachHang);
+                    } else {
+                        psOrder.setNull(2, java.sql.Types.INTEGER);
+                    }
+                    
+                    // Các tham số tiếp theo phải lùi index đi 1 đơn vị
+                    psOrder.setLong(3, subTotal);
+                    psOrder.setLong(4, Math.round(totalVat));
+                    psOrder.setLong(5, finalTotal);
+                    psOrder.setString(6, status);
+                    psOrder.setString(7, orderTypeNote); 
+                    
                     psOrder.executeUpdate();
 
                     try (ResultSet rs = psOrder.getGeneratedKeys()) {
@@ -69,7 +80,7 @@ public class OrderDAO {
                         psDetail.setLong(5, Math.round(taxAmount));      
                         psDetail.setLong(6, totalRowPrice);              
                         
-                        // [ĐÃ SỬA LẠI]: Lấy ghi chú (Đá, Đường...) từ CartItemModel để truyền vào cột GhiChuMon
+                        // Lấy ghi chú (Đá, Đường...) từ CartItemModel để truyền vào cột GhiChuMon
                         psDetail.setString(7, item.getNote()); 
                         
                         psDetail.executeUpdate();

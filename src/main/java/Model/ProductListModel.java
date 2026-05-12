@@ -33,4 +33,8 @@ public class ProductListModel {
         this.productList.add(product);
     }
     
+    public void addProduct(ProductModel product){
+        this.productList.add(product);
+    }
+    
 }

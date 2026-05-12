@@ -20,6 +20,7 @@ import View.ProductEditDialog;
 
 import java.awt.GridLayout;
 import java.awt.event.ItemEvent;
+import java.awt.event.KeyAdapter;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ public class ProductController {
     private MenuPanel menuPanel;
     private MainFrame mainFrame;
     private ProductListModel productList;
+    private List<ProductModel> allProducts;
     private ProductDetailDialog productDetailDialogFrame;
     private ProductCategoryService categoryService;
     private IngredientService ingredientService;
@@ -64,6 +66,13 @@ public class ProductController {
             loadDialogData();
             productDetailDialogFrame.clearForm();
             productDetailDialogFrame.setVisible(true);
+        });
+        
+        menuPanel.addSearchListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(java.awt.event.KeyEvent e) {
+                filterProducts();
+            }
         });
 
         // ========================================================
@@ -553,6 +562,13 @@ public class ProductController {
 
     private void loadMainMenuData() {
         productList = productService.getProductList();
+        
+        if (productList != null && productList.getProductList() != null) {
+            allProducts = new ArrayList<>(productList.getProductList()); 
+        } else {
+            allProducts = new ArrayList<>();
+        }
+        
         menuPanel.displayProductList(productList);
     }
     
@@ -583,5 +599,31 @@ public class ProductController {
             editDialog.loadRecipeData(null);
             editDialog.setEstimatedCost(0);
         }
+    }
+    
+    private void filterProducts() {
+        // Lấy từ khóa và viết thường để tìm kiếm không phân biệt hoa thường
+        String keyword = menuPanel.getSearchText().toLowerCase();
+        
+        // Bỏ qua chữ mờ
+        if (keyword.equals("tìm kiếm tên món...")) {
+            keyword = "";
+        }
+
+        // Tạo một Model mới để chứa kết quả đã lọc
+        ProductListModel filteredModel = new ProductListModel();
+        
+        // Duyệt qua danh sách gốc
+        for (ProductModel p : allProducts) {
+            // Lọc theo Tên món HOẶC Tên danh mục đều được
+            if (p.getProductName().toLowerCase().contains(keyword) || 
+                p.getCategoryName().toLowerCase().contains(keyword)) {
+                
+                filteredModel.addProduct(p); // Thêm món khớp vào list mới
+            }
+        }
+        
+        // Yêu cầu MenuPanel hiển thị danh sách mới này
+        menuPanel.displayProductList(filteredModel);
     }
 }
