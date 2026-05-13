@@ -27,6 +27,13 @@ public class VariantModel {
 
     public String getSizeName() { return sizeName; }
     public void setSizeName(String sizeName) { this.sizeName = sizeName; }
+    
+    // Thêm hàm này để AutoCompleteComboBox biết cách hiển thị tên Size lên giao diện
+    @Override
+    public String toString() {
+        // Trả về tên biến chứa tên Size của bạn (ở đây mình ví dụ là sizeName)
+        return this.sizeName; 
+    }
 
     // --- GETTERS & SETTERS FOR PRICES ---
     public long getDineInPrice() { return dineInPrice; }

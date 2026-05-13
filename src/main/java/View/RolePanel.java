@@ -15,7 +15,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays; // Bổ sung thư viện này
+import java.util.Arrays; 
 import java.util.List;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -37,26 +37,26 @@ public class RolePanel extends JPanel {
     private JButton btnAddScope;
     private JButton btnAssignRole;
     
-    // --- ĐỔI TOÀN BỘ SANG AUTOCOMPLETE COMBOBOX ---
-    private AutoCompleteComboBox cbRoleGroup;
-    private AutoCompleteComboBox cbRole;
-    private AutoCompleteComboBox cbFunctions = new AutoCompleteComboBox();
+    // --- [ĐÃ SỬA] THÊM <String> CHO TẤT CẢ AUTOCOMPLETE COMBOBOX ---
+    private AutoCompleteComboBox<String> cbRoleGroup;
+    private AutoCompleteComboBox<String> cbRole;
+    private AutoCompleteComboBox<String> cbFunctions = new AutoCompleteComboBox<>();
     
     private DefaultTableModel assignedRolesTableModel;
     private JTable assignedRolesTable;
     private JLabel lblAssignedRolesTitle;
     
     // --- THÊM CÁC BIẾN NÀY CHO TAB 3 ---
-    private AutoCompleteComboBox cbAccount;
-    private AutoCompleteComboBox cbAccountRoleGroup;
+    private AutoCompleteComboBox<String> cbAccount;
+    private AutoCompleteComboBox<String> cbAccountRoleGroup;
     private JButton btnAssignRoleGroupToAccount;
     
     private DefaultTableModel assignedAccountRolesTableModel;
     private JTable assignedAccountRolesTable;
     private JLabel lblAssignedAccountRolesTitle;
     
-    private AutoCompleteComboBox cbAccountTab4;
-    private AutoCompleteComboBox cbRoleTab4;
+    private AutoCompleteComboBox<String> cbAccountTab4;
+    private AutoCompleteComboBox<String> cbRoleTab4;
     private JButton btnAssignScopeToAccount;
     
     private DefaultTableModel assignedAccountScopesTableModel;
@@ -73,7 +73,7 @@ public class RolePanel extends JPanel {
     private DefaultTableModel roleGroupTableModel;
     private JTable roleGroupTable;
     private JButton btnAddRoleGroupTab5;
-    private RoleActionListener roleGroupTableListener; // Tái sử dụng lại Interface của Tab 1
+    private RoleActionListener roleGroupTableListener; 
     // --------------------------------------------------------
    
     private boolean hasEditPermission = true;
@@ -265,8 +265,8 @@ public class RolePanel extends JPanel {
         JLabel lblRoleGroup = new JLabel("Chọn Nhóm Quyền:");
         lblRoleGroup.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
-        // --- KHỞI TẠO RỖNG ---
-        this.cbRoleGroup = new AutoCompleteComboBox();
+        // --- [ĐÃ SỬA] THÊM <String> KHI KHỞI TẠO ---
+        this.cbRoleGroup = new AutoCompleteComboBox<>();
         cbRoleGroup.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
         cbRoleGroup.setPreferredSize(new Dimension(cbWidth, cbHeight)); 
 
@@ -277,8 +277,8 @@ public class RolePanel extends JPanel {
         JLabel lblScope = new JLabel("Gán Phạm Vi Quyền:");
         lblScope.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
-        // --- KHỞI TẠO RỖNG ---
-        this.cbRole = new AutoCompleteComboBox();
+        // --- [ĐÃ SỬA] THÊM <String> KHI KHỞI TẠO ---
+        this.cbRole = new AutoCompleteComboBox<>();
         cbRole.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
         cbRole.setPreferredSize(new Dimension(cbWidth, cbHeight)); 
 
@@ -367,12 +367,8 @@ public class RolePanel extends JPanel {
         JLabel lblAcc = new JLabel("Chọn Tài Khoản:");
         lblAcc.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
-        // --- KHỞI TẠO VỚI DỮ LIỆU MOCK ---
-        this.cbAccount = new AutoCompleteComboBox(Arrays.asList(
-            "1 - Lê Quốc Kiệt", 
-            "2 - Bành Xuân Phúc", 
-            "3 - Lâm Nguyên Phát"
-        ));
+        // --- [ĐÃ SỬA] THÊM <String> KHI KHỞI TẠO ---
+        this.cbAccount = new AutoCompleteComboBox<>();
         cbAccount.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
         cbAccount.setPreferredSize(new Dimension(cbWidth, cbHeight)); 
 
@@ -383,12 +379,8 @@ public class RolePanel extends JPanel {
         JLabel lblRole = new JLabel("Gán Nhóm Quyền:");
         lblRole.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
-        // --- KHỞI TẠO VỚI DỮ LIỆU MOCK ---
-        this.cbAccountRoleGroup = new AutoCompleteComboBox(Arrays.asList(
-            "1 - Quản lý", 
-            "2 - Nhân viên Bán hàng", 
-            "3 - Quản lý kho"
-        ));
+        // --- [ĐÃ SỬA] THÊM <String> KHI KHỞI TẠO ---
+        this.cbAccountRoleGroup = new AutoCompleteComboBox<>();
         cbAccountRoleGroup.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
         cbAccountRoleGroup.setPreferredSize(new Dimension(cbWidth, cbHeight)); 
 
@@ -449,7 +441,10 @@ public class RolePanel extends JPanel {
                 }
             }
         });
-        cbAccount.setSelectedIndex(0);
+        // [ĐÃ SỬA LỖI] Bọc dòng setSelectedIndex lại để tránh Crash khi ComboBox rỗng
+        if (cbAccount.getItemCount() > 0) {
+            cbAccount.setSelectedIndex(0);
+        }
 
         return panel;
     }
@@ -488,8 +483,8 @@ public class RolePanel extends JPanel {
         JLabel lblAcc = new JLabel("Chọn Tài Khoản:");
         lblAcc.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
-        // --- KHỞI TẠO RỖNG ---
-        this.cbAccountTab4 = new AutoCompleteComboBox();
+        // --- [ĐÃ SỬA] THÊM <String> KHI KHỞI TẠO ---
+        this.cbAccountTab4 = new AutoCompleteComboBox<>();
         cbAccountTab4.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
         cbAccountTab4.setPreferredSize(new Dimension(cbWidth, cbHeight)); 
 
@@ -500,8 +495,8 @@ public class RolePanel extends JPanel {
         JLabel lblScope = new JLabel("Cấp Quyền Riêng:");
         lblScope.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         
-        // --- KHỞI TẠO RỖNG ---
-        this.cbRoleTab4 = new AutoCompleteComboBox();
+        // --- [ĐÃ SỬA] THÊM <String> KHI KHỞI TẠO ---
+        this.cbRoleTab4 = new AutoCompleteComboBox<>();
         cbRoleTab4.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
         cbRoleTab4.setPreferredSize(new Dimension(cbWidth, cbHeight)); 
 
@@ -672,7 +667,6 @@ public class RolePanel extends JPanel {
         }
     }
     
-    // --- ĐÃ NÂNG CẤP DÙNG LIST + SETDATA() ---
     public void loadRoleGroupsToTab2ComboBox(List<RoleGroupModel> roleGroups) {
         List<String> itemsToLoad = new ArrayList<>();
         if (roleGroups != null) {
@@ -683,7 +677,6 @@ public class RolePanel extends JPanel {
         cbRoleGroup.setData(itemsToLoad);
     }
     
-    // --- ĐÃ NÂNG CẤP DÙNG LIST + SETDATA() ---
     public void loadRolesToTab2ComboBox(List<RoleModel> roles) {
         List<String> itemsToLoad = new ArrayList<>(); 
         
@@ -700,7 +693,6 @@ public class RolePanel extends JPanel {
         cbRole.setData(itemsToLoad); 
     }
     
-    // --- ĐÃ NÂNG CẤP DÙNG LIST + SETDATA() ---
     public void loadFunctionsToComboBox(List<FunctionModel> functions) {
         List<String> itemsToLoad = new ArrayList<>();
         if (functions != null) {
@@ -727,7 +719,6 @@ public class RolePanel extends JPanel {
         }
     }
     
-    // --- ĐÃ NÂNG CẤP DÙNG LIST + SETDATA() ---
     public void loadAccountsToTab3ComboBox(List<AccountModel> accounts) {
         List<String> itemsToLoad = new ArrayList<>();
         if (accounts != null) {
@@ -738,7 +729,6 @@ public class RolePanel extends JPanel {
         cbAccount.setData(itemsToLoad);
     }
 
-    // --- ĐÃ NÂNG CẤP DÙNG LIST + SETDATA() ---
     public void loadRoleGroupsToTab3ComboBox(List<RoleGroupModel> roleGroups) {
         List<String> itemsToLoad = new ArrayList<>();
         if (roleGroups != null && !roleGroups.isEmpty()) {
@@ -770,7 +760,6 @@ public class RolePanel extends JPanel {
         }
     }
     
-    // --- ĐÃ NÂNG CẤP DÙNG LIST + SETDATA() ---
     public void loadAccountsToTab4ComboBox(List<AccountModel> accounts) {
         List<String> itemsToLoad = new ArrayList<>();
         if (accounts != null) {
@@ -781,7 +770,6 @@ public class RolePanel extends JPanel {
         cbAccountTab4.setData(itemsToLoad);
     }
 
-    // --- ĐÃ NÂNG CẤP DÙNG LIST + SETDATA() ---
     public void loadRolesToTab4ComboBox(List<RoleModel> roles) {
         List<String> itemsToLoad = new ArrayList<>();
         if (roles != null && !roles.isEmpty()) {
@@ -798,7 +786,7 @@ public class RolePanel extends JPanel {
     }
 
     public void loadAssignedRolesToTab4Table(String accountName, List<RoleModel> assignedScopes) {
-        lblAssignedAccountScopesTitle.setText("Danh sách quyền riêng của tài khoản: " + accountName);
+        lblAssignedAccountRolesTitle.setText("Danh sách quyền riêng của tài khoản: " + accountName);
         assignedAccountScopesTableModel.setRowCount(0); 
         
         if (assignedScopes != null) {
@@ -869,28 +857,28 @@ public class RolePanel extends JPanel {
     }
     
     
-    // --- SỬA KIỂU TRẢ VỀ CỦA CÁC GETTERS ---
-    public AutoCompleteComboBox getRoleGroupComboBox(){
+    // --- [ĐÃ SỬA] ĐỔI KIỂU TRẢ VỀ CỦA GETTERS SANG <String> ---
+    public AutoCompleteComboBox<String> getRoleGroupComboBox(){
         return cbRoleGroup;
     }
     
-    public AutoCompleteComboBox getRoleComboBox(){
+    public AutoCompleteComboBox<String> getRoleComboBox(){
         return cbRole;
     }
     
-    public AutoCompleteComboBox getAccountComboBox() {
+    public AutoCompleteComboBox<String> getAccountComboBox() {
         return cbAccount;
     }
 
-    public AutoCompleteComboBox getAccountRoleGroupComboBox() {
+    public AutoCompleteComboBox<String> getAccountRoleGroupComboBox() {
         return cbAccountRoleGroup;
     }
     
-    public AutoCompleteComboBox getAccountTab4ComboBox() {
+    public AutoCompleteComboBox<String> getAccountTab4ComboBox() {
         return cbAccountTab4;
     }
 
-    public AutoCompleteComboBox getRoleTab4ComboBox() {
+    public AutoCompleteComboBox<String> getRoleTab4ComboBox() {
         return cbRoleTab4;
     }
     
@@ -976,6 +964,7 @@ public class RolePanel extends JPanel {
                 return null; 
             }
 
+            // cbFunctions hiện tại giữ Object String nên toString() vẫn an toàn
             String funcId = cbFunctions.getSelectedItem().toString().split(" - ")[0];
 
             RoleModel newRole = new RoleModel();
@@ -1047,7 +1036,8 @@ public class RolePanel extends JPanel {
         JLabel lblFunction = new JLabel("Chọn chức năng:");
 
         for (int i = 0; i < cbFunctions.getItemCount(); i++) {
-            if (cbFunctions.getItemAt(i).startsWith(currentRole.getFunctionId() + " - ")) {
+            String function = cbFunctions.getItemAt(i);
+            if (function.startsWith(currentRole.getFunctionId() + " - ")) {
                 cbFunctions.setSelectedIndex(i);
                 break;
             }

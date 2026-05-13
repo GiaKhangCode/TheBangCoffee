@@ -19,15 +19,13 @@ public class OrderService {
         this.orderDAO = new OrderDAO();
     }
 
-    // [SỬA] Thêm isTakeaway và isHoliday vào tham số
-    public boolean createOrder(int accountId, Integer maKhachHang, List<CartItemModel> cart, long finalTotal, double totalVat, String status, boolean isTakeaway, boolean isHoliday) {
-        
+    // [ĐÃ SỬA] Đổi status thành prepStatus và payStatus
+    public boolean createOrder(int accountId, Integer maKhachHang, List<CartItemModel> cart, long finalTotal, double totalVat, String prepStatus, String payStatus, boolean isTakeaway, boolean isHoliday, int pointsEarned, int pointsUsed) {
         if (cart == null || cart.isEmpty()) {
             return false;
         }
-
-        // Truyền maKhachHang xuống tầng DAO
-        return orderDAO.createOrder(accountId, maKhachHang, cart, finalTotal, totalVat, status, isTakeaway, isHoliday);
+ 
+        return orderDAO.createOrder(accountId, maKhachHang, cart, finalTotal, totalVat, prepStatus, payStatus, isTakeaway, isHoliday, pointsEarned, pointsUsed);
     }
     
     public String validateInventory(List<CartItemModel> cart) {
@@ -116,8 +114,13 @@ public class OrderService {
         return orderDAO.getOrderDetailsByOrderId(orderId);
     }
 
-    public boolean updateOrderStatus(int orderId, String newStatus) {
-        return orderDAO.updateStatus(orderId, newStatus);
+    // [ĐÃ SỬA] Tách ra làm 2 hàm Service
+    public boolean updatePreparationStatus(int orderId, String newStatus) {
+        return orderDAO.updatePreparationStatus(orderId, newStatus);
+    }
+
+    public boolean updatePaymentStatus(int orderId, String newStatus) {
+        return orderDAO.updatePaymentStatus(orderId, newStatus);
     }
 
     // Hàm then chốt: Vừa đổi trạng thái vừa trừ kho

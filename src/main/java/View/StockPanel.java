@@ -1,5 +1,6 @@
 package View;
 
+import Common.AutoCompleteComboBox;
 import Common.ComponentUI;
 import Model.IngredientModel;
 import Model.IngredientTypeModel;
@@ -14,13 +15,9 @@ import java.util.ArrayList;
 import java.text.SimpleDateFormat;
 import com.toedter.calendar.JDateChooser;
 
-/**
- * Phân hệ Quản lý Kho - The Bang Coffee.
- * Thiết kế cho phép quản lý tồn kho và nhập hàng ngay trong panel chính.
- */
 public class StockPanel extends JPanel {
 
-    // Colors (Đồng bộ với MainFrame)
+    // Colors
     private final Color PRIMARY_COLOR = new Color(67, 142, 104);
     private final Color TEXT_DARK = new Color(33, 37, 41);
     private final Color TEXT_MUTED = new Color(108, 117, 125);
@@ -32,40 +29,47 @@ public class StockPanel extends JPanel {
     private JPanel inventoryListView;
     private JPanel receiptFormView;
     private JPanel historyView;
+    private JPanel categoryView; // [MỚI] View Quản lý loại NL
 
     // Models
     private DefaultTableModel inventoryModel;
     private JTable inventoryTable;
     private JTable historyTable;
     private DefaultTableModel historyModel;
-    private DefaultTableModel itemModel; // Model cho bảng nhập hàng
+    private DefaultTableModel itemModel; 
+    
+    // [MỚI] Model & Table cho Loại NL
+    private JTable categoryTable;
+    private DefaultTableModel categoryModel;
+    
     private List<Receipt> historyList = new ArrayList<>();
-    private Receipt editingReceipt = null; // Receipt đang được sửa
+    private Receipt editingReceipt = null; 
     private JLabel lblTotal;
     private JButton btnSubmit;
     private JButton btnHistory;
     
-    // Listner
+    private JButton btnManageCategory; // [MỚI] Nút chuyển view sang Quản lý loại NL
+    private JButton btnAddNewIngredient;
+    
+    // Listeners
     private ActionButtonListener inventoryActionListener;
     private ActionButtonListener historyActionListener;
+    private ActionButtonListener categoryActionListener; // [MỚI] Listener cho Sửa loại NL
     
-    // Form Inputs
-    private JComboBox<IngredientTypeModel> cbCategory; 
-    private JTextField txtIngredientName;
-    private JComboBox<String> cbUnit;
+    // --- Form Phiếu Nhập Kho ---
+    private AutoCompleteComboBox<IngredientTypeModel> cbCategory; 
+    private AutoCompleteComboBox<String> cbIngredient;
+    private JButton btnAddCategory; // Nút này sẽ được dời sang categoryView
+    private JTextField txtUnit; 
     private JTextField txtUnitCapacity; 
     private JTextField txtQuantity;     
-    private JTextField txtThreshold;
     private JTextField txtProvider;
-    
-    // [MỚI] Các trường liên quan đến Thuế
     private JTextField txtGiaTruocThue;   
     private JTextField txtThueGTGT;
-    
     private JDateChooser jdImportDate;
     private JDateChooser jdExpiryDate;
-    private JButton btnAddCategory;
     
+    // --- Stats ---
     private StatCard cardTotalIngredients;
     private StatCard cardWarning;
 
@@ -78,13 +82,14 @@ public class StockPanel extends JPanel {
         mainContainer.setOpaque(false);
 
         initInventoryListView();
-        
         initHistoryView(); 
         initReceiptFormView();
+        initCategoryView(); // [MỚI] Khởi tạo giao diện Category
 
         mainContainer.add(inventoryListView, "InventoryList");
         mainContainer.add(historyView, "HistoryList");
         mainContainer.add(receiptFormView, "ReceiptForm");
+        mainContainer.add(categoryView, "CategoryList"); // [MỚI] Thêm vào CardLayout
 
         add(mainContainer, BorderLayout.CENTER);
     }
@@ -93,18 +98,15 @@ public class StockPanel extends JPanel {
         inventoryListView = new JPanel(new BorderLayout(0, 25));
         inventoryListView.setOpaque(false);
 
-        // 1. Stats Row
         JPanel statsPanel = new JPanel(new GridLayout(1, 3, 20, 0));
         statsPanel.setOpaque(false);
         
-        // Khởi tạo và gán vào biến
         cardTotalIngredients = new StatCard("Tổng nguyên liệu", "0", "Loại");
         cardWarning = new StatCard("Cần nhập hàng", "0", "Cảnh báo");
 
         statsPanel.add(cardTotalIngredients);
         statsPanel.add(cardWarning);
 
-        // 2. Action Bar
         JPanel actionBar = new JPanel(new BorderLayout());
         actionBar.setOpaque(false);
 
@@ -120,55 +122,55 @@ public class StockPanel extends JPanel {
         rightActions.setOpaque(false);
 
         btnHistory = ComponentUI.createModernButton("Lịch sử nhập hàng", new Color(240, 240, 240), TEXT_DARK);
+        btnManageCategory = ComponentUI.createModernButton("Quản lý loại NL", new Color(240, 240, 240), TEXT_DARK); // [MỚI] Nút chuyển view
         
-        JButton btnImport = ComponentUI.createModernButton("Nhập hàng mới +", PRIMARY_COLOR, Color.WHITE);
+        cbCategory = new AutoCompleteComboBox<>(); 
+        // [ĐÃ XÓA] btnAddCategory khỏi giao diện kho chính
+        
+        btnAddNewIngredient = ComponentUI.createModernButton("Thêm Nguyên Liệu", new Color(0, 122, 255), Color.WHITE);
+        JButton btnImport = ComponentUI.createModernButton("Nhập Hàng", PRIMARY_COLOR, Color.WHITE);
         
         btnHistory.addActionListener(e -> cardLayout.show(mainContainer, "HistoryList"));
-        
+        btnManageCategory.addActionListener(e -> cardLayout.show(mainContainer, "CategoryList")); // [MỚI] Mở tab Loại NL
         btnImport.addActionListener(e -> {
             editingReceipt = null; 
             cardLayout.show(mainContainer, "ReceiptForm");
         });
 
+        rightActions.add(btnManageCategory); // Thêm nút Quản lý loại
         rightActions.add(btnHistory);
+        rightActions.add(btnAddNewIngredient);
         rightActions.add(btnImport);
 
         actionBar.add(leftActions, BorderLayout.WEST);
         actionBar.add(rightActions, BorderLayout.EAST);
 
-        // 3. Table
-        String[] columns = {"ID", "Tên nguyên liệu", "Tổng tồn kho hiện tại", "Ngưỡng cảnh báo", "Trạng thái", "Hành động"};
+        String[] columns = {"ID", "Tên nguyên liệu", "ĐVT", "Tồn kho hiện tại", "Ngưỡng cảnh báo", "Trạng thái", "Hành động"};
         inventoryModel = new DefaultTableModel(null, columns) {
-            @Override public boolean isCellEditable(int r, int c) { return c == 5; }
+            @Override public boolean isCellEditable(int r, int c) { return c == 6; } 
         };
         inventoryTable = new JTable(inventoryModel);
         ComponentUI.styleTable(inventoryTable, TEXT_DARK, TEXT_DARK, PRIMARY_COLOR);
+        
+        TableColumnModel tcm = inventoryTable.getColumnModel();
+        tcm.getColumn(0).setPreferredWidth(50);  tcm.getColumn(0).setMaxWidth(80); 
+        tcm.getColumn(1).setPreferredWidth(250); 
+        tcm.getColumn(2).setPreferredWidth(80);  
+        tcm.getColumn(3).setPreferredWidth(120); 
+        tcm.getColumn(4).setPreferredWidth(120); 
+        tcm.getColumn(5).setPreferredWidth(120); 
         
         InventoryStatusRenderer customRenderer = new InventoryStatusRenderer();
         for (int i = 0; i < inventoryTable.getColumnCount() - 1; i++) {
             inventoryTable.getColumnModel().getColumn(i).setCellRenderer(customRenderer);
         }
         
-        TableColumn actionCol = inventoryTable.getColumnModel().getColumn(5);
+        TableColumn actionCol = inventoryTable.getColumnModel().getColumn(6); 
         actionCol.setCellRenderer(new ActionButtonRenderer(true, true, true));
         actionCol.setCellEditor(new ActionButtonEditor(new ActionButtonListener() {
-            @Override 
-            public void onEdit(int row) { 
-                if (inventoryActionListener != null) {
-                    inventoryActionListener.onEdit(row);
-                }
-            }
-            @Override 
-            public void onDelete(int row) { 
-                if (inventoryActionListener != null) {
-                    inventoryActionListener.onDelete(row);
-                }
-            }
-            @Override
-            public void onDetail(int row) {
-                if (inventoryActionListener != null) 
-                    inventoryActionListener.onDetail(row);
-            }
+            @Override public void onEdit(int row) { if (inventoryActionListener != null) inventoryActionListener.onEdit(row); }
+            @Override public void onDelete(int row) { if (inventoryActionListener != null) inventoryActionListener.onDelete(row); }
+            @Override public void onDetail(int row) { if (inventoryActionListener != null) inventoryActionListener.onDetail(row); }
         }, true, true, true));
         actionCol.setPreferredWidth(240);
         
@@ -184,6 +186,79 @@ public class StockPanel extends JPanel {
         centerWrapper.add(scrollPane, BorderLayout.CENTER);
         
         inventoryListView.add(centerWrapper, BorderLayout.CENTER);
+    }
+    
+    // ==========================================================
+    // [MỚI] VIEW QUẢN LÝ LOẠI NGUYÊN LIỆU
+    // ==========================================================
+    private void initCategoryView() {
+        categoryView = new JPanel(new BorderLayout(0, 20));
+        categoryView.setOpaque(false);
+
+        JPanel header = new JPanel(new BorderLayout()); header.setOpaque(false);
+        JLabel title = new JLabel("Danh sách Loại Nguyên Liệu"); title.setFont(new Font("Segoe UI", Font.BOLD, 24)); title.setForeground(TEXT_DARK);
+        
+        JPanel headerActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
+        headerActions.setOpaque(false);
+        
+        // [MỚI] Nút thêm loại được dời vào đây
+        btnAddCategory = ComponentUI.createModernButton("+ Thêm loại mới", PRIMARY_COLOR, Color.WHITE);
+        
+        JButton btnBack = new JButton("← Quay lại kho"); btnBack.setFont(new Font("Segoe UI", Font.BOLD, 14)); btnBack.setForeground(PRIMARY_COLOR);
+        btnBack.setContentAreaFilled(false); btnBack.setBorderPainted(false); btnBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnBack.addActionListener(e -> cardLayout.show(mainContainer, "InventoryList"));
+        
+        headerActions.add(btnAddCategory);
+        headerActions.add(btnBack);
+        
+        header.add(title, BorderLayout.WEST); 
+        header.add(headerActions, BorderLayout.EAST);
+
+        String[] cols = {"Mã Loại", "Tên Loại Nguyên Liệu", "Hành động"};
+        categoryModel = new DefaultTableModel(null, cols) {
+            @Override public boolean isCellEditable(int r, int c) { return c == 2; }
+        };
+        categoryTable = new JTable(categoryModel);
+        ComponentUI.styleTable(categoryTable, TEXT_DARK, TEXT_DARK, PRIMARY_COLOR);
+
+        TableColumnModel tcmCat = categoryTable.getColumnModel();
+        tcmCat.getColumn(0).setPreferredWidth(100); tcmCat.getColumn(0).setMaxWidth(150);
+        tcmCat.getColumn(1).setPreferredWidth(300);
+        
+        CenterRenderer centerRenderer = new CenterRenderer();
+        for (int i = 0; i < categoryTable.getColumnCount() - 1; i++) {
+            tcmCat.getColumn(i).setCellRenderer(centerRenderer);
+        }
+
+        TableColumn actionCol = categoryTable.getColumnModel().getColumn(2);
+        // Bảng Loại chỉ hiện nút "Sửa"
+        actionCol.setCellRenderer(new ActionButtonRenderer(false, true, false)); 
+        actionCol.setCellEditor(new ActionButtonEditor(new ActionButtonListener() {
+            @Override public void onEdit(int row) { if (categoryActionListener != null) categoryActionListener.onEdit(row); }
+            @Override public void onDelete(int row) {}
+            @Override public void onDetail(int row) {}
+        }, false, true, false)); 
+        actionCol.setPreferredWidth(100); 
+        
+        JScrollPane scroll = new JScrollPane(categoryTable); scroll.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230))); scroll.getViewport().setBackground(Color.WHITE);
+        categoryView.add(header, BorderLayout.NORTH); categoryView.add(scroll, BorderLayout.CENTER);
+    }
+    
+    // API Controller tương tác với CategoryView
+    public DefaultTableModel getCategoryModel() { return categoryModel; }
+    public JTable getCategoryTable() { return categoryTable; }
+    
+    public void displayCategoryData(List<IngredientTypeModel> types) {
+        categoryModel.setRowCount(0);
+        for (IngredientTypeModel type : types) {
+            categoryModel.addRow(new Object[]{ type.getTypeID(), type.getTypeName(), "Sửa" });
+        }
+    }
+    
+    public void setCategoryActionListener(ActionButtonListener listener) { this.categoryActionListener = listener; }
+    
+    public String showEditCategoryDialog(String currentName) {
+        return (String) JOptionPane.showInputDialog(this, "Chỉnh sửa tên loại nguyên liệu:", "Sửa loại", JOptionPane.PLAIN_MESSAGE, null, null, currentName);
     }
 
     private void initReceiptFormView() {
@@ -201,64 +276,42 @@ public class StockPanel extends JPanel {
         JPanel content = new JPanel(new BorderLayout(0, 15));
         content.setOpaque(false); content.setBorder(new EmptyBorder(20, 30, 20, 30));
 
-        // KHỞI TẠO CÁC Ô NHẬP LIỆU ĐỂ TRÁNH NULL POINTER EXCEPTION
-        cbCategory = new JComboBox<>(); 
-        cbCategory.setBackground(Color.WHITE);
+        cbIngredient = new AutoCompleteComboBox<>();
+        cbIngredient.setBackground(Color.WHITE);
         
-        txtIngredientName = new JTextField();
-        String[] units = {"kg", "gram", "lít", "ml", "cái"}; 
-        cbUnit = new JComboBox<>(units); cbUnit.setBackground(Color.WHITE);
+        txtUnit = new JTextField(); 
+        txtUnit.setEditable(false); 
+        txtUnit.setBackground(new Color(245, 245, 245));
         
         txtUnitCapacity = new JTextField(); 
         txtQuantity = new JTextField();
-        txtThreshold = new JTextField("0"); 
         txtProvider = new JTextField();
         
         txtGiaTruocThue = new JTextField();   
-        txtThueGTGT = new JTextField("8"); // Mặc định 8%
+        txtThueGTGT = new JTextField("8"); 
         
         jdImportDate = new JDateChooser();
-        jdImportDate.setDateFormatString("yyyy-MM-dd"); // Chuẩn format đẩy xuống DB
+        jdImportDate.setDateFormatString("yyyy-MM-dd"); 
         jdImportDate.setDate(new java.util.Date()); 
 
         jdExpiryDate = new JDateChooser();
         jdExpiryDate.setDateFormatString("yyyy-MM-dd");
 
-        // 1. CHỈNH LẠI LƯỚI: 4 dòng x 3 cột = 12 ô. (Sử dụng 11 ô, dư 1 ô)
-        JPanel formPanel = new JPanel(new GridLayout(4, 3, 15, 15)); 
+        JPanel formPanel = new JPanel(new GridLayout(3, 3, 15, 15)); 
         formPanel.setOpaque(false);
-        formPanel.setBorder(BorderFactory.createTitledBorder("Thông tin chi tiết"));
+        formPanel.setBorder(BorderFactory.createTitledBorder("Chi tiết Lô hàng nhập"));
         
-        // 2. Khởi tạo nút + (Gọn gàng)
-        btnAddCategory = new JButton("+");
-        btnAddCategory.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnAddCategory.setBackground(PRIMARY_COLOR); // Hoặc màu (0, 122, 255) tùy bạn
-        btnAddCategory.setForeground(Color.WHITE);
-        btnAddCategory.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnAddCategory.setPreferredSize(new Dimension(40, 30));
-        btnAddCategory.setMargin(new Insets(0, 0, 0, 0));
+        formPanel.add(createInputWrapper("Chọn Nguyên liệu:", cbIngredient));
+        formPanel.add(createInputWrapper("Đơn vị tính:", txtUnit)); 
+        formPanel.add(createInputWrapper("Định lượng 1 bao/hộp:", txtUnitCapacity)); 
         
-        // 3. Gom Category Cbb + Btn thành 1 Panel nằm ngang
-        JPanel categoryPanel = new JPanel(new BorderLayout(5, 0)); // Khoảng cách 5px
-        categoryPanel.setOpaque(false);
-        categoryPanel.add(cbCategory, BorderLayout.CENTER);
-        categoryPanel.add(btnAddCategory, BorderLayout.EAST);
+        formPanel.add(createInputWrapper("Số lượng (gói/hộp):", txtQuantity)); 
+        formPanel.add(createInputWrapper("Giá trước thuế (Tổng):", txtGiaTruocThue)); 
+        formPanel.add(createInputWrapper("Thuế GTGT (%):", txtThueGTGT)); 
         
-        // 4. ADD COMPONENTS THEO ĐÚNG LƯỚI 4x3
-        formPanel.add(createInputWrapper("Loại nguyên liệu:", categoryPanel)); // 1
-        formPanel.add(createInputWrapper("Tên nguyên liệu:", txtIngredientName)); // 2
-        formPanel.add(createInputWrapper("Đơn vị tính:", cbUnit)); // 3
-        
-        formPanel.add(createInputWrapper("Định lượng 1 bao/hộp:", txtUnitCapacity)); // 4
-        formPanel.add(createInputWrapper("Số lượng (gói/hộp):", txtQuantity)); // 5
-        formPanel.add(createInputWrapper("Giá trước thuế (Tổng):", txtGiaTruocThue)); // 6
-        
-        formPanel.add(createInputWrapper("Thuế GTGT (%):", txtThueGTGT)); // 7
-        formPanel.add(createInputWrapper("Ngưỡng cảnh báo (gói/hộp):", txtThreshold)); // 8
-        formPanel.add(createInputWrapper("Nhà cung cấp:", txtProvider)); // 9
-        
-        formPanel.add(createInputWrapper("Ngày nhập:", jdImportDate)); // 10
-        formPanel.add(createInputWrapper("Hạn sử dụng:", jdExpiryDate)); // 11
+        formPanel.add(createInputWrapper("Nhà cung cấp:", txtProvider)); 
+        formPanel.add(createInputWrapper("Ngày nhập:", jdImportDate)); 
+        formPanel.add(createInputWrapper("Hạn sử dụng:", jdExpiryDate)); 
 
         JButton btnAddToList = ComponentUI.createModernButton("+ Thêm vào bảng", new Color(0, 122, 255), Color.WHITE);
         btnAddToList.setPreferredSize(new Dimension(160, 35)); 
@@ -273,93 +326,78 @@ public class StockPanel extends JPanel {
         topSection.add(formPanel, BorderLayout.CENTER);
         topSection.add(btnPanel, BorderLayout.SOUTH);
 
-        // [SỬA LẠI] Đủ 13 Cột để Controller lấy data map với DB
-        String[] itemCols = {"Loại NL", "Tên NL", "ĐVT", "Đ.Lượng/Gói", "Số lượng", "Giá T.Thuế", "Thuế (%)", "Thành tiền", "Ngưỡng", "Nhà cung cấp", "Ngày nhập", "Hạn sử dụng", "Hành động"};
+        // BẢNG CHI TIẾT PHIẾU NHẬP
+        String[] itemCols = {"Tên NL", "ĐVT", "Đ.Lượng/Gói", "Số lượng", "Giá T.Thuế", "Thuế (%)", "Thành tiền", "Nhà cung cấp", "Ngày nhập", "Hạn sử dụng", "Hành động"};
         itemModel = new DefaultTableModel(null, itemCols) {
-            @Override 
-            public boolean isCellEditable(int row, int column) { 
-                return column == 12; // Cột hành động
-            }
+            @Override public boolean isCellEditable(int row, int column) { return column == 10; }
         };
         JTable itemTable = new JTable(itemModel);
         ComponentUI.styleTable(itemTable, TEXT_DARK, TEXT_DARK, PRIMARY_COLOR);
+        
+        TableColumnModel tcmItem = itemTable.getColumnModel();
+        tcmItem.getColumn(0).setPreferredWidth(150); 
+        tcmItem.getColumn(1).setPreferredWidth(50);  
+        tcmItem.getColumn(2).setPreferredWidth(80);  
+        tcmItem.getColumn(3).setPreferredWidth(60);  
+        tcmItem.getColumn(4).setPreferredWidth(100); 
+        tcmItem.getColumn(5).setPreferredWidth(60);  
+        tcmItem.getColumn(6).setPreferredWidth(100); 
+        tcmItem.getColumn(7).setPreferredWidth(120); 
+        tcmItem.getColumn(8).setPreferredWidth(90);  
+        tcmItem.getColumn(9).setPreferredWidth(90);  
+        
+        CenterRenderer centerRenderer = new CenterRenderer();
+        for (int i = 0; i < itemTable.getColumnCount() - 1; i++) {
+            tcmItem.getColumn(i).setCellRenderer(centerRenderer);
+        }
+
         JScrollPane itemScroll = new JScrollPane(itemTable); itemScroll.setPreferredSize(new Dimension(0, 300));
 
-        TableColumn actionCol = itemTable.getColumnModel().getColumn(12);
-        actionCol.setCellRenderer(new ActionButtonRenderer(false, true, true));
+        TableColumn actionCol = itemTable.getColumnModel().getColumn(10);
+        actionCol.setCellRenderer(new ActionButtonRenderer(false, false, true));
         actionCol.setCellEditor(new ActionButtonEditor(new ActionButtonListener() {
             @Override
-            public void onEdit(int row) {
-                // Mapping Index
-                String catStr = itemModel.getValueAt(row, 0).toString();
-                for(int i = 0; i < cbCategory.getItemCount(); i++) {
-                    if(cbCategory.getItemAt(i).getTypeName().equals(catStr)) { 
-                        cbCategory.setSelectedIndex(i); 
-                        break; 
-                    }
-                }
-                txtIngredientName.setText(itemModel.getValueAt(row, 1).toString());
-                cbUnit.setSelectedItem(itemModel.getValueAt(row, 2).toString());
-                
-                txtUnitCapacity.setText(itemModel.getValueAt(row, 3).toString()); 
-                txtQuantity.setText(itemModel.getValueAt(row, 4).toString());
-                txtGiaTruocThue.setText(itemModel.getValueAt(row, 5).toString());
-                txtThueGTGT.setText(itemModel.getValueAt(row, 6).toString());
-                txtThreshold.setText(itemModel.getValueAt(row, 8).toString());
-                txtProvider.setText(itemModel.getValueAt(row, 9).toString());
+            public void onEdit(int row) {}
+            @Override public void onDelete(int row) {
+                cbIngredient.setSelectedItem(itemModel.getValueAt(row, 0).toString());
+                txtUnit.setText(itemModel.getValueAt(row, 1).toString());
+                txtUnitCapacity.setText(itemModel.getValueAt(row, 2).toString()); 
+                txtQuantity.setText(itemModel.getValueAt(row, 3).toString());
+                txtGiaTruocThue.setText(itemModel.getValueAt(row, 4).toString());
+                txtThueGTGT.setText(itemModel.getValueAt(row, 5).toString());
+                txtProvider.setText(itemModel.getValueAt(row, 7).toString());
                 
                 try {
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                    String importStr = itemModel.getValueAt(row, 8).toString();
+                    if (!importStr.isEmpty()) jdImportDate.setDate(sdf.parse(importStr));
                     
-                    String importStr = itemModel.getValueAt(row, 10).toString();
-                    if (!importStr.isEmpty()) {
-                        jdImportDate.setDate(sdf.parse(importStr));
-                    }
-                    
-                    String expiryStr = itemModel.getValueAt(row, 11).toString();
-                    if (!expiryStr.isEmpty()) {
-                        jdExpiryDate.setDate(sdf.parse(expiryStr));
-                    }
-                } catch (java.text.ParseException ex) {
-                    ex.printStackTrace();
-                }
+                    String expiryStr = itemModel.getValueAt(row, 9).toString();
+                    if (!expiryStr.isEmpty()) jdExpiryDate.setDate(sdf.parse(expiryStr));
+                } catch (java.text.ParseException ex) { ex.printStackTrace(); }
                 
                 itemModel.removeRow(row);
             }
-            @Override
-            public void onDelete(int row) { itemModel.removeRow(row); }
-
-            @Override
-            public void onDetail(int row) {}
-        }, false, true, true));
-        actionCol.setPreferredWidth(160);
+            @Override public void onDetail(int row) {}
+        }, false, false, true));
+        actionCol.setPreferredWidth(90);
 
         btnAddToList.addActionListener(e -> {
             try {
-                if(cbCategory.getSelectedItem() == null) return;
-                String category = ((IngredientTypeModel) cbCategory.getSelectedItem()).getTypeName();
-                String name = txtIngredientName.getText().trim();
-                String unit = cbUnit.getSelectedItem().toString();
+                if(cbIngredient.getSelectedItem() == null) return;
+                String name = cbIngredient.getSelectedItem().toString();
+                String unit = txtUnit.getText().trim();
                 String capStr = txtUnitCapacity.getText().trim();
                 String qtyStr = txtQuantity.getText().trim();
                 String giaTruocThueStr = txtGiaTruocThue.getText().trim(); 
                 String thueStr = txtThueGTGT.getText().trim(); 
-                String thresStr = txtThreshold.getText().trim();
                 String provider = txtProvider.getText().trim();
                 
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                
-                String importingDate = "";
-                if (jdImportDate.getDate() != null) {
-                    importingDate = sdf.format(jdImportDate.getDate());
-                }
-                
-                String expiryDate = "";
-                if (jdExpiryDate.getDate() != null) {
-                    expiryDate = sdf.format(jdExpiryDate.getDate());
-                }
+                String importingDate = (jdImportDate.getDate() != null) ? sdf.format(jdImportDate.getDate()) : "";
+                String expiryDate = (jdExpiryDate.getDate() != null) ? sdf.format(jdExpiryDate.getDate()) : "";
 
-                if (name.isEmpty() || capStr.isEmpty() || qtyStr.isEmpty() || giaTruocThueStr.isEmpty() || thueStr.isEmpty() || provider.isEmpty() || thresStr.isEmpty() || importingDate.isEmpty() || expiryDate.isEmpty()) {
+                if (name.isEmpty() || capStr.isEmpty() || qtyStr.isEmpty() || giaTruocThueStr.isEmpty() || thueStr.isEmpty() || provider.isEmpty() || importingDate.isEmpty() || expiryDate.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Vui lòng nhập đủ thông tin (Kể cả ngày HSD)!", "Lỗi", JOptionPane.WARNING_MESSAGE); return;
                 }
 
@@ -367,19 +405,16 @@ public class StockPanel extends JPanel {
                 int soLuongGoi = Integer.parseInt(qtyStr);
                 long giaTruocThue = Long.parseLong(giaTruocThueStr); 
                 double thuePercent = Double.parseDouble(thueStr);
-                int threshold = Integer.parseInt(thresStr);
 
-                if (dinhLuong1Goi <= 0 || soLuongGoi <= 0 || giaTruocThue < 0 || thuePercent < 0 || threshold < 0) {
+                if (dinhLuong1Goi <= 0 || soLuongGoi <= 0 || giaTruocThue < 0 || thuePercent < 0) {
                     JOptionPane.showMessageDialog(this, "Số liệu phải hợp lệ (>=0)!", "Lỗi", JOptionPane.ERROR_MESSAGE); return;
                 }
 
-                // Tính toán
                 long tienThue = Math.round(giaTruocThue * (thuePercent / 100.0));
                 long thanhTien = giaTruocThue + tienThue;
 
-                // Push xuống Table Model đúng vị trí
                 itemModel.addRow(new Object[]{
-                    category, name, unit, dinhLuong1Goi, soLuongGoi, giaTruocThue, thuePercent, thanhTien, threshold, provider, importingDate, expiryDate, "Sửa/Xóa"
+                    name, unit, dinhLuong1Goi, soLuongGoi, giaTruocThue, thuePercent, thanhTien, provider, importingDate, expiryDate, "Xóa"
                 });
                 
                 clearFormInputsOnly();
@@ -411,16 +446,70 @@ public class StockPanel extends JPanel {
         return panel;
     }
     
+    // Lắng nghe sự kiện thêm Dữ liệu gốc
+    public void addAddNewIngredientListener(ActionListener listener) {
+        btnAddNewIngredient.addActionListener(listener);
+    }
+    
+    public Object[] showAddIngredientDialog(List<IngredientTypeModel> categories) {
+        JTextField txtName = new JTextField();
+        JComboBox<String> cbUom = new JComboBox<>(new String[]{"kg", "gram", "lít", "ml", "cái"});
+        JTextField txtThres = new JTextField("0");
+
+        JPanel panel = new JPanel(new GridLayout(0, 1, 5, 5));
+        panel.add(new JLabel("Loại nguyên liệu:")); 
+        panel.add(cbCategory); 
+        panel.add(new JLabel("Tên nguyên liệu:")); panel.add(txtName);
+        panel.add(new JLabel("Đơn vị tính:")); panel.add(cbUom);
+        panel.add(new JLabel("Ngưỡng cảnh báo hết hàng:")); panel.add(txtThres);
+
+        int result = JOptionPane.showConfirmDialog(this, panel, "Thêm Dữ Liệu Nguyên Liệu Gốc", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                int thres = Integer.parseInt(txtThres.getText().trim());
+                if (txtName.getText().trim().isEmpty() || thres < 0) throw new Exception();
+                
+                return new Object[]{
+                    cbCategory.getSelectedItem(),
+                    txtName.getText().trim(),
+                    cbUom.getSelectedItem().toString(),
+                    thres
+                };
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Dữ liệu không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        return null;
+    }
+    
+    public void loadIngredientsToComboBox(List<IngredientModel> ingredients) {
+        if (cbIngredient == null) cbIngredient = new AutoCompleteComboBox<>();
+        List<String> names = new ArrayList<>();
+        for (IngredientModel ing : ingredients) {
+            names.add(ing.getIngredientName());
+        }
+        cbIngredient.setData(names); 
+    }
+    
+    public void loadIngredientTypesToComboBox(List<IngredientTypeModel> types) {
+        if (cbCategory == null) cbCategory = new AutoCompleteComboBox<>();
+        cbCategory.setData(types); 
+    }
+    
+    public AutoCompleteComboBox<String> getIngredientComboBox() { return cbIngredient; }
+    public AutoCompleteComboBox<IngredientTypeModel> getCategoryComboBox() { return cbCategory; }
+    public void setUnitText(String unit) { txtUnit.setText(unit); }
+
     public void displayIngredientData(List<IngredientModel> danhSach) {
         javax.swing.table.DefaultTableModel tableModel = (javax.swing.table.DefaultTableModel) inventoryTable.getModel();
         tableModel.setRowCount(0); 
-        
         for (IngredientModel nl : danhSach) {
             Object[] rowData = {
                 nl.getIngredientID(),            
                 nl.getIngredientName(), 
-                String.format("%,d %s", nl.getInStock(), nl.getUnit()),
-                String.format("%,d %s", nl.getThreshold(), nl.getUnit()),
+                nl.getUnit(), 
+                String.format("%,d", nl.getInStock()), 
+                String.format("%,d", nl.getThreshold()), 
                 nl.getStatus(),    
                 "Sửa / Xóa" 
             };
@@ -431,13 +520,12 @@ public class StockPanel extends JPanel {
     public void displayWarehouseReceiptData(List<WarehouseReceiptModel> list) {
         javax.swing.table.DefaultTableModel tableModel = (javax.swing.table.DefaultTableModel) historyTable.getModel();
         tableModel.setRowCount(0); 
-        
         for (WarehouseReceiptModel pnk : list) {
             Object[] rowData = {
                 pnk.getReceiptID(),          
                 pnk.getImportingDate(), 
                 pnk.getUserName(),    
-                pnk.getTotal(),
+                String.format("%,d đ", pnk.getTotal()),
                 "Sửa / Xóa"         
             };
             tableModel.addRow(rowData);
@@ -448,301 +536,149 @@ public class StockPanel extends JPanel {
         historyView = new JPanel(new BorderLayout(0, 20));
         historyView.setOpaque(false);
 
-        JPanel header = new JPanel(new BorderLayout());
-        header.setOpaque(false);
-        JLabel title = new JLabel("Lịch sử nhập hàng");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        title.setForeground(TEXT_DARK);
-
-        JButton btnBack = new JButton("← Quay lại kho");
-        btnBack.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnBack.setForeground(PRIMARY_COLOR);
-        btnBack.setContentAreaFilled(false);
-        btnBack.setBorderPainted(false);
-        btnBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        JPanel header = new JPanel(new BorderLayout()); header.setOpaque(false);
+        JLabel title = new JLabel("Lịch sử nhập hàng"); title.setFont(new Font("Segoe UI", Font.BOLD, 24)); title.setForeground(TEXT_DARK);
+        JButton btnBack = new JButton("← Quay lại kho"); btnBack.setFont(new Font("Segoe UI", Font.BOLD, 14)); btnBack.setForeground(PRIMARY_COLOR);
+        btnBack.setContentAreaFilled(false); btnBack.setBorderPainted(false); btnBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnBack.addActionListener(e -> cardLayout.show(mainContainer, "InventoryList"));
-
-        header.add(title, BorderLayout.WEST);
-        header.add(btnBack, BorderLayout.EAST);
+        header.add(title, BorderLayout.WEST); header.add(btnBack, BorderLayout.EAST);
 
         String[] cols = {"Mã phiếu", "Ngày nhập", "Người nhập", "Tổng tiền", "Hành động"};
         historyModel = new DefaultTableModel(null, cols) {
-            @Override 
-            public boolean isCellEditable(int r, int c) { 
-                return c == 4; 
-            }
+            @Override public boolean isCellEditable(int r, int c) { return c == 4; }
         };
         historyTable = new JTable(historyModel);
         ComponentUI.styleTable(historyTable, TEXT_DARK, TEXT_DARK, PRIMARY_COLOR);
 
+        TableColumnModel tcmHistory = historyTable.getColumnModel();
+        tcmHistory.getColumn(0).setPreferredWidth(80); tcmHistory.getColumn(0).setMaxWidth(100);
+        tcmHistory.getColumn(1).setPreferredWidth(120);
+        tcmHistory.getColumn(2).setPreferredWidth(200);
+        tcmHistory.getColumn(3).setPreferredWidth(120);
+        
+        CenterRenderer centerRenderer = new CenterRenderer();
+        for (int i = 0; i < historyTable.getColumnCount() - 1; i++) {
+            tcmHistory.getColumn(i).setCellRenderer(centerRenderer);
+        }
+
         TableColumn actionCol = historyTable.getColumnModel().getColumn(4);
         actionCol.setCellRenderer(new ActionButtonRenderer(true, false, true));
         actionCol.setCellEditor(new ActionButtonEditor(new ActionButtonListener() {
-            @Override
-            public void onDetail(int row) {
-                if (historyActionListener != null) historyActionListener.onDetail(row);
-            }
-            @Override
-            public void onEdit(int row) {
-                if (historyActionListener != null) historyActionListener.onEdit(row);
-            }
-            @Override
-            public void onDelete(int row) {
-                if (historyActionListener != null) historyActionListener.onDelete(row);
-            }
+            @Override public void onDetail(int row) { if (historyActionListener != null) historyActionListener.onDetail(row); }
+            @Override public void onEdit(int row) { if (historyActionListener != null) historyActionListener.onEdit(row); }
+            @Override public void onDelete(int row) { if (historyActionListener != null) historyActionListener.onDelete(row); }
         }, true, false, true)); 
         
         actionCol.setPreferredWidth(170); 
-
-        JScrollPane scroll = new JScrollPane(historyTable);
-        scroll.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230)));
-        scroll.getViewport().setBackground(Color.WHITE);
-
-        historyView.add(header, BorderLayout.NORTH);
-        historyView.add(scroll, BorderLayout.CENTER);
-    }
-
-    private void loadReceiptToForm(Receipt r) {
-        itemModel.setRowCount(0);
-        for (ReceiptItem item : r.items) {
-            itemModel.addRow(new Object[]{item.name, item.unit, item.quantity, item.price, item.threshold, item.supplier, item.date, "X"});
-        }
+        JScrollPane scroll = new JScrollPane(historyTable); scroll.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230))); scroll.getViewport().setBackground(Color.WHITE);
+        historyView.add(header, BorderLayout.NORTH); historyView.add(scroll, BorderLayout.CENTER);
     }
 
     class StatCard extends JPanel {
         private JLabel lblValue;
         public StatCard(String title, String value, String unit) {
-            setLayout(new BorderLayout(0, 5));
-            setBackground(Color.WHITE);
-            setBorder(new EmptyBorder(20, 20, 20, 20));
-
-            JLabel lblTitle = new JLabel(title);
-            lblTitle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            lblTitle.setForeground(TEXT_MUTED);
-
-            lblValue = new JLabel(value); 
-            lblValue.setFont(new Font("Segoe UI", Font.BOLD, 24));
-            lblValue.setForeground(TEXT_DARK);
-
-            JLabel lblUnit = new JLabel(unit);
-            lblUnit.setFont(new Font("Segoe UI", Font.ITALIC, 12));
-            lblUnit.setForeground(TEXT_MUTED);
-
-            add(lblTitle, BorderLayout.NORTH);
-            add(lblValue, BorderLayout.CENTER);
-            add(lblUnit, BorderLayout.SOUTH);
+            setLayout(new BorderLayout(0, 5)); setBackground(Color.WHITE); setBorder(new EmptyBorder(20, 20, 20, 20));
+            JLabel lblTitle = new JLabel(title); lblTitle.setFont(new Font("Segoe UI", Font.PLAIN, 14)); lblTitle.setForeground(TEXT_MUTED);
+            lblValue = new JLabel(value);  lblValue.setFont(new Font("Segoe UI", Font.BOLD, 24)); lblValue.setForeground(TEXT_DARK);
+            JLabel lblUnit = new JLabel(unit); lblUnit.setFont(new Font("Segoe UI", Font.ITALIC, 12)); lblUnit.setForeground(TEXT_MUTED);
+            add(lblTitle, BorderLayout.NORTH); add(lblValue, BorderLayout.CENTER); add(lblUnit, BorderLayout.SOUTH);
         }
-        
-        public void setValue(String newValue) {
-            if (this.lblValue != null) {
-                this.lblValue.setText(newValue);
-            }
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(Color.WHITE);
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
-            g2.setColor(new Color(0, 0, 0, 20));
-            g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 15, 15);
-            g2.dispose();
+        public void setValue(String newValue) { if (this.lblValue != null) this.lblValue.setText(newValue); }
+        @Override protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create(); g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(Color.WHITE); g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+            g2.setColor(new Color(0, 0, 0, 20)); g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 15, 15); g2.dispose();
         }
         @Override public void setOpaque(boolean isOpaque) { super.setOpaque(false); }
     }
 
-    public interface ActionButtonListener {
-        void onDetail(int row);
-        void onEdit(int row);
-        void onDelete(int row);
+    class CenterRenderer extends DefaultTableCellRenderer {
+        public CenterRenderer() {
+            setHorizontalAlignment(SwingConstants.CENTER);
+        }
     }
 
-    class ActionPanel extends JPanel {
-        protected JButton btnDetail = new JButton("Xem chi tiết");
-        protected JButton btnEdit = new JButton("Sửa");
-        protected JButton btnDelete = new JButton("Xóa");
-
-        public ActionPanel(boolean showDetail, boolean showEdit, boolean showDelete) {
-            setLayout(new FlowLayout(FlowLayout.CENTER, 5, 8));
-            setOpaque(true);
-            setBackground(Color.WHITE);
-
-            if (showDetail) {
-                styleButton(btnDetail, new Color(0, 0, 0), 95, 30);
-                add(btnDetail);
+    class InventoryStatusRenderer extends DefaultTableCellRenderer {
+        private final Color WARNING_COLOR = new Color(255, 230, 230); 
+        private final Color WARNING_TEXT_COLOR = new Color(220, 53, 69); 
+        private final Color NORMAL_BG = Color.WHITE;
+        private final Color NORMAL_TEXT = TEXT_DARK;
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            String status = table.getValueAt(row, 5).toString(); 
+            if (!isSelected) { 
+                if (status.equalsIgnoreCase("Hết hàng") || status.equalsIgnoreCase("Sắp hết")) {
+                    c.setBackground(WARNING_COLOR);
+                    if(column == 5) c.setForeground(WARNING_TEXT_COLOR); else c.setForeground(NORMAL_TEXT);
+                } else { c.setBackground(NORMAL_BG); c.setForeground(NORMAL_TEXT); }
             }
-            if (showEdit) {
-                styleButton(btnEdit, new Color(0, 122, 255), 60, 30);
-                add(btnEdit);
-            }
-            if (showDelete) {
-                styleButton(btnDelete, new Color(255, 59, 48), 60, 30);
-                add(btnDelete);
-            }
+            setHorizontalAlignment(SwingConstants.CENTER);
+            setBorder(new EmptyBorder(0, 5, 0, 5)); return c;
         }
+    }
 
+    public interface ActionButtonListener { void onDetail(int row); void onEdit(int row); void onDelete(int row); }
+
+    class ActionPanel extends JPanel {
+        protected JButton btnDetail = new JButton("Xem chi tiết"); protected JButton btnEdit = new JButton("Sửa"); protected JButton btnDelete = new JButton("Xóa");
+        public ActionPanel(boolean showDetail, boolean showEdit, boolean showDelete) {
+            setLayout(new FlowLayout(FlowLayout.CENTER, 5, 8)); setOpaque(true); setBackground(Color.WHITE);
+            if (showDetail) { styleButton(btnDetail, new Color(0, 0, 0), 95, 30); add(btnDetail); }
+            if (showEdit) { styleButton(btnEdit, new Color(0, 122, 255), 60, 30); add(btnEdit); }
+            if (showDelete) { styleButton(btnDelete, new Color(255, 59, 48), 60, 30); add(btnDelete); }
+        }
         protected void styleButton(JButton btn, Color color, int width, int height) {
-            btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-            btn.setForeground(color);
-            btn.setBackground(Color.WHITE);
-            btn.setBorder(BorderFactory.createLineBorder(color, 1));
-            btn.setFocusPainted(false);
-            btn.setPreferredSize(new Dimension(width, height));
-            btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btn.setFont(new Font("Segoe UI", Font.BOLD, 12)); btn.setForeground(color); btn.setBackground(Color.WHITE); btn.setBorder(BorderFactory.createLineBorder(color, 1));
+            btn.setFocusPainted(false); btn.setPreferredSize(new Dimension(width, height)); btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         }
     }
 
     class ActionButtonRenderer implements TableCellRenderer {
         protected ActionPanel panel;
-
-        public ActionButtonRenderer(boolean showDetail, boolean showEdit, boolean showDelete) {
-            this.panel = new ActionPanel(showDetail, showEdit, showDelete);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
-            return panel;
+        public ActionButtonRenderer(boolean showDetail, boolean showEdit, boolean showDelete) { this.panel = new ActionPanel(showDetail, showEdit, showDelete); }
+        @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE); return panel;
         }
     }
 
     class ActionButtonEditor extends DefaultCellEditor {
-        protected ActionPanel panel;
-        protected ActionButtonListener listener;
-        protected int currentRow;
-
+        protected ActionPanel panel; protected ActionButtonListener listener; protected int currentRow;
         public ActionButtonEditor(ActionButtonListener listener, boolean showDetail, boolean showEdit, boolean showDelete) {
-            super(new JCheckBox());
-            this.listener = listener;
-            this.panel = new ActionPanel(showDetail, showEdit, showDelete);
-
+            super(new JCheckBox()); this.listener = listener; this.panel = new ActionPanel(showDetail, showEdit, showDelete);
             if (showDetail) this.panel.btnDetail.addActionListener(e -> { stopCellEditing(); listener.onDetail(currentRow); });
             if (showEdit) this.panel.btnEdit.addActionListener(e -> { stopCellEditing(); listener.onEdit(currentRow); });
             if (showDelete) this.panel.btnDelete.addActionListener(e -> { stopCellEditing(); listener.onDelete(currentRow); });
         }
-
-        @Override
-        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            currentRow = row;
-            panel.setBackground(table.getSelectionBackground());
-            return panel;
+        @Override public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            currentRow = row; panel.setBackground(table.getSelectionBackground()); return panel;
         }
-
         @Override public Object getCellEditorValue() { return ""; }
     }
-    
-    // ==========================================================
-    // CLASS CUSTOM RENDERER TÔ MÀU DÒNG CẢNH BÁO "HẾT HÀNG"
-    // ==========================================================
-    class InventoryStatusRenderer extends DefaultTableCellRenderer {
-        private final Color WARNING_COLOR = new Color(255, 230, 230); // Đỏ nhạt (Hồng nhạt)
-        private final Color WARNING_TEXT_COLOR = new Color(220, 53, 69); // Đỏ đậm
-        private final Color NORMAL_BG = Color.WHITE;
-        private final Color NORMAL_TEXT = TEXT_DARK;
 
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-            // Cột 4 là cột Trạng thái ("Còn hàng", "Hết hàng", "Sắp hết")
-            String status = table.getValueAt(row, 4).toString();
-
-            if (!isSelected) { // Không tô màu đè lên dòng đang click chọn
-                if (status.equalsIgnoreCase("Hết hàng") || status.equalsIgnoreCase("Sắp hết")) {
-                    c.setBackground(WARNING_COLOR);
-                    // Có thể đổi màu chữ luôn cho nổi bật
-                    if(column == 4) c.setForeground(WARNING_TEXT_COLOR); 
-                    else c.setForeground(NORMAL_TEXT);
-                } else {
-                    c.setBackground(NORMAL_BG);
-                    c.setForeground(NORMAL_TEXT);
-                }
-            }
-            
-            // Xóa viền khi focus
-            setBorder(new EmptyBorder(0, 5, 0, 5));
-            return c;
-        }
-    }
-
-    public void addSubmitReceiptListener(ActionListener listener) {
-        btnSubmit.addActionListener(listener);
-    }
-    
-    private static class Receipt {
-        String id;
-        String date;
-        String supplier;
-        double totalAmount;
-        List<ReceiptItem> items = new ArrayList<>();
-    }
-
-    private static class ReceiptItem {
-        String name;
-        String unit;
-        double quantity;
-        double price;
-        double threshold;
-        String supplier;
-        String date;
-    }
-    
-    public void setInventoryActionListener(ActionButtonListener listener) {
-        this.inventoryActionListener = listener;
-    }
-
+    public void addSubmitReceiptListener(ActionListener listener) { btnSubmit.addActionListener(listener); }
+    private static class Receipt { String id; String date; String supplier; double totalAmount; List<ReceiptItem> items = new ArrayList<>(); }
+    private static class ReceiptItem { String name; String unit; double quantity; double price; double threshold; String supplier; String date; }
+    public void setInventoryActionListener(ActionButtonListener listener) { this.inventoryActionListener = listener; }
     public JTable getInventoryTable() { return inventoryTable; }
     public DefaultTableModel getInventoryModel() { return inventoryModel; }
     
     public Object[] showEditDialog(String ten, String dvt, int ton, int nguong) {
-        JTextField txtTen = new JTextField(ten);
-        JTextField txtDVT = new JTextField(dvt);
-        JTextField txtTon = new JTextField(String.valueOf(ton));
-        JTextField txtNguong = new JTextField(String.valueOf(nguong));
-        JTextField txtLyDo = new JTextField(); 
-
-        Object[] message = {
-            "Tên nguyên liệu:", txtTen,
-            "Đơn vị tính:", txtDVT,
-            "Số lượng tồn hiện tại:", txtTon,
-            "Ngưỡng báo động:", txtNguong,
-            "Lý do chỉnh sửa:", txtLyDo 
-        };
-
+        JTextField txtTen = new JTextField(ten); JTextField txtDVT = new JTextField(dvt); JTextField txtTon = new JTextField(String.valueOf(ton));
+        JTextField txtNguong = new JTextField(String.valueOf(nguong)); JTextField txtLyDo = new JTextField(); 
+        Object[] message = { "Tên nguyên liệu:", txtTen, "Đơn vị tính:", txtDVT, "Số lượng tồn hiện tại:", txtTon, "Ngưỡng báo động:", txtNguong, "Lý do chỉnh sửa:", txtLyDo };
         int option = JOptionPane.showConfirmDialog(this, message, "Chỉnh sửa nguyên liệu", JOptionPane.OK_CANCEL_OPTION);
-        
         if (option == JOptionPane.OK_OPTION) {
             try {
                 String lyDo = txtLyDo.getText().trim();
-                if (lyDo.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Vui lòng nhập lý do chỉnh sửa.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                    return null; 
-                }
-
-                return new Object[]{
-                    txtTen.getText().trim(), 
-                    txtDVT.getText().trim(), 
-                    Integer.parseInt(txtTon.getText().trim()), 
-                    Integer.parseInt(txtNguong.getText().trim()),
-                    lyDo
-                };
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Số lượng và ngưỡng phải là con số!");
-            }
+                if (lyDo.isEmpty()) { JOptionPane.showMessageDialog(this, "Vui lòng nhập lý do chỉnh sửa.", "Cảnh báo", JOptionPane.WARNING_MESSAGE); return null; }
+                return new Object[]{ txtTen.getText().trim(), txtDVT.getText().trim(), Integer.parseInt(txtTon.getText().trim()), Integer.parseInt(txtNguong.getText().trim()), lyDo };
+            } catch (NumberFormatException e) { JOptionPane.showMessageDialog(this, "Số lượng và ngưỡng phải là con số!"); }
         }
         return null; 
     }
     
-    public DefaultTableModel getReceiptItemModel() {
-        return itemModel;
-    }
-    
-    public void loadIngredientTypesToComboBox(List<IngredientTypeModel> types) {
-        cbCategory.removeAllItems();
-        for (IngredientTypeModel type : types) { cbCategory.addItem(type); }
-    }
-
+    public DefaultTableModel getReceiptItemModel() { return itemModel; }
     public void clearReceiptForm() {
         if (itemModel != null) { itemModel.setRowCount(0); itemModel.fireTableDataChanged(); }
         if (lblTotal != null) { lblTotal.setText("Tổng cộng: 0 VND"); }
@@ -750,53 +686,114 @@ public class StockPanel extends JPanel {
     }
     
     private void clearFormInputsOnly() {
-        if (cbCategory != null && cbCategory.getItemCount() > 0) cbCategory.setSelectedIndex(0);
-        if (txtIngredientName != null) txtIngredientName.setText("");
-        if (cbUnit != null) cbUnit.setSelectedIndex(0);
+        if (cbIngredient != null && cbIngredient.getItemCount() > 0) cbIngredient.setSelectedIndex(0);
         if (txtUnitCapacity != null) txtUnitCapacity.setText("");
         if (txtQuantity != null) txtQuantity.setText("");
         if (txtGiaTruocThue != null) txtGiaTruocThue.setText("");
         if (txtThueGTGT != null) txtThueGTGT.setText("8");
-        if (txtThreshold != null) txtThreshold.setText("0"); 
         if (txtProvider != null) txtProvider.setText("");
         if (jdImportDate != null) jdImportDate.setDate(new java.util.Date()); 
         if (jdExpiryDate != null) jdExpiryDate.setDate(null); 
     }
     
-    public void addHistoryButtonListener(ActionListener listener) {
-        btnHistory.addActionListener(listener);
-    }
-        
-    public void setHistoryActionListener(ActionButtonListener listener) {
-        this.historyActionListener = listener;
-    }
-
-    public JTable getHistoryTable() { return historyTable; }
-    public DefaultTableModel getHistoryModel() { return historyModel; }
-    
-    public void setTotalAmountLabel(long tongCong) {
-        if (lblTotal != null) {
-            lblTotal.setText("Tổng cộng: " + String.format("%,d", tongCong) + " VND");
-        }
-    }
-    
+    public void addHistoryButtonListener(ActionListener listener) { btnHistory.addActionListener(listener); }
     public void addCategoryButtonListener(ActionListener listener) {
         btnAddCategory.addActionListener(listener);
     }
-
-    // 2. Bổ sung hàm hiển thị hộp thoại thêm danh mục
+    public void setHistoryActionListener(ActionButtonListener listener) { this.historyActionListener = listener; }
+    public JTable getHistoryTable() { return historyTable; }
+    public DefaultTableModel getHistoryModel() { return historyModel; }
+    public void setTotalAmountLabel(long tongCong) { if (lblTotal != null) lblTotal.setText("Tổng cộng: " + String.format("%,d", tongCong) + " VND"); }
+    public void updateDashboardStats(int totalTypes, int warningCount) {
+        if (cardTotalIngredients != null) cardTotalIngredients.setValue(String.valueOf(totalTypes));
+        if (cardWarning != null) cardWarning.setValue(String.valueOf(warningCount));
+    }
+    
     public String showAddCategoryDialog() {
         return JOptionPane.showInputDialog(this, "Nhập tên loại nguyên liệu mới:", "Thêm Loại Nguyên Liệu", JOptionPane.QUESTION_MESSAGE);
     }
     
-    public JComboBox<IngredientTypeModel> getCategoryComboBox() {
-        return cbCategory;
+    public void showReceiptDetailTableDialog(int receiptID, List<Object[]> details) {
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Chi tiết phiếu nhập #" + receiptID, true);
+        dialog.setLayout(new BorderLayout(10, 10));
+        dialog.setSize(850, 450);
+        dialog.setLocationRelativeTo(this);
+
+        String[] cols = {"Tên Nguyên Liệu", "SL Nhập", "Định Lượng", "ĐVT", "Hạn Sử Dụng", "Thành Tiền"};
+        DefaultTableModel model = new DefaultTableModel(null, cols) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+
+        long total = 0;
+        for (Object[] row : details) {
+            model.addRow(row);
+            total += (long) row[5]; 
+        }
+
+        JTable table = new JTable(model);
+        ComponentUI.styleTable(table, TEXT_DARK, TEXT_DARK, PRIMARY_COLOR);
+
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 10));
+        footer.setOpaque(false);
+        JLabel lblTotal = new JLabel("Tổng giá trị phiếu: " + String.format("%,d VNĐ", total));
+        lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblTotal.setForeground(new Color(231, 76, 60));
+        footer.add(lblTotal);
+
+        dialog.add(new JScrollPane(table), BorderLayout.CENTER);
+        dialog.add(footer, BorderLayout.SOUTH);
+
+        dialog.setVisible(true);
     }
     
-    public void updateDashboardStats(int totalTypes, int warningCount) {
-        if (cardTotalIngredients != null) 
-            cardTotalIngredients.setValue(String.valueOf(totalTypes));
-        if (cardWarning != null) 
-            cardWarning.setValue(String.valueOf(warningCount));
+    public void showBatchDetailDialog(String tenNL, List<Object[]> batches, BatchDisposeListener listener) {
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Chi tiết các lô hàng: " + tenNL, true);
+        dialog.setLayout(new BorderLayout(10, 10));
+        dialog.setSize(700, 400);
+        dialog.setLocationRelativeTo(this);
+
+        String[] cols = {"Mã Lô", "Ngày Nhập", "Tồn Lô", "Hạn Sử Dụng", "Hành động"};
+        DefaultTableModel model = new DefaultTableModel(null, cols) {
+            @Override public boolean isCellEditable(int r, int c) { return c == 4; }
+        };
+
+        for (Object[] b : batches) { model.addRow(new Object[]{ b[0], b[1], b[2], b[3], "Xuất hủy" }); }
+
+        JTable table = new JTable(model);
+        ComponentUI.styleTable(table, TEXT_DARK, TEXT_DARK, PRIMARY_COLOR);
+        
+        TableColumn actionCol = table.getColumnModel().getColumn(4);
+        actionCol.setCellRenderer(new ActionButtonRenderer(false, false, true)); 
+        
+        actionCol.setCellEditor(new ActionButtonEditor(new ActionButtonListener() {
+            @Override public void onDelete(int row) {
+                int maLo = (int) table.getValueAt(row, 0);
+                double tonHienTai = (double) table.getValueAt(row, 2);
+                
+                JTextField txtQty = new JTextField();
+                JTextField txtReason = new JTextField();
+                Object[] message = { "Số lượng hủy:", txtQty, "Lý do hủy:", txtReason };
+                
+                int option = JOptionPane.showConfirmDialog(dialog, message, "Xác nhận xuất hủy lô #" + maLo, JOptionPane.OK_CANCEL_OPTION);
+                if (option == JOptionPane.OK_OPTION) {
+                    try {
+                        double qty = Double.parseDouble(txtQty.getText());
+                        String reason = txtReason.getText().trim();
+                        if (qty <= 0 || qty > tonHienTai || reason.isEmpty()) {
+                            JOptionPane.showMessageDialog(dialog, "Dữ liệu không hợp lệ hoặc vượt quá tồn lô!");
+                            return;
+                        }
+                        listener.onDispose(maLo, qty, reason);
+                        dialog.dispose(); 
+                    } catch (Exception e) { JOptionPane.showMessageDialog(dialog, "Vui lòng nhập số hợp lệ!"); }
+                }
+            }
+            @Override public void onEdit(int row) {} @Override public void onDetail(int row) {}
+        }, false, false, true));
+
+        dialog.add(new JScrollPane(table), BorderLayout.CENTER);
+        dialog.setVisible(true);
     }
+
+    public interface BatchDisposeListener { void onDispose(int maLo, double qty, String reason); }
 }

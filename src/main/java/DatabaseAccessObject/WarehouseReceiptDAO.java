@@ -170,6 +170,36 @@ public class WarehouseReceiptDAO {
         
         return receiptDetail.isEmpty() ? "Không có chi tiết nguyên liệu cho phiếu nhập này." : receiptDetail;
     }
+    
+    public List<Object[]> getReceiptDetailList(int receiptID) {
+        List<Object[]> list = new ArrayList<>();
+        // Truy vấn lấy thông tin từ chi tiết phiếu nhập và thông tin lô tương ứng
+        String query = "SELECT nl.TenNguyenLieu, ct.SoLuong, ct.DinhLuong, nl.DonViTinh, " +
+                       "TO_CHAR(lo.HanSuDung, 'DD/MM/YYYY') AS HSD, ct.ThanhTien " +
+                       "FROM CHI_TIET_PHIEU_NHAP ct " +
+                       "JOIN LO_NGUYEN_LIEU lo ON (lo.MaPhieuNhap = ct.MaPhieuNhap AND lo.MaNguyenLieu = ct.MaNguyenLieu) " +
+                       "JOIN NGUYEN_LIEU nl ON nl.MaNguyenLieu = ct.MaNguyenLieu " +
+                       "WHERE ct.MaPhieuNhap = ?";
+
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, receiptID);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new Object[]{
+                    rs.getString("TenNguyenLieu"),
+                    rs.getInt("SoLuong"),
+                    rs.getDouble("DinhLuong"),
+                    rs.getString("DonViTinh"),
+                    rs.getString("HSD"),
+                    rs.getLong("ThanhTien")
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 }
 
 

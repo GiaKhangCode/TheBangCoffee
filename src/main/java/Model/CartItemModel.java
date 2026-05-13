@@ -1,23 +1,20 @@
 package Model;
-
+ 
 import java.util.List;
 import java.util.ArrayList;
-
+ 
 public class CartItemModel {
     private String cartItemId; 
     private ProductModel product;
     private VariantModel selectedVariant;
     private List<ToppingModel> selectedToppings;
     private int quantity;
-    
-    // [MỚI] Thêm biến lưu ghi chú (Đá, Đường, Ghi chú tự nhập)
     private String note;
-    
-    // Thêm trạng thái để biết nên tính tiền theo giá nào
     private boolean isTakeaway = false;
     private boolean isHoliday = false;
-
-    // [SỬA] Thêm tham số note vào constructor
+    // [MỚI] Biến xác định đây có phải là hàng quy đổi điểm không
+    private boolean isReward = false;
+ 
     public CartItemModel(ProductModel product, VariantModel selectedVariant, List<ToppingModel> selectedToppings, int quantity, String note) {
         this.cartItemId = java.util.UUID.randomUUID().toString(); 
         this.product = product;
@@ -26,15 +23,16 @@ public class CartItemModel {
         this.quantity = quantity;
         this.note = note != null ? note : "";
     }
-    
-    // Hàm cập nhật lại trạng thái đơn hàng cho từng món
     public void setOrderType(boolean isTakeaway, boolean isHoliday) {
         this.isTakeaway = isTakeaway;
         this.isHoliday = isHoliday;
     }
-
-    // Hàm lấy giá chính (Main Price) dựa trên trạng thái (Lễ / Mang đi / Tại quán)
+    // [MỚI] Getter/Setter cho isReward
+    public boolean isReward() { return isReward; }
+    public void setReward(boolean reward) { this.isReward = reward; }
+ 
     public long getMainSellingPrice() {
+        if (isReward) return 0; // Hàng đổi điểm giá 0đ
         if (selectedVariant != null) {
             if (isHoliday) return selectedVariant.getHolidayPrice();
             if (isTakeaway) return selectedVariant.getTakeawayPrice();
@@ -45,9 +43,9 @@ public class CartItemModel {
             return product.getDineInPrice();
         }
     }
-
-    // Tính giá của 1 ly (Giá Size + Tổng giá Topping)
+ 
     public long getUnitPrice() {
+        if (isReward) return 0; // Đã đổi điểm thì Topping cũng free (hoặc bạn có thể tính tiền topping tùy ý, ở đây set free toàn bộ ly)
         long basePrice = getMainSellingPrice();
         long toppingsPrice = 0;
         for (ToppingModel t : selectedToppings) {
@@ -55,18 +53,15 @@ public class CartItemModel {
         }
         return basePrice + toppingsPrice;
     }
-    
     public double getMainVatAmount() {
+        if (isReward) return 0;
         long basePrice = getMainSellingPrice();
-        // Giả sử product.getVat() trả về 8.0 (tương đương 8%)
         double vatRate = product.getVat(); 
-        
-        // Công thức: Giá Bán - (Giá Bán / (1 + Rate))
         double priceBeforeTax = basePrice / (1.0 + (vatRate / 100.0));
         return (basePrice - priceBeforeTax) * quantity;
     }
-    
     public double getToppingsVatAmount() {
+        if (isReward) return 0;
         double totalToppingVat = 0;
         for (ToppingModel t : selectedToppings) {
             double vatRate = t.getVat(); 
@@ -75,22 +70,22 @@ public class CartItemModel {
         }
         return totalToppingVat * quantity;
     }
-
-    // Tính tổng tiền cho dòng này
+ 
     public long getTotalPrice() {
         return getUnitPrice() * quantity;
     }
-    
     public double getTotalVatAmount() {
         return getMainVatAmount() + getToppingsVatAmount();
     }
-
+ 
     public String getDisplayName() {
         StringBuilder sb = new StringBuilder();
-        sb.append("<html><b>").append(product.getProductName()).append("</b><br>");
+        sb.append("<html><b>").append(product.getProductName()).append("</b>");
+        // [MỚI] Hiển thị icon hộp quà nếu là hàng đổi điểm
+        if (isReward) sb.append(" <span style='color:#e67e22'>[🎁 QUÀ TẶNG]</span>");
+        sb.append("<br>");
         sb.append("<small style='color:gray'>");
         if (selectedVariant != null) sb.append("Size ").append(selectedVariant.getSizeName());
-        
         if (!selectedToppings.isEmpty()) {
             sb.append(", ");
             for (int i = 0; i < selectedToppings.size(); i++) {
@@ -99,48 +94,42 @@ public class CartItemModel {
             }
         }
         sb.append("</small>");
-        
-        // In thêm ghi chú Đá/Đường phía dưới
         if (!note.isEmpty()) {
-            // Thay thế ký tự " | Ghi chú:" thành thẻ "<br>Ghi chú:" để ép xuống dòng
             String formattedNote = note.replace(" | Ghi chú:", "<br>Ghi chú:");
             sb.append("<br><i style='color:#e67e22'>").append(formattedNote).append("</i>");
         }
-        
         sb.append("</html>");
         return sb.toString();
     }
-
-    // Getters & Setters
+ 
     public String getCartItemId() { return cartItemId; }
     public ProductModel getProduct() { return product; }
     public VariantModel getSelectedVariant() { return selectedVariant; }
     public List<ToppingModel> getSelectedToppings() { return selectedToppings; }
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
-    
     public String getNote() { return note; }
-    
-    // [SỬA LẠI] Thêm tham số otherNote để so sánh
-    public boolean isSameItem(ProductModel otherProduct, VariantModel otherVariant, List<ToppingModel> otherToppings, String otherNote) {
+    public boolean isSameItem(ProductModel otherProduct, VariantModel otherVariant, List<ToppingModel> otherToppings, String otherNote, boolean otherIsReward) {
         if (this.product.getProductID() != otherProduct.getProductID()) return false;
-
+        // [MỚI] Không gộp chung hàng mua và hàng tặng
+        if (this.isReward != otherIsReward) return false;
+ 
         if (this.selectedVariant == null && otherVariant != null) return false;
         if (this.selectedVariant != null && otherVariant == null) return false;
         if (this.selectedVariant != null && otherVariant != null) {
             if (this.selectedVariant.getVariantID() != otherVariant.getVariantID()) return false;
         }
-
+ 
         if (!this.note.equals(otherNote != null ? otherNote : "")) return false;
-
+ 
         if (this.selectedToppings.size() != otherToppings.size()) return false;
-
+ 
         List<Integer> thisToppingIds = new ArrayList<>();
         for (ToppingModel t : this.selectedToppings) thisToppingIds.add(t.getToppingID());
-
+ 
         List<Integer> otherToppingIds = new ArrayList<>();
         for (ToppingModel t : otherToppings) otherToppingIds.add(t.getToppingID());
-
+ 
         if (!thisToppingIds.containsAll(otherToppingIds) || !otherToppingIds.containsAll(thisToppingIds)) {
             return false;
         }

@@ -9,11 +9,13 @@ import java.awt.event.ActionListener;
 public class OrderPanel extends JPanel {
 
     private final Color PRIMARY_COLOR = new Color(67, 142, 104);
+    private final Color SUCCESS_COLOR = new Color(39, 174, 96);
     private final Color TEXT_DARK = new Color(33, 37, 41);
     private final Color TEXT_MUTED = new Color(108, 117, 125);
     private final Color BG_LIGHT = new Color(248, 249, 250);
     private final Color DANGER_COLOR = new Color(231, 76, 60);
     private final Color INFO_COLOR = new Color(41, 128, 185);
+    private final Color WARNING_COLOR = new Color(243, 156, 18);
 
     // --- LEFT PANEL (DANH SÁCH ĐƠN HÀNG) ---
     private JTextField txtSearch;
@@ -26,7 +28,11 @@ public class OrderPanel extends JPanel {
     private JLabel lblOrderId;
     private JLabel lblOrderTime;
     private JLabel lblOrderType;
-    private JLabel lblOrderStatus;
+    
+    // [ĐÃ SỬA] Tách thành 2 Label trạng thái
+    private JLabel lblPrepStatus;
+    private JLabel lblPayStatus;
+    
     private DefaultTableModel detailTableModel;
     private JTable detailTable;
     private JLabel lblTotalAmount;
@@ -73,7 +79,6 @@ public class OrderPanel extends JPanel {
         txtSearch.setText("Tìm theo mã đơn...");
         txtSearch.setForeground(Color.GRAY);
 
-        // Placeholder effect
         txtSearch.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 if (txtSearch.getText().equals("Tìm theo mã đơn...")) {
@@ -89,7 +94,8 @@ public class OrderPanel extends JPanel {
             }
         });
 
-        String[] statuses = {"Tất cả", "Chờ tiếp nhận", "Đang pha chế", "Hoàn thành", "Đã thanh toán", "Đã hủy"};
+        // [ĐÃ SỬA] Cập nhật bộ lọc để bao quát 2 loại trạng thái
+        String[] statuses = {"Tất cả", "Chờ tiếp nhận", "Đang pha chế", "Đã hoàn thành", "Chưa thanh toán", "Đã thanh toán", "Đã hủy"};
         cbStatusFilter = new JComboBox<>(statuses);
         cbStatusFilter.setPreferredSize(new Dimension(150, 40));
         cbStatusFilter.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -99,12 +105,12 @@ public class OrderPanel extends JPanel {
         btnRefresh.setPreferredSize(new Dimension(120, 40));
 
         topBar.add(txtSearch);
-        topBar.add(new JLabel("Trạng thái:"));
+        topBar.add(new JLabel("Lọc trạng thái:"));
         topBar.add(cbStatusFilter);
         topBar.add(btnRefresh);
 
-        // 2. Bảng Danh Sách Đơn Hàng
-        String[] cols = {"Mã Đơn", "Thời Gian", "Loại Đơn", "Trạng Thái", "Tổng Tiền"};
+        // 2. Bảng Danh Sách Đơn Hàng [ĐÃ SỬA CỘT]
+        String[] cols = {"Mã Đơn", "Thời Gian", "Loại Đơn", "Pha Chế", "Thanh Toán", "Tổng Tiền"};
         orderTableModel = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -115,11 +121,17 @@ public class OrderPanel extends JPanel {
 
         // Chỉnh độ rộng cột
         TableColumnModel tcm = orderTable.getColumnModel();
-        tcm.getColumn(0).setPreferredWidth(80);
-        tcm.getColumn(1).setPreferredWidth(150);
-        tcm.getColumn(2).setPreferredWidth(150);
-        tcm.getColumn(3).setPreferredWidth(150);
-        tcm.getColumn(4).setPreferredWidth(120);
+        tcm.getColumn(0).setPreferredWidth(70);
+        tcm.getColumn(1).setPreferredWidth(130);
+        tcm.getColumn(2).setPreferredWidth(100);
+        tcm.getColumn(3).setPreferredWidth(120); // Cột Pha Chế
+        tcm.getColumn(4).setPreferredWidth(120); // Cột Thanh Toán
+        tcm.getColumn(5).setPreferredWidth(110);
+
+        // [MỚI] Gắn Custom Renderer để tô màu 2 cột trạng thái
+        StatusCellRenderer statusRenderer = new StatusCellRenderer();
+        tcm.getColumn(3).setCellRenderer(statusRenderer);
+        tcm.getColumn(4).setCellRenderer(statusRenderer);
 
         JScrollPane scrollPane = new JScrollPane(orderTable);
         scrollPane.setBorder(new LineBorder(new Color(230, 230, 230), 1, true));
@@ -159,9 +171,12 @@ public class OrderPanel extends JPanel {
         lblOrderType.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblOrderType.setForeground(TEXT_DARK);
 
-        lblOrderStatus = new JLabel("Trạng thái: --");
-        lblOrderStatus.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblOrderStatus.setForeground(DANGER_COLOR);
+        // [ĐÃ SỬA] Tách Label
+        lblPrepStatus = new JLabel("Pha chế: --");
+        lblPrepStatus.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        
+        lblPayStatus = new JLabel("Thanh toán: --");
+        lblPayStatus.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
         infoPanel.add(lblOrderId);
         infoPanel.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -169,7 +184,9 @@ public class OrderPanel extends JPanel {
         infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         infoPanel.add(lblOrderType);
         infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        infoPanel.add(lblOrderStatus);
+        infoPanel.add(lblPrepStatus);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        infoPanel.add(lblPayStatus);
 
         // 2. Bảng Chi Tiết Món
         String[] detailCols = {"Tên Món (Kèm Size/Topping)", "SL", "Thành Tiền"};
@@ -179,7 +196,7 @@ public class OrderPanel extends JPanel {
         };
         detailTable = new JTable(detailTableModel);
         styleTable(detailTable);
-        detailTable.setRowHeight(65); // Cao hơn chút để chứa text dài
+        detailTable.setRowHeight(65); 
 
         TableColumnModel dtcm = detailTable.getColumnModel();
         dtcm.getColumn(0).setPreferredWidth(250);
@@ -206,12 +223,12 @@ public class OrderPanel extends JPanel {
         JPanel actionPanel = new JPanel(new GridLayout(2, 2, 10, 10));
         actionPanel.setOpaque(false);
 
-        btnAccept = createModernButton("Tiếp nhận", INFO_COLOR, Color.WHITE);
-        btnComplete = createModernButton("Hoàn thành (Trừ kho)", PRIMARY_COLOR, Color.WHITE);
-        btnPay = createModernButton("Đã thanh toán", PRIMARY_COLOR, Color.WHITE);
-        btnCancel = createModernButton("Hủy đơn", DANGER_COLOR, Color.WHITE);
+        // [ĐÃ SỬA] Thay đổi text của nút cho rõ nghĩa
+        btnAccept = createModernButton("Tiếp nhận món", INFO_COLOR, Color.WHITE);
+        btnComplete = createModernButton("Hoàn thành món", SUCCESS_COLOR, Color.WHITE);
+        btnPay = createModernButton("Xác nhận đã thu tiền", PRIMARY_COLOR, Color.WHITE);
+        btnCancel = createModernButton("Hủy đơn hàng", DANGER_COLOR, Color.WHITE);
 
-        // Mặc định vô hiệu hóa khi chưa chọn đơn
         setActionsEnabled(false);
 
         actionPanel.add(btnAccept);
@@ -221,12 +238,39 @@ public class OrderPanel extends JPanel {
 
         footerPanel.add(actionPanel, BorderLayout.CENTER);
 
-        // Gắn vào Right Panel
         panel.add(infoPanel, BorderLayout.NORTH);
         panel.add(detailScroll, BorderLayout.CENTER);
         panel.add(footerPanel, BorderLayout.SOUTH);
 
         return panel;
+    }
+
+    // ==========================================================
+    // CUSTOM CELL RENDERER ĐỂ TÔ MÀU TRẠNG THÁI
+    // ==========================================================
+    class StatusCellRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (value != null) {
+                String status = value.toString();
+                setFont(new Font("Segoe UI", Font.BOLD, 13));
+                
+                switch (status) {
+                    case "Chờ tiếp nhận": setForeground(WARNING_COLOR); break;
+                    case "Đang pha chế": setForeground(INFO_COLOR); break;
+                    case "Đã hoàn thành": 
+                    case "Đã thanh toán": setForeground(SUCCESS_COLOR); break;
+                    case "Chưa thanh toán": 
+                    case "Đã hủy": 
+                    case "Đã hoàn tiền": setForeground(DANGER_COLOR); break;
+                    default: setForeground(TEXT_DARK);
+                }
+                
+                if (isSelected) setForeground(Color.WHITE); // Giữ màu trắng nếu dòng đang được bôi đen
+            }
+            return c;
+        }
     }
 
     // ==========================================================
@@ -239,7 +283,7 @@ public class OrderPanel extends JPanel {
         table.getTableHeader().setBackground(new Color(245, 245, 245));
         table.getTableHeader().setForeground(TEXT_DARK);
         table.setShowVerticalLines(false);
-        table.setSelectionBackground(new Color(PRIMARY_COLOR.getRed(), PRIMARY_COLOR.getGreen(), PRIMARY_COLOR.getBlue(), 30));
+        table.setSelectionBackground(new Color(PRIMARY_COLOR.getRed(), PRIMARY_COLOR.getGreen(), PRIMARY_COLOR.getBlue(), 180));
     }
 
     private JButton createModernButton(String text, Color bg, Color fg) {
@@ -251,7 +295,7 @@ public class OrderPanel extends JPanel {
                 if (getModel().isPressed()) {
                     g2.setColor(bg.darker());
                 } else if (!isEnabled()) {
-                    g2.setColor(new Color(220, 220, 220)); // Màu xám khi disabled
+                    g2.setColor(new Color(220, 220, 220)); 
                 } else {
                     g2.setColor(bg);
                 }
@@ -289,25 +333,35 @@ public class OrderPanel extends JPanel {
     public String getSelectedFilter() { return (String) cbStatusFilter.getSelectedItem(); }
     public int getSelectedOrderRow() { return orderTable.getSelectedRow(); }
     
-    // Setters để hiển thị dữ liệu
     public DefaultTableModel getOrderTableModel() { return orderTableModel; }
     public DefaultTableModel getDetailTableModel() { return detailTableModel; }
 
-    public void setOrderInfo(String id, String time, String type, String status, String total) {
+    // [ĐÃ SỬA] Thêm tham số prepStatus và payStatus
+    public void setOrderInfo(String id, String time, String type, String prepStatus, String payStatus, String total) {
         lblOrderId.setText("Mã đơn: #" + id);
         lblOrderTime.setText("Thời gian: " + time);
         lblOrderType.setText("Loại: " + type);
-        lblOrderStatus.setText("Trạng thái: " + status);
+        
+        lblPrepStatus.setText("Pha chế: " + prepStatus);
+        lblPayStatus.setText("Thanh toán: " + payStatus);
+        
         lblTotalAmount.setText("Tổng cộng: " + total);
         
-        // Đổi màu Label trạng thái cho sinh động
-        switch (status) {
-            case "Chờ tiếp nhận": lblOrderStatus.setForeground(Color.ORANGE); break;
-            case "Đang pha chế": lblOrderStatus.setForeground(INFO_COLOR); break;
-            case "Hoàn thành": 
-            case "Đã thanh toán": lblOrderStatus.setForeground(PRIMARY_COLOR); break;
-            case "Đã hủy": lblOrderStatus.setForeground(DANGER_COLOR); break;
-            default: lblOrderStatus.setForeground(TEXT_DARK);
+        // Cập nhật màu cho Label Pha Chế
+        switch (prepStatus) {
+            case "Chờ tiếp nhận": lblPrepStatus.setForeground(WARNING_COLOR); break;
+            case "Đang pha chế": lblPrepStatus.setForeground(INFO_COLOR); break;
+            case "Đã hoàn thành": lblPrepStatus.setForeground(SUCCESS_COLOR); break;
+            case "Đã hủy": lblPrepStatus.setForeground(DANGER_COLOR); break;
+            default: lblPrepStatus.setForeground(TEXT_DARK);
+        }
+        
+        // Cập nhật màu cho Label Thanh Toán
+        switch (payStatus) {
+            case "Chưa thanh toán": 
+            case "Đã hoàn tiền": lblPayStatus.setForeground(DANGER_COLOR); break;
+            case "Đã thanh toán": lblPayStatus.setForeground(SUCCESS_COLOR); break;
+            default: lblPayStatus.setForeground(TEXT_DARK);
         }
     }
 
@@ -315,37 +369,38 @@ public class OrderPanel extends JPanel {
         lblOrderId.setText("Chưa chọn đơn hàng");
         lblOrderTime.setText("Thời gian: --");
         lblOrderType.setText("Loại: --");
-        lblOrderStatus.setText("Trạng thái: --");
-        lblOrderStatus.setForeground(TEXT_MUTED);
+        
+        lblPrepStatus.setText("Pha chế: --");
+        lblPrepStatus.setForeground(TEXT_MUTED);
+        
+        lblPayStatus.setText("Thanh toán: --");
+        lblPayStatus.setForeground(TEXT_MUTED);
+        
         lblTotalAmount.setText("Tổng cộng: 0 đ");
         detailTableModel.setRowCount(0);
         setActionsEnabled(false);
     }
 
     /**
-     * Tự động bật/tắt các nút thao tác dựa trên Trạng thái hiện tại của đơn hàng.
-     * Logic luồng: Chờ tiếp nhận -> Đang pha chế (Tiếp nhận) -> Hoàn thành (Trừ kho) -> Đã thanh toán.
+     * [ĐÃ SỬA LẠI LOGIC]
+     * Tự động bật/tắt các nút thao tác dựa trên 2 Trạng thái độc lập.
      */
-    public void updateActionButtons(String status) {
-        setActionsEnabled(true); // Bật hết lên trước
-        
-        if (status.equals("Chờ tiếp nhận")) {
-            btnComplete.setEnabled(false);
-            btnPay.setEnabled(false);
-        } 
-        else if (status.equals("Đang pha chế")) {
-            btnAccept.setEnabled(false);
-            btnPay.setEnabled(false);
-        } 
-        else if (status.equals("Hoàn thành")) {
-            btnAccept.setEnabled(false);
-            btnComplete.setEnabled(false);
-            // Vẫn cho phép Hủy hoặc Thanh toán
-        } 
-        else if (status.equals("Đã thanh toán") || status.equals("Đã hủy")) {
-            // Đơn đã kết thúc vòng đời -> Khóa tất cả các nút
+    public void updateActionButtons(String prepStatus, String payStatus) {
+        // Nếu đơn đã hủy -> Đóng băng toàn bộ
+        if (prepStatus.equals("Đã hủy")) {
             setActionsEnabled(false);
+            return;
         }
+
+        // Logic Bếp (Pha chế)
+        btnAccept.setEnabled(prepStatus.equals("Chờ tiếp nhận"));
+        btnComplete.setEnabled(prepStatus.equals("Đang pha chế"));
+        
+        // Logic Thu Ngân (Thanh toán)
+        btnPay.setEnabled(payStatus.equals("Chưa thanh toán"));
+        
+        // Nút hủy chỉ khả dụng khi chưa giao xong cho khách
+        btnCancel.setEnabled(!prepStatus.equals("Đã hoàn thành"));
     }
 
     private void setActionsEnabled(boolean enabled) {

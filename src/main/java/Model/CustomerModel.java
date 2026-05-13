@@ -9,10 +9,10 @@ public class CustomerModel {
 
     public CustomerModel() {}
 
-    public CustomerModel(int MaKhachHang, String soDienThoai, String HoTen, int diemTichLuy, String hangThanhVien) {
-        this.MaKhachHang = MaKhachHang;
+    public CustomerModel(int maKH, String soDienThoai, String tenKH, int diemTichLuy, String hangThanhVien) {
+        this.MaKhachHang = maKH;
         this.soDienThoai = soDienThoai;
-        this.HoTen = HoTen;
+        this.HoTen = tenKH;
         this.diemTichLuy = diemTichLuy;
         this.hangThanhVien = hangThanhVien;
     }
@@ -56,5 +56,21 @@ public class CustomerModel {
     public void setHangThanhVien(String hangThanhVien) {
         this.hangThanhVien = hangThanhVien;
     } 
-    
+
+    public int getMaKhachHang() {
+        return MaKhachHang;
+    }
+
+    public String getHoTen() {
+        return HoTen;
+    }
+
+    public void setMaKhachHang(int MaKhachHang) {
+        this.MaKhachHang = MaKhachHang;
+    }
+
+    public void setHoTen(String HoTen) {
+        this.HoTen = HoTen;
+    }
+
 }

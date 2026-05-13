@@ -60,9 +60,10 @@ public class IngredientDAO {
         }
     }
     
+    // [ĐÃ SỬA] Xóa tham số Nhà cung cấp và Thuế để khớp với Procedure trong Oracle
     public boolean updateIngredientWithLog(int maNL, String tenMoi, String dvtMoi, int tonKhoMoi, int nguongMoi, String nhaCungCapMoi, double thueMoi, int maTaiKhoan, String lyDo) {
-        // Procedure mới cần 10 tham số (9 IN, 1 OUT)
-        String sql = "{CALL SP_SUA_NGUYEN_LIEU(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}"; 
+        // Procedure chỉ có 8 tham số (7 IN, 1 OUT)
+        String sql = "{CALL SP_SUA_NGUYEN_LIEU(?, ?, ?, ?, ?, ?, ?, ?)}"; 
         
         try (Connection conn = getMyConnection();
              CallableStatement cs = conn.prepareCall(sql)) {
@@ -72,15 +73,14 @@ public class IngredientDAO {
             cs.setString(3, dvtMoi);
             cs.setInt(4, tonKhoMoi);
             cs.setInt(5, nguongMoi);
-            cs.setString(6, nhaCungCapMoi); // Cột mới
-            cs.setDouble(7, thueMoi);       // Cột mới
-            cs.setInt(8, maTaiKhoan); 
-            cs.setString(9, lyDo);
+            // Bỏ 2 dòng setString NhaCungCap và setDouble Thue
+            cs.setInt(6, maTaiKhoan); 
+            cs.setString(7, lyDo);
             
-            cs.registerOutParameter(10, Types.NVARCHAR);
+            cs.registerOutParameter(8, Types.NVARCHAR);
             cs.execute();
             
-            String ketQua = cs.getString(10);
+            String ketQua = cs.getString(8);
             if (ketQua.equals("Thành công")) {
                 return true;
             } else {
@@ -241,5 +241,65 @@ public class IngredientDAO {
             e.printStackTrace();
         }
         return null;
+    }
+    
+    public boolean addIngredientMasterData(String categoryName, String ingredientName, String unit, int threshold) {
+        String sql = "{CALL SP_THEM_NGUYEN_LIEU_GOC(?, ?, ?, ?, ?)}";
+        try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection();
+             CallableStatement cs = conn.prepareCall(sql)) {
+            
+            cs.setString(1, categoryName);
+            cs.setString(2, ingredientName);
+            cs.setString(3, unit);
+            cs.setInt(4, threshold);
+            
+            // Đăng ký tham số OUT
+            cs.registerOutParameter(5, java.sql.Types.NVARCHAR);
+            
+            cs.execute();
+            
+            String result = cs.getString(5);
+            return result.equals("Thành công");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    // Lấy danh sách các lô còn hàng của 1 nguyên liệu
+    public List<Object[]> getIngredientBatches(int maNL) {
+        List<Object[]> list = new ArrayList<>();
+        String sql = "SELECT l.MaLo, p.NgayNhap, l.SoLuongConLai, l.HanSuDung " +
+                     "FROM LO_NGUYEN_LIEU l " +
+                     "JOIN PHIEU_NHAP_KHO p ON l.MaPhieuNhap = p.MaPhieuNhap " +
+                     "WHERE l.MaNguyenLieu = ? AND l.SoLuongConLai > 0 " +
+                     "ORDER BY l.HanSuDung ASC";
+        try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, maNL);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new Object[]{
+                    rs.getInt("MaLo"),
+                    rs.getDate("NgayNhap"),
+                    rs.getDouble("SoLuongConLai"),
+                    rs.getDate("HanSuDung")
+                });
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    public String disposeBatch(int maLo, double soLuong, String lyDo) {
+        String sql = "{CALL SP_XUAT_HUY_LO(?, ?, ?, ?)}";
+        try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection();
+             CallableStatement cs = conn.prepareCall(sql)) {
+            cs.setInt(1, maLo);
+            cs.setDouble(2, soLuong);
+            cs.setString(3, lyDo);
+            cs.registerOutParameter(4, java.sql.Types.NVARCHAR);
+            cs.execute();
+            return cs.getString(4);
+        } catch (Exception e) { return e.getMessage(); }
     }
 }

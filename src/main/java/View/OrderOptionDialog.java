@@ -16,6 +16,7 @@ public class OrderOptionDialog extends JDialog {
 
     private final Color PRIMARY_COLOR = new Color(67, 142, 104);
     private final Color TEXT_DARK = new Color(33, 37, 41);
+    private final Color REWARD_COLOR = new Color(230, 126, 34); 
 
     private ProductModel product;
     private List<VariantModel> availableVariants;
@@ -27,11 +28,16 @@ public class OrderOptionDialog extends JDialog {
 
     // Kết quả thu được sau khi chọn
     private boolean isConfirmed = false;
+    private boolean isReward = false; 
+    private int availablePoints = 0;  
+    
     private VariantModel selectedVariant = null;
     private List<ToppingModel> selectedToppings = new ArrayList<>();
-    private int quantity = 1;
     
-    // [MỚI] Biến chứa chuỗi Ghi chú tổng hợp
+    // [ĐÃ SỬA] Số lượng mặc định bắt đầu từ 0
+    private int quantity = 0;
+    
+    // Biến chứa chuỗi Ghi chú tổng hợp
     private String finalNote = "";
 
     // UI Components
@@ -40,24 +46,41 @@ public class OrderOptionDialog extends JDialog {
     private List<JCheckBox> toppingCheckboxes = new ArrayList<>();
     private JLabel lblQuantity;
     
-    // [MỚI] UI Components cho Đá, Đường, Ghi chú
+    // UI Components cho Đá, Đường, Ghi chú
     private ButtonGroup sugarGroup;
     private ButtonGroup iceGroup;
     private JTextField txtCustomNote;
+    
+    // Components cho tích điểm
+    private JLabel lblPoints;
+    private JButton btnRedeem;
+    
+    // [MỚI] Interface Validate Tồn kho
+    public interface InventoryValidator {
+        String validate(int newQuantity, VariantModel variant, List<ToppingModel> toppings);
+    }
+    private InventoryValidator inventoryValidator;
 
-    public OrderOptionDialog(Frame owner, ProductModel product, List<VariantModel> variants, List<ToppingModel> toppings, boolean isTakeaway, boolean isHoliday) {
+    public OrderOptionDialog(Frame owner, ProductModel product, List<VariantModel> variants, List<ToppingModel> toppings, boolean isTakeaway, boolean isHoliday, int availablePoints) {
         super(owner, "Tùy chọn: " + product.getProductName(), true);
         this.product = product;
         this.availableVariants = variants != null ? variants : new ArrayList<>();
         this.availableToppings = toppings != null ? toppings : new ArrayList<>();
         this.isTakeaway = isTakeaway;
         this.isHoliday = isHoliday;
+        this.availablePoints = availablePoints; 
         
         initComponents();
+        updateRedeemState(); 
+    }
+    
+    // [MỚI] Hàm set bộ kiểm tra tồn kho từ Controller
+    public void setInventoryValidator(InventoryValidator validator) {
+        this.inventoryValidator = validator;
     }
 
     private void initComponents() {
-        setSize(700, 700); // Tăng chiều cao để chứa thêm form
+        setSize(700, 700); 
         setLocationRelativeTo(getParent());
         setLayout(new BorderLayout());
         getContentPane().setBackground(Color.WHITE);
@@ -131,7 +154,7 @@ public class OrderOptionDialog extends JDialog {
             bodyPanel.add(Box.createRigidArea(new Dimension(0, 15)));
         }
         
-        // [MỚI] 4. Tùy chọn Mức Đường
+        // 4. Tùy chọn Mức Đường
         JPanel sugarPanel = createSectionPanel("Mức Đường");
         sugarPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 15, 10));
         sugarGroup = new ButtonGroup();
@@ -140,15 +163,15 @@ public class OrderOptionDialog extends JDialog {
             JRadioButton rb = new JRadioButton(sugarLevels[i]);
             rb.setFont(new Font("Segoe UI", Font.PLAIN, 14));
             rb.setBackground(Color.WHITE);
-            rb.setActionCommand(sugarLevels[i]); // Dùng để lấy giá trị sau này
-            if (i == 0) rb.setSelected(true); // Mặc định 100%
+            rb.setActionCommand(sugarLevels[i]); 
+            if (i == 0) rb.setSelected(true); 
             sugarGroup.add(rb);
             sugarPanel.add(rb);
         }
         bodyPanel.add(sugarPanel);
         bodyPanel.add(Box.createRigidArea(new Dimension(0, 15)));
 
-        // [MỚI] 5. Tùy chọn Mức Đá
+        // 5. Tùy chọn Mức Đá
         JPanel icePanel = createSectionPanel("Mức Đá");
         icePanel.setLayout(new FlowLayout(FlowLayout.LEFT, 15, 10));
         iceGroup = new ButtonGroup();
@@ -165,7 +188,7 @@ public class OrderOptionDialog extends JDialog {
         bodyPanel.add(icePanel);
         bodyPanel.add(Box.createRigidArea(new Dimension(0, 15)));
 
-        // [MỚI] 6. Ghi chú thêm
+        // 6. Ghi chú đặc biệt
         JPanel notePanel = createSectionPanel("Ghi chú đặc biệt");
         notePanel.setLayout(new BorderLayout());
         txtCustomNote = new JTextField();
@@ -176,6 +199,15 @@ public class OrderOptionDialog extends JDialog {
         ));
         notePanel.add(txtCustomNote, BorderLayout.CENTER);
         bodyPanel.add(notePanel);
+        
+        // Hiển thị nhãn thông tin điểm phía dưới ghi chú
+        JPanel pointsInfoPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 10));
+        pointsInfoPanel.setBackground(Color.WHITE);
+        lblPoints = new JLabel("Điểm của bạn: 0 | Cần: 0 điểm");
+        lblPoints.setFont(new Font("Segoe UI", Font.ITALIC, 13));
+        lblPoints.setForeground(new Color(150, 150, 150));
+        pointsInfoPanel.add(lblPoints);
+        bodyPanel.add(pointsInfoPanel);
 
         add(new JScrollPane(bodyPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
 
@@ -191,7 +223,8 @@ public class OrderOptionDialog extends JDialog {
         JButton btnMinus = createModernButton("-", Color.WHITE, TEXT_DARK);
         btnMinus.setPreferredSize(new Dimension(40, 35));
         
-        lblQuantity = new JLabel("1", SwingConstants.CENTER);
+        // [ĐÃ SỬA] Nhãn mặc định là 0
+        lblQuantity = new JLabel("0", SwingConstants.CENTER);
         lblQuantity.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lblQuantity.setPreferredSize(new Dimension(30, 35));
         
@@ -209,16 +242,45 @@ public class OrderOptionDialog extends JDialog {
         actionPanel.setOpaque(false);
         
         JButton btnCancel = createModernButton("Hủy", new Color(220, 220, 220), TEXT_DARK);
+        btnRedeem = createModernButton("Quy đổi điểm", REWARD_COLOR, Color.WHITE); 
         JButton btnConfirm = createModernButton("Thêm vào giỏ", PRIMARY_COLOR, Color.WHITE);
         
         btnCancel.addActionListener(e -> dispose());
+        
         btnConfirm.addActionListener(e -> {
+            if (quantity == 0) { // [MỚI] Ngăn khách hàng Thêm giỏ hàng nếu chưa nhấn dấu +
+                JOptionPane.showMessageDialog(this, "Vui lòng bấm dấu (+) để thêm số lượng trước khi cho vào giỏ!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             gatherData();
             isConfirmed = true;
+            isReward = false; 
             dispose();
+        });
+        
+        btnRedeem.addActionListener(e -> {
+            if (quantity == 0) { 
+                JOptionPane.showMessageDialog(this, "Vui lòng bấm dấu (+) để thêm số lượng quy đổi!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            int pointsNeeded = quantity * 12; // 1 ly = 12 điểm
+            int confirm = JOptionPane.showConfirmDialog(this, 
+                "Xác nhận quy đổi " + pointsNeeded + " điểm để lấy " + quantity + " ly miễn phí?", 
+                "Xác nhận quy đổi", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                String currentNote = txtCustomNote.getText().trim();
+                txtCustomNote.setText(currentNote.isEmpty() ? "Hàng quy đổi điểm" : currentNote + " | Hàng quy đổi điểm");
+                
+                gatherData();
+                isConfirmed = true;
+                isReward = true; 
+                dispose();
+            }
         });
 
         actionPanel.add(btnCancel);
+        actionPanel.add(btnRedeem); 
         actionPanel.add(btnConfirm);
 
         footerPanel.add(qtyPanel, BorderLayout.WEST);
@@ -228,15 +290,54 @@ public class OrderOptionDialog extends JDialog {
     }
 
     private void updateQuantity(int delta) {
-        if (quantity + delta >= 1) {
+        if (quantity + delta >= 0) {
+            
+            // [MỚI] Validate Tồn Kho mỗi khi bấm dấu (+)
+            if (delta > 0 && inventoryValidator != null) {
+                // Thu thập nhanh danh sách Topping hiện tại đang được tick chọn
+                selectedToppings.clear();
+                for (JCheckBox cb : toppingCheckboxes) {
+                    if (cb.isSelected()) {
+                        selectedToppings.add((ToppingModel) cb.getClientProperty("topping"));
+                    }
+                }
+                
+                // Gọi API kiểm tra xuống DB thông qua PosController
+                String errorMsg = inventoryValidator.validate(quantity + delta, selectedVariant, selectedToppings);
+                
+                if (errorMsg != null) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Kho không đủ nguyên liệu để thêm lượng này!\n\n" + errorMsg, 
+                        "Cảnh báo Hết Hàng", JOptionPane.WARNING_MESSAGE);
+                    return; // Đóng băng, KHÔNG CỘNG SỐ LƯỢNG NỮA
+                }
+            }
+            
             quantity += delta;
             lblQuantity.setText(String.valueOf(quantity));
+            updateRedeemState(); 
+        }
+    }
+    
+    private void updateRedeemState() {
+        int pointsNeeded = quantity * 12; // Mặc định 1 ly trừ 12 điểm
+        
+        if (lblPoints != null) {
+            lblPoints.setText(String.format("Điểm của bạn: %d | Cần: %d điểm", availablePoints, pointsNeeded));
+        }
+
+        if (btnRedeem != null) {
+            if (availablePoints >= pointsNeeded && availablePoints > 0 && quantity > 0) {
+                btnRedeem.setEnabled(true);
+                btnRedeem.setBackground(REWARD_COLOR);
+            } else {
+                btnRedeem.setEnabled(false);
+                btnRedeem.setBackground(new Color(200, 200, 200)); 
+            }
         }
     }
 
-    // [MỚI] Hàm gom dữ liệu (Topping và Ghi chú Đá/Đường)
     private void gatherData() {
-        // 1. Lấy Topping
         selectedToppings.clear();
         for (JCheckBox cb : toppingCheckboxes) {
             if (cb.isSelected()) {
@@ -244,13 +345,11 @@ public class OrderOptionDialog extends JDialog {
             }
         }
         
-        // 2. Lắp ráp chuỗi Ghi chú
         StringBuilder noteBuilder = new StringBuilder();
         
         String sugar = sugarGroup.getSelection().getActionCommand();
         String ice = iceGroup.getSelection().getActionCommand();
         
-        // Nếu khác "Bình thường" thì mới ghi vào để đỡ rối mắt
         if (!sugar.contains("100%")) {
             noteBuilder.append("Đường: ").append(sugar.split(" ")[0]).append(" ");
         }
@@ -285,7 +384,7 @@ public class OrderOptionDialog extends JDialog {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getBackground());
+                g2.setColor(isEnabled() ? getBackground() : new Color(200, 200, 200));
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
                 g2.dispose();
                 super.paintComponent(g);
@@ -305,10 +404,10 @@ public class OrderOptionDialog extends JDialog {
         return btn;
     }
 
-    // Getters for Controller
     public boolean isConfirmed() { return isConfirmed; }
+    public boolean isReward() { return isReward; } 
     public VariantModel getSelectedVariant() { return selectedVariant; }
     public List<ToppingModel> getSelectedToppings() { return selectedToppings; }
     public int getQuantity() { return quantity; }
-    public String getFinalNote() { return finalNote; } // Lấy chuỗi ghi chú ra
+    public String getFinalNote() { return finalNote; }
 }

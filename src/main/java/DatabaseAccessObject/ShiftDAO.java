@@ -13,7 +13,8 @@ public class ShiftDAO {
 
     public List<ShiftModel> getAllShifts() throws SQLException, ClassNotFoundException {
         List<ShiftModel> list = new ArrayList<>();
-        String sql = "SELECT MaCa, TenCa, GioBatDau, GioKetThuc, TrangThai FROM CA_LAM_VIEC " +
+        // [CẬP NHẬT] Dùng TO_CHAR để lấy giờ phút từ TIMESTAMP
+        String sql = "SELECT MaCa, TenCa, TO_CHAR(GioBatDau, 'HH24:MI') AS GioBatDau, TO_CHAR(GioKetThuc, 'HH24:MI') AS GioKetThuc, TrangThai FROM CA_LAM_VIEC " +
                      "ORDER BY " +
                      "  CASE WHEN TrangThai = N'Đang sử dụng' THEN 1 ELSE 2 END ASC, " +
                      "  MaCa ASC";
@@ -66,13 +67,14 @@ public class ShiftDAO {
     }
 
     public boolean checkUpdateConflict(int maCa, String newGioBatDau, String newGioKetThuc) throws SQLException, ClassNotFoundException {
+        // [CẬP NHẬT] Chuyển tham số string thành TIMESTAMP để so sánh chính xác thời gian
         String sql = "SELECT COUNT(*) " +
                      "FROM LICH_LAM_VIEC l1 " +
                      "JOIN LICH_LAM_VIEC l2 ON l1.NgayLamViec = l2.NgayLamViec AND l1.MaTaiKhoan = l2.MaTaiKhoan " +
                      "JOIN CA_LAM_VIEC c2 ON l2.MaCa = c2.MaCa " +
                      "WHERE l1.MaCa = ? " +
                      "  AND l2.MaCa != ? " +
-                     "  AND (? < c2.GioKetThuc AND c2.GioBatDau < ?) " +
+                     "  AND (TO_TIMESTAMP(?, 'HH24:MI') < c2.GioKetThuc AND c2.GioBatDau < TO_TIMESTAMP(?, 'HH24:MI')) " +
                      "  AND c2.TrangThai = N'Đang sử dụng'";
                      
         try (Connection conn = getMyConnection();
@@ -92,7 +94,8 @@ public class ShiftDAO {
     }
 
     public boolean insertShift(ShiftModel shift) throws SQLException, ClassNotFoundException {
-        String sql = "INSERT INTO CA_LAM_VIEC (TenCa, GioBatDau, GioKetThuc, TrangThai) VALUES (?, ?, ?, N'Đang sử dụng')";
+        // [CẬP NHẬT] Insert chuỗi thời gian dưới dạng TIMESTAMP
+        String sql = "INSERT INTO CA_LAM_VIEC (TenCa, GioBatDau, GioKetThuc, TrangThai) VALUES (?, TO_TIMESTAMP(?, 'HH24:MI'), TO_TIMESTAMP(?, 'HH24:MI'), N'Đang sử dụng')";
         try (Connection conn = getMyConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, shift.getTenCa());
@@ -109,7 +112,8 @@ public class ShiftDAO {
     }
 
     public boolean updateShift(ShiftModel shift) throws SQLException, ClassNotFoundException {
-        String sql = "UPDATE CA_LAM_VIEC SET TenCa=?, GioBatDau=?, GioKetThuc=? WHERE MaCa=?";
+        // [CẬP NHẬT] Update chuỗi thời gian dưới dạng TIMESTAMP
+        String sql = "UPDATE CA_LAM_VIEC SET TenCa=?, GioBatDau=TO_TIMESTAMP(?, 'HH24:MI'), GioKetThuc=TO_TIMESTAMP(?, 'HH24:MI') WHERE MaCa=?";
         try (Connection conn = getMyConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, shift.getTenCa());
@@ -128,7 +132,8 @@ public class ShiftDAO {
     
     public List<ShiftModel> getActiveShift() throws SQLException, ClassNotFoundException{
         List<ShiftModel> list = new ArrayList<>();
-        String sql = "SELECT MaCa, TenCa, GioBatDau, GioKetThuc, TrangThai FROM CA_LAM_VIEC "
+        // [CẬP NHẬT] Dùng TO_CHAR để format lại giờ
+        String sql = "SELECT MaCa, TenCa, TO_CHAR(GioBatDau, 'HH24:MI') AS GioBatDau, TO_CHAR(GioKetThuc, 'HH24:MI') AS GioKetThuc, TrangThai FROM CA_LAM_VIEC "
                 + "WHERE TRANGTHAI = N'Đang sử dụng' ORDER BY MaCa ASC";
         
         try (Connection conn = getMyConnection();

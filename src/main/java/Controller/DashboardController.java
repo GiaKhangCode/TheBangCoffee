@@ -4,7 +4,6 @@ import Service.ReportService;
 import View.DashboardPanel;
 import View.MainFrame;
 import java.util.List;
-import javax.swing.table.DefaultTableModel;
 
 public class DashboardController {
     
@@ -17,10 +16,11 @@ public class DashboardController {
         this.dashboardPanel = mainFrame.getDashboardPanel();
         this.reportService = new ReportService();
         
+        // --- SỰ KIỆN LỌC DOANH THU ---
         this.dashboardPanel.addRevenueFilterListener(e -> {
             String selectedFilter = dashboardPanel.getSelectedRevenueFilter();
             
-            if(selectedFilter.equals("Tùy chỉnh...")) {
+            if(selectedFilter.contains("Tùy chỉnh")) {
                 // Gọi hộp thoại chọn ngày lên
                 java.util.Date[] dates = dashboardPanel.showCustomDateDialog();
                 if (dates != null) {
@@ -33,6 +33,34 @@ public class DashboardController {
             }
         });
         
+        // --- SỰ KIỆN LỌC CA LÀM VIỆC ---
+        this.dashboardPanel.addShiftFilterListener(e -> {
+            String selectedFilter = dashboardPanel.getSelectedShiftFilter();
+            
+            if(selectedFilter.contains("Tùy chỉnh")) {
+                java.util.Date[] dates = dashboardPanel.showCustomDateDialog();
+                if (dates != null) {
+                    loadCustomShiftStats(dates[0], dates[1]);
+                }
+            } else {
+                loadShiftStats(selectedFilter);
+            }
+        });
+        
+        // --- SỰ KIỆN LỌC KHÁCH HÀNG (MỚI) ---
+        this.dashboardPanel.addCustomerFilterListener(e -> {
+            String selectedFilter = dashboardPanel.getSelectedCustomerFilter();
+            
+            if(selectedFilter.contains("Tùy chỉnh")) {
+                java.util.Date[] dates = dashboardPanel.showCustomDateDialog();
+                if (dates != null) {
+                    loadCustomCustomerStats(dates[0], dates[1]);
+                }
+            } else {
+                loadCustomerStats(selectedFilter);
+            }
+        });
+        
         loadData();
     }
 
@@ -40,7 +68,8 @@ public class DashboardController {
         loadRevenueStats("Hôm nay");
         loadSalesStats();
         loadInventoryStats();
-        // loadShiftStats()...
+        loadShiftStats("Tuần này"); // Mở khóa dòng này để gọi Load dữ liệu Ca làm việc
+        loadCustomerStats("Tuần này"); 
     }
 
     private void loadRevenueStats(String filterType) {
@@ -58,11 +87,8 @@ public class DashboardController {
 
         // 2. Load Biểu đồ và cập nhật Tiêu đề
         List<Object[]> chartData = reportService.getRevenueChartData(filterType);
-        
-        // Sinh tiêu đề dựa trên bộ lọc
         String chartTitle = "Doanh Thu " + filterType; 
         
-        // Gọi hàm update có truyền tiêu đề
         dashboardPanel.updateRevenueChart(chartData, chartTitle);
     }
 
@@ -94,8 +120,35 @@ public class DashboardController {
         dashboardPanel.updateMostUsedTable(mostUsedData);
     }
     
+    // =========================================================================
+    // XỬ LÝ DỮ LIỆU TAB KHÁCH HÀNG (MỚI)
+    // =========================================================================
+    private void loadCustomerStats(String filterType) {
+        // 1. Lấy dữ liệu 4 Thẻ thống kê
+        Object[] cusData = reportService.getCustomerOverviewStats(filterType);
+        int newCus = (int) cusData[0];
+        double retention = (double) cusData[1];
+        long arpu = (long) cusData[2];
+        long totalPoints = (long) cusData[3];
+
+        String strNewCus = String.format("%,d", newCus);
+        String strRetention = String.format("%.2f%%", retention); // Format phần trăm
+        String strArpu = String.format("%,d đ", arpu);
+        String strTotalPoints = String.format("%,d", totalPoints);
+
+        dashboardPanel.updateCustomerCards(strNewCus, strRetention, strArpu, strTotalPoints);
+
+        // 2. Cập nhật Biểu đồ đường
+        List<Object[]> chartData = reportService.getCustomerGrowthChartData(filterType);
+        String chartTitle = "Tốc Độ Tăng Trưởng Khách Hàng - " + filterType; 
+        
+        dashboardPanel.updateCustomerGrowthChart(chartData, chartTitle);
+    }
+
+    // =========================================================================
+    // XỬ LÝ LỌC CUSTOM (THEO KHOẢNG NGÀY)
+    // =========================================================================
     private void loadCustomRevenueStats(java.util.Date startDate, java.util.Date endDate) {
-        // 1. Load Thẻ thống kê
         Object[] revData = reportService.getCustomRevenueStats(startDate, endDate);
         long totalRevenue = (long) revData[0];
         int totalOrders = (int) revData[1];
@@ -107,14 +160,74 @@ public class DashboardController {
 
         dashboardPanel.updateRevenueCards(strTotalRev, strTotalOrders, strAvgOrder);
 
-        // 2. Load Biểu đồ
         List<Object[]> chartData = reportService.getCustomRevenueChartData(startDate, endDate);
         
-        // Ép kiểu ngày tháng để tạo câu Tiêu đề thật đẹp (VD: Doanh Thu Từ 01/05/2026 Đến 15/05/2026)
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
         String chartTitle = "Doanh Thu Từ " + sdf.format(startDate) + " Đến " + sdf.format(endDate);
         
-        // Gọi hàm update có truyền tiêu đề
         dashboardPanel.updateRevenueChart(chartData, chartTitle);
+    }
+    
+    private void loadCustomCustomerStats(java.util.Date startDate, java.util.Date endDate) {
+        Object[] cusData = reportService.getCustomCustomerOverviewStats(startDate, endDate);
+        int newCus = (int) cusData[0];
+        double retention = (double) cusData[1];
+        long arpu = (long) cusData[2];
+        long totalPoints = (long) cusData[3]; // Tổng điểm luôn được lấy thực tế trong kho không qua Date
+
+        String strNewCus = String.format("%,d", newCus);
+        String strRetention = String.format("%.2f%%", retention);
+        String strArpu = String.format("%,d đ", arpu);
+        String strTotalPoints = String.format("%,d", totalPoints);
+
+        dashboardPanel.updateCustomerCards(strNewCus, strRetention, strArpu, strTotalPoints);
+
+        List<Object[]> chartData = reportService.getCustomCustomerGrowthChartData(startDate, endDate);
+        
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+        String chartTitle = "Tăng Trưởng Khách Hàng Từ " + sdf.format(startDate) + " Đến " + sdf.format(endDate);
+        
+        dashboardPanel.updateCustomerGrowthChart(chartData, chartTitle);
+    }
+    
+    // =========================================================================
+    // XỬ LÝ DỮ LIỆU TAB CA LÀM VIỆC
+    // =========================================================================
+    private void loadShiftStats(String filterType) {
+        // 1. Thẻ thống kê
+        Object[] stats = reportService.getShiftOverviewStats(filterType);
+        String strShifts = String.format("%,d", (Integer) stats[0]);
+        String strHours = String.format("%.1f", (Double) stats[1]);
+        String strAvgRev = String.format("%,d đ", (Long) stats[2]);
+        String strCanceled = String.format("%,d", (Integer) stats[3]);
+
+        dashboardPanel.updateShiftCards(strShifts, strHours, strAvgRev, strCanceled);
+
+        // 2. Biểu đồ cột (Doanh thu theo mẫu Ca)
+        List<Object[]> barData = reportService.getShiftRevenueChartData(filterType);
+        dashboardPanel.updateShiftRevenueChart(barData, "Doanh Thu Theo Mẫu Ca - " + filterType);
+
+        // 3. Biểu đồ đường (Giờ làm việc)
+        List<Object[]> lineData = reportService.getWorkingHoursChartData(filterType);
+        dashboardPanel.updateWorkingHoursChart(lineData, "Xu Hướng Giờ Làm Việc - " + filterType);
+    }
+
+    private void loadCustomShiftStats(java.util.Date startDate, java.util.Date endDate) {
+        Object[] stats = reportService.getCustomShiftOverviewStats(startDate, endDate);
+        String strShifts = String.format("%,d", (Integer) stats[0]);
+        String strHours = String.format("%.1f", (Double) stats[1]);
+        String strAvgRev = String.format("%,d đ", (Long) stats[2]);
+        String strCanceled = String.format("%,d", (Integer) stats[3]);
+
+        dashboardPanel.updateShiftCards(strShifts, strHours, strAvgRev, strCanceled);
+
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+        String dateSuffix = "Từ " + sdf.format(startDate) + " Đến " + sdf.format(endDate);
+
+        List<Object[]> barData = reportService.getCustomShiftRevenueChartData(startDate, endDate);
+        dashboardPanel.updateShiftRevenueChart(barData, "Doanh Thu Theo Mẫu Ca " + dateSuffix);
+
+        List<Object[]> lineData = reportService.getCustomWorkingHoursChartData(startDate, endDate);
+        dashboardPanel.updateWorkingHoursChart(lineData, "Xu Hướng Giờ Làm Việc " + dateSuffix);
     }
 }

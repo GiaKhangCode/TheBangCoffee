@@ -7,20 +7,25 @@ public class OrderModel {
     private long subTotal;        // Tạm tính (Chưa thuế)
     private long totalVat;        // Tổng thuế
     private long finalTotal;      // Khách phải trả
-    private String status;        // Trạng thái (Chờ tiếp nhận, Hoàn thành...)
+    
+    // [ĐÃ SỬA] Tách trạng thái thành 2 biến riêng biệt
+    private String preparationStatus; // Trạng thái pha chế (Chờ tiếp nhận, Đang pha chế...)
+    private String paymentStatus;     // Trạng thái thanh toán (Chưa thanh toán, Đã thanh toán...)
+    
     private String orderTypeNote; // Ghi chú loại đơn ([LỄ] Mua mang đi, Dùng tại quán...)
 
     public OrderModel() {
     }
 
-    public OrderModel(int orderId, int accountId, String orderTime, long subTotal, long totalVat, long finalTotal, String status, String orderTypeNote) {
+    public OrderModel(int orderId, int accountId, String orderTime, long subTotal, long totalVat, long finalTotal, String preparationStatus, String paymentStatus, String orderTypeNote) {
         this.orderId = orderId;
         this.accountId = accountId;
         this.orderTime = orderTime;
         this.subTotal = subTotal;
         this.totalVat = totalVat;
         this.finalTotal = finalTotal;
-        this.status = status;
+        this.preparationStatus = preparationStatus;
+        this.paymentStatus = paymentStatus;
         this.orderTypeNote = orderTypeNote;
     }
 
@@ -42,8 +47,13 @@ public class OrderModel {
     public long getFinalTotal() { return finalTotal; }
     public void setFinalTotal(long finalTotal) { this.finalTotal = finalTotal; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    // [THÊM MỚI] Getter & Setter cho Trạng thái Pha chế
+    public String getPreparationStatus() { return preparationStatus; }
+    public void setPreparationStatus(String preparationStatus) { this.preparationStatus = preparationStatus; }
+
+    // [THÊM MỚI] Getter & Setter cho Trạng thái Thanh toán
+    public String getPaymentStatus() { return paymentStatus; }
+    public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
 
     public String getOrderTypeNote() { return orderTypeNote != null ? orderTypeNote : ""; }
     public void setOrderTypeNote(String orderTypeNote) { this.orderTypeNote = orderTypeNote; }

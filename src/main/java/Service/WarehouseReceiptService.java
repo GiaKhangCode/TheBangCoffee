@@ -38,8 +38,8 @@ public class WarehouseReceiptService {
         long total = 0;
         for (int i = 0; i < model.getRowCount(); i++) {
             try {
-                // [SỬA] Đổi index từ 5 thành 7 vì cột Thành tiền ở Model Table mới là cột số 7
-                String strTotal = model.getValueAt(i, 7).toString().trim(); 
+                // [ĐÃ SỬA] Đổi index thành 6 vì cột Thành tiền ở Model Table mới là cột số 6
+                String strTotal = model.getValueAt(i, 6).toString().trim(); 
                 if (strTotal.isEmpty()) 
                     continue;
                 total += Long.parseLong(strTotal);
@@ -56,5 +56,9 @@ public class WarehouseReceiptService {
     
     public String getDetailReceipt(int receiptID){
         return warehouseReceiptDAO.getReceiptDetail(receiptID);
+    }
+    
+    public List<Object[]> getReceiptDetailList(int receiptID){
+        return warehouseReceiptDAO.getReceiptDetailList(receiptID);
     }
 }

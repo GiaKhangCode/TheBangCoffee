@@ -19,13 +19,18 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import javax.swing.border.LineBorder;
 import javax.swing.event.EventListenerList;
+import java.util.Calendar;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
 public class EmployeeSchedulePanel extends JPanel {
     private JTabbedPane tabbedPane;
     
     // Components Tab 1
     private JPanel cardsContainer;
-    private JTextField txtTenCa, txtGioBatDau, txtGioKetThuc;
+    private JTextField txtTenCa;
+    // [CẬP NHẬT] Đổi từ JTextField sang JSpinner để chọn thời gian
+    private JSpinner spnGioBatDau, spnGioKetThuc; 
     private JButton btnSaveShift, btnDeleteShift; 
     private IOSSwitch tglShowActiveOnly;
 
@@ -99,7 +104,6 @@ public class EmployeeSchedulePanel extends JPanel {
     public void forceReloadCurrentWeek() { loadedWeeksFromDB.remove(currentPointer); }
     public LocalDate getCurrentStartOfWeek() { return currentPointer; }
 
-    // ĐÃ FIX: Hàm sao chép lịch được cập nhật để thêm row nếu TableModel trống
     public void cloneScheduleToNextWeeks(int additionalWeeks) {
         String[][] currentData = getCurrentScheduleData();
         for (int w = 1; w <= additionalWeeks; w++) {
@@ -111,9 +115,8 @@ public class EmployeeSchedulePanel extends JPanel {
                 weeklyModels.put(targetWeek, targetModel);
             }
             
-            // Nếu targetModel chưa có đủ số lượng nhân sự, thêm các dòng trống vào
             if (targetModel.getRowCount() != currentAccountsList.size()) {
-                targetModel.setRowCount(0); // Reset trước cho chắc chắn
+                targetModel.setRowCount(0); 
                 for (AccountModel a : currentAccountsList) {
                     targetModel.addRow(new Object[]{a.getUsername(), "", "", "", "", "", "", ""});
                 }
@@ -147,9 +150,21 @@ public class EmployeeSchedulePanel extends JPanel {
 
     public void clearShiftForm() {
         currentMaCa = 0;
-        txtTenCa.setText(""); txtGioBatDau.setText(""); txtGioKetThuc.setText("");
-        txtTenCa.setEditable(true); txtGioBatDau.setEditable(true); txtGioKetThuc.setEditable(true);
-        btnSaveShift.setVisible(true); btnDeleteShift.setVisible(false); 
+        txtTenCa.setText(""); 
+        txtTenCa.setEditable(true); 
+        
+        // [CẬP NHẬT] Đưa JSpinner về mốc 00:00 mặc định
+        try {
+            Date defaultTime = new SimpleDateFormat("HH:mm").parse("00:00");
+            spnGioBatDau.setValue(defaultTime);
+            spnGioKetThuc.setValue(defaultTime);
+        } catch (Exception e) {}
+        
+        spnGioBatDau.setEnabled(true); 
+        spnGioKetThuc.setEnabled(true);
+        btnSaveShift.setVisible(true); 
+        btnDeleteShift.setVisible(false); 
+        
         if (selectedCard != null) { selectedCard.setHighlight(false); selectedCard = null; }
     }
 
@@ -182,10 +197,31 @@ public class EmployeeSchedulePanel extends JPanel {
 
         gbc.gridx = 0; gbc.gridy = 0; formPanel.add(new JLabel("Tên ca:"), gbc);
         gbc.gridx = 1; gbc.gridy = 0; txtTenCa = new JTextField(15); formPanel.add(txtTenCa, gbc);
+        
+        // [CẬP NHẬT] Khởi tạo JSpinner cho Giờ Bắt Đầu
         gbc.gridx = 2; gbc.gridy = 0; formPanel.add(new JLabel("Giờ bắt đầu (HH:mm):"), gbc);
-        gbc.gridx = 3; gbc.gridy = 0; txtGioBatDau = new JTextField(10); formPanel.add(txtGioBatDau, gbc);
+        gbc.gridx = 3; gbc.gridy = 0; 
+        SpinnerDateModel modelBD = new SpinnerDateModel();
+        modelBD.setCalendarField(Calendar.MINUTE);
+        spnGioBatDau = new JSpinner(modelBD);
+        spnGioBatDau.setEditor(new JSpinner.DateEditor(spnGioBatDau, "HH:mm"));
+        formPanel.add(spnGioBatDau, gbc);
+        
+        // [CẬP NHẬT] Khởi tạo JSpinner cho Giờ Kết Thúc
         gbc.gridx = 0; gbc.gridy = 1; formPanel.add(new JLabel("Giờ kết thúc (HH:mm):"), gbc);
-        gbc.gridx = 1; gbc.gridy = 1; txtGioKetThuc = new JTextField(15); formPanel.add(txtGioKetThuc, gbc);
+        gbc.gridx = 1; gbc.gridy = 1; 
+        SpinnerDateModel modelKT = new SpinnerDateModel();
+        modelKT.setCalendarField(Calendar.MINUTE);
+        spnGioKetThuc = new JSpinner(modelKT);
+        spnGioKetThuc.setEditor(new JSpinner.DateEditor(spnGioKetThuc, "HH:mm"));
+        formPanel.add(spnGioKetThuc, gbc);
+
+        // Thiết lập giờ mặc định 00:00
+        try {
+            Date defaultTime = new SimpleDateFormat("HH:mm").parse("00:00");
+            spnGioBatDau.setValue(defaultTime);
+            spnGioKetThuc.setValue(defaultTime);
+        } catch (Exception e) {}
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonPanel.setBackground(Color.WHITE); 
@@ -290,8 +326,19 @@ public class EmployeeSchedulePanel extends JPanel {
                     if (selectedCard != null) selectedCard.setHighlight(false);
                     selectedCard = ShiftCard.this; setHighlight(true);
                     currentMaCa = shift.getMaCa();
-                    txtTenCa.setText(shift.getTenCa()); txtGioBatDau.setText(shift.getGioBatDau()); txtGioKetThuc.setText(shift.getGioKetThuc());
-                    txtTenCa.setEditable(isActive); txtGioBatDau.setEditable(isActive); txtGioKetThuc.setEditable(isActive);
+                    txtTenCa.setText(shift.getTenCa()); 
+                    
+                    // [CẬP NHẬT] Gán giờ từ chuỗi vào JSpinner
+                    try {
+                        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+                        spnGioBatDau.setValue(sdf.parse(shift.getGioBatDau()));
+                        spnGioKetThuc.setValue(sdf.parse(shift.getGioKetThuc()));
+                    } catch (Exception ex) {}
+
+                    txtTenCa.setEditable(isActive); 
+                    spnGioBatDau.setEnabled(isActive); 
+                    spnGioKetThuc.setEnabled(isActive);
+                    
                     btnSaveShift.setVisible(isActive); btnDeleteShift.setVisible(isActive);
                     if(!isActive) JOptionPane.showMessageDialog(EmployeeSchedulePanel.this, "Ca làm việc này đã ngưng sử dụng nên không thể chỉnh sửa.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                 }
@@ -621,8 +668,11 @@ public class EmployeeSchedulePanel extends JPanel {
 
     public int getMaCa() { return currentMaCa; }
     public String getTenCa() { return txtTenCa.getText(); }
-    public String getGioBatDau() { return txtGioBatDau.getText(); }
-    public String getGioKetThuc() { return txtGioKetThuc.getText(); }
+    
+    // [CẬP NHẬT] Đọc giá trị từ JSpinner và format ra String "HH:mm" để tương thích ngược với luồng Data cũ
+    public String getGioBatDau() { return new SimpleDateFormat("HH:mm").format(spnGioBatDau.getValue()); }
+    public String getGioKetThuc() { return new SimpleDateFormat("HH:mm").format(spnGioKetThuc.getValue()); }
+    
     public int getSelectedMaCa() { return currentMaCa; } 
     public boolean isRepeatChecked() { return chkRepeat.isSelected(); }
     public int getRepeatWeeks() { return (Integer) spnRepeatWeeks.getValue(); }

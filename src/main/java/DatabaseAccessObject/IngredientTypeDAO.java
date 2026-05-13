@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package DatabaseAccessObject;
 
 import static ConnectDatabase.ConnectionUtils.getMyConnection;
@@ -14,11 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
 
-/**
- *
- * @author Kiet
- */
 public class IngredientTypeDAO {
+    
     public List<IngredientTypeModel> getIngredientTypes() throws SQLException {
         List<IngredientTypeModel> list = new ArrayList<>();
         String query = "SELECT MaLoaiNguyenLieu, TenLoaiNguyenLieu "
@@ -55,6 +48,32 @@ public class IngredientTypeDAO {
             } else {
                 e.printStackTrace();
             }
+            return false;
+        }
+    }
+    
+    // [MỚI] Hàm cập nhật tên loại nguyên liệu
+    public boolean updateIngredientType(int id, String newName) {
+        String sql = "UPDATE LOAI_NGUYEN_LIEU SET TenLoaiNguyenLieu = ? WHERE MaLoaiNguyenLieu = ?";
+        try (Connection conn = getMyConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, newName);
+            ps.setInt(2, id);
+            
+            int rowAffected = ps.executeUpdate();
+            return rowAffected > 0;
+
+        } catch (SQLException e) {
+            // Bắt lỗi Duplicate tên khi sửa
+            if (e.getErrorCode() == 1) { 
+                JOptionPane.showMessageDialog(null, "Tên loại nguyên liệu này đã tồn tại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            } else {
+                e.printStackTrace();
+            }
+            return false;
+        } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }

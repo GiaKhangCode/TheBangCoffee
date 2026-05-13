@@ -36,9 +36,9 @@ public class PosPanel extends JPanel {
     private JTextField txtCustomerName;
     private JLabel lblCustomerInfo;
     private JButton btnCheckCustomer;
-    private JButton btnRegisterCustomer; // [MỚI]
-    private JButton btnClearCustomer;    // [MỚI]
-    private JPanel nameActionPanel;      // [MỚI]
+    private JButton btnRegisterCustomer; 
+    private JButton btnClearCustomer;    
+    private JPanel nameActionPanel;      
 
     // Các biến UI cho Tùy chọn đơn hàng
     private JRadioButton rbDineIn;
@@ -50,6 +50,9 @@ public class PosPanel extends JPanel {
     private JLabel lblTotal;
     private JButton btnClearCart;
     private JButton btnCreateOrder;
+    
+    // Listeners
+    private DeleteActionListener cartDeleteListener;
 
     public PosPanel() {
         loadDefaultImage(); 
@@ -127,24 +130,6 @@ public class PosPanel extends JPanel {
         txtSearch.setText("Tìm kiếm tên món...");
         txtSearch.setForeground(Color.GRAY);
         
-        
-        txtSearch.addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override
-            public void focusGained(java.awt.event.FocusEvent evt) {
-                if (txtSearch.getText().equals("Tìm kiếm tên món...")) {
-                    txtSearch.setText("");
-                    txtSearch.setForeground(TEXT_DARK); // Trả lại màu chữ đen khi gõ
-                }
-            }
-            @Override
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                if (txtSearch.getText().trim().isEmpty()) {
-                    txtSearch.setForeground(Color.GRAY); // Đổi thành màu xám
-                    txtSearch.setText("Tìm kiếm tên món...");
-                }
-            }
-        });
-
         txtSearch.addFocusListener(new java.awt.event.FocusAdapter() {
             @Override
             public void focusGained(java.awt.event.FocusEvent evt) {
@@ -161,7 +146,6 @@ public class PosPanel extends JPanel {
                 }
             }
         });
-
 
         JPanel searchWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         searchWrapper.setOpaque(false);
@@ -184,7 +168,7 @@ public class PosPanel extends JPanel {
     }
 
     // ==========================================================
-    // KHU VỰC KHÁCH HÀNG THÀNH VIÊN [MỚI]
+    // KHU VỰC KHÁCH HÀNG THÀNH VIÊN
     // ==========================================================
     private JPanel createCustomerPanel() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
@@ -194,7 +178,6 @@ public class PosPanel extends JPanel {
             TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 13), PRIMARY_COLOR
         ));
 
-        // --- Dòng 1: Ô nhập SĐT + Nút Tìm ---
         JPanel phonePanel = new JPanel(new BorderLayout(5, 0));
         phonePanel.setOpaque(false);
         txtCustomerPhone = new JTextField();
@@ -229,7 +212,6 @@ public class PosPanel extends JPanel {
         phonePanel.add(txtCustomerPhone, BorderLayout.CENTER);
         phonePanel.add(btnCheckCustomer, BorderLayout.EAST);
 
-        // --- Dòng 2: Hiển thị thông tin HOẶC form Đăng ký ---
         JPanel infoPanel = new JPanel(new BorderLayout(5, 0));
         infoPanel.setOpaque(false);
         
@@ -308,11 +290,12 @@ public class PosPanel extends JPanel {
         lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
         panel.add(lblTitle, BorderLayout.NORTH);
 
+        // [SỬA LẠI] Cột SL bị khóa lại, chỉ mở cột 3 (Xóa)
         String[] cols = {"Món", "SL", "Giá", "Xóa"};
         cartTableModel = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 1 || column == 3; 
+                return column == 3; 
             }
         };
         cartTable = new JTable(cartTableModel);
@@ -545,6 +528,7 @@ public class PosPanel extends JPanel {
     }
 
     public void addProductCard(ProductModel product, ActionListener onClick) {
+        if (product.getProductStatus().equals("Ngừng bán")) return;
         productGridPanel.add(createProductCard(product, onClick));
         productGridPanel.revalidate();
         productGridPanel.repaint();
@@ -654,7 +638,7 @@ public class PosPanel extends JPanel {
     }
 
     // ==========================================================
-    // INNER CLASSES
+    // INNER CLASSES (GIAO DIỆN NÚT VÀ CÁC THÀNH PHẦN)
     // ==========================================================
     class WrapLayout extends FlowLayout {
         public WrapLayout(int align, int hgap, int vgap) { super(align, hgap, vgap); }
@@ -679,8 +663,7 @@ public class PosPanel extends JPanel {
         }
     }
     
-    private DeleteActionListener cartDeleteListener;
-
+    // --- GIAO DIỆN XÓA ---
     public void setCartDeleteListener(DeleteActionListener listener) {
         this.cartDeleteListener = listener;
     }

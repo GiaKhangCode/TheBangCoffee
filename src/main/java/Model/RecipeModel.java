@@ -13,6 +13,14 @@ public class RecipeModel {
         this.ingredientID = -1;
         this.quantityRequired = 0.0;
     }
+    
+    public RecipeModel(int variantID, int ingredientID, double quantityRequired) {
+        this.variantID = variantID;
+        this.ingredientID = ingredientID;
+        this.quantityRequired = quantityRequired;
+        this.ingredientName = "";
+        this.unit = "";
+    }
 
     public RecipeModel(int variantID, int ingredientID, String ingredientName, String unit, double quantityRequired) {
         this.variantID = variantID;

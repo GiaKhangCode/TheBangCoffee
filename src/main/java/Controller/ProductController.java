@@ -138,7 +138,8 @@ public class ProductController {
             }
             
             // Sự kiện Thêm Công Thức
-            editDialog.addAddRecipeListener(ev -> {
+            // 1. SỰ KIỆN: NÚT "THÊM VÀO BẢNG" (Chỉ thao tác trên RAM)
+            editDialog.addAddRecipeToTableListener(ev -> {
                 VariantModel selectedVar = editDialog.getSelectedVariantForRecipe();
                 if (selectedVar == null || selectedVar.getVariantID() == 0) {
                     JOptionPane.showMessageDialog(editDialog, "Bạn phải lưu Sản phẩm để tạo Size trước khi thêm công thức!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
@@ -146,36 +147,96 @@ public class ProductController {
                 }
                 
                 String ingName = editDialog.getIngredientName();
-                double quantitative = editDialog.getQuantitative();
+                double qty = editDialog.getQuantitative();
                 
-                if (ingName == null || ingName.trim().isEmpty()) {
-                    JOptionPane.showMessageDialog(editDialog, "Vui lòng chọn nguyên liệu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                if (quantitative <= 0) {
-                    JOptionPane.showMessageDialog(editDialog, "Định lượng phải là số lớn hơn 0!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                if (ingName == null || ingName.trim().isEmpty() || qty <= 0) {
+                    JOptionPane.showMessageDialog(editDialog, "Vui lòng chọn nguyên liệu và nhập định lượng lớn hơn 0!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
                 
                 int ingId = ingredientService.getIngredientIdByName(ingName); 
-                if (ingId <= 0) {
-                    JOptionPane.showMessageDialog(editDialog, "Không tìm thấy mã nguyên liệu hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    return;
+                String unit = ingredientService.getUnitByName(ingName);
+                
+                // Kiểm tra xem món này đã có trên bảng chưa
+                boolean exists = false;
+                for (RecipeModel r : editDialog.getRecipesFromTable()) {
+                    if (r.getIngredientID() == ingId) {
+                        JOptionPane.showMessageDialog(editDialog, "Nguyên liệu này đã có trong công thức! Vui lòng ấn 'Sửa' trên bảng thay vì thêm mới.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                        exists = true;
+                        break;
+                    }
                 }
                 
-                boolean isSuccess = false;
-                try {
-                    isSuccess = recipeService.upsertRecipe(selectedVar.getVariantID(), ingId, quantitative);
-                } catch (SQLException ex) {
-                    System.getLogger(ProductController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
-                } catch (ClassNotFoundException ex) {
-                    System.getLogger(ProductController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+                // Nếu chưa có thì add vào table (RAM)
+                if (!exists) {
+                    editDialog.addRecipeRow(ingId, ingName, unit, qty);
+                    updateEstimatedCostFromTable(editDialog); // Cập nhật ngay giá vốn
                 }
-                if (isSuccess) {
-                    loadRecipeAndCalculateCost(editDialog, selectedVar);
-                } else {
-                    JOptionPane.showMessageDialog(editDialog, "Thêm nguyên liệu thất bại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            });
+
+            // 2. SỰ KIỆN: SỬA / XÓA TRÊN BẢNG (Chỉ thao tác trên RAM)
+            editDialog.setRecipeTableListener(new ProductEditDialog.ProductActionListener() {
+                @Override
+                public void onEdit(int row) {
+                    String ingName = editDialog.getRecipeIngredientNameAt(row);
+                    double currentQty = editDialog.getRecipeQuantitativeAt(row);
+                    
+                    String newQtyStr = JOptionPane.showInputDialog(editDialog, "Nhập định lượng mới cho [" + ingName + "]:", currentQty);
+                    if (newQtyStr != null && !newQtyStr.trim().isEmpty()) {
+                        try {
+                            double newQty = Double.parseDouble(newQtyStr.trim());
+                            if (newQty <= 0) throw new NumberFormatException();
+                            
+                            // Đánh dấu dòng này là đã sửa (EDITED) trên UI
+                            editDialog.markRecipeRowAsEdited(row, newQty);
+                            updateEstimatedCostFromTable(editDialog);
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(editDialog, "Định lượng không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
                 }
+
+                @Override
+                public void onDelete(int row) {
+                    // Xóa thẳng dòng đó khỏi bảng UI
+                    editDialog.removeRecipeRow(row);
+                    updateEstimatedCostFromTable(editDialog);
+                }
+            });
+
+            // 3. SỰ KIỆN: NÚT "LƯU CÔNG THỨC SIZE NÀY" (Đồng bộ RAM xuống Database)
+            editDialog.addSaveRecipeListener(ev -> {
+                VariantModel selectedVar = editDialog.getSelectedVariantForRecipe();
+                if (selectedVar == null) return;
+                
+                List<RecipeModel> tableRecipes = editDialog.getRecipesFromTable();
+                List<RecipeModel> dbRecipes = recipeService.getRecipeByVariantId(selectedVar.getVariantID());
+                
+                // Bước A: Tìm các nguyên liệu bị XÓA (Có trong DB nhưng không còn trên Bảng)
+                if (dbRecipes != null) {
+                    for (RecipeModel dbRec : dbRecipes) {
+                        boolean stillExists = tableRecipes.stream().anyMatch(t -> t.getIngredientID() == dbRec.getIngredientID());
+                        if (!stillExists) {
+                            recipeService.deleteRecipe(selectedVar.getVariantID(), dbRec.getIngredientID());
+                        }
+                    }
+                }
+                
+                // Bước B: Tìm các nguyên liệu THÊM MỚI hoặc SỬA ĐỔI
+                for (RecipeModel tRec : tableRecipes) {
+                    String rowStatus = tRec.getIngredientName(); // Mượn trường name chứa cờ "NEW", "EDITED", "OLD"
+                    
+                    if ("NEW".equals(rowStatus) || "EDITED".equals(rowStatus)) {
+                        try {
+                            recipeService.upsertRecipe(selectedVar.getVariantID(), tRec.getIngredientID(), tRec.getQuantityRequired());
+                        } catch (Exception ex) { ex.printStackTrace(); }
+                    }
+                }
+                
+                JOptionPane.showMessageDialog(editDialog, "Đã lưu toàn bộ công thức cho Size [" + selectedVar.getSizeName() + "] thành công!");
+                
+                // Load lại dữ liệu sạch từ DB lên để reset các cờ "NEW", "EDITED" thành "OLD"
+                loadRecipeAndCalculateCost(editDialog, selectedVar);
             });
             
             // --- SỰ KIỆN UPLOAD ẢNH & UPDATE SẢN PHẨM ---
@@ -625,5 +686,15 @@ public class ProductController {
         
         // Yêu cầu MenuPanel hiển thị danh sách mới này
         menuPanel.displayProductList(filteredModel);
+    }
+    
+    // Tính giá vốn trực tiếp từ dữ liệu đang có trên bảng UI
+    private void updateEstimatedCostFromTable(ProductEditDialog editDialog) {
+        long totalCost = 0;
+        for (RecipeModel r : editDialog.getRecipesFromTable()) {
+            double donGiaBQ = ingredientService.getAveragePrice(r.getIngredientID());
+            totalCost += Math.round(r.getQuantityRequired() * donGiaBQ);
+        }
+        editDialog.setEstimatedCost(totalCost);
     }
 }

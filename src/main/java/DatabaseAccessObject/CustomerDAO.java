@@ -7,35 +7,29 @@ import java.sql.*;
 public class CustomerDAO {
     
     // 1. Tìm khách hàng theo Số điện thoại
-    public CustomerModel findByPhone(String phone) throws SQLException, ClassNotFoundException {
-        // [SỬA]: Đổi tên bảng thành KHACH_HANG
-        String sql = "SELECT * FROM KHACH_HANG WHERE SoDienThoai = ?";
-        try (Connection conn = getMyConnection();
+    public CustomerModel findCustomerByPhone(String phone) {
+        String sql = "SELECT MaKhachHang, SoDienThoai, HoTen, DiemTichLuy, HangThanhVien " +
+                     "FROM KHACH_HANG WHERE SoDienThoai = ?";
+        try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
             ps.setString(1, phone);
-            ResultSet rs = ps.executeQuery();
-            
-            if (rs.next()) {
-                return new CustomerModel(
-                    rs.getInt("MaKhachHang"),      // Đổi từ MaKH -> MaKhachHang
-                    rs.getString("SoDienThoai"),
-                    rs.getString("HoTen"),         // Đổi từ TenKH -> HoTen
-                    rs.getInt("DiemTichLuy"),
-                    rs.getString("HangThanhVien")
-                );
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new CustomerModel(
+                        rs.getInt("MaKhachHang"), rs.getString("SoDienThoai"),
+                        rs.getString("HoTen"), rs.getInt("DiemTichLuy"),
+                        rs.getString("HangThanhVien") // Lấy thêm ở đây
+                    );
+                }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw e; // Ném lỗi lên để dễ debug
-        }
+        } catch (Exception e) { e.printStackTrace(); }
         return null;
     }
 
     // 2. Thêm khách hàng mới và trả về Mã Khách Hàng (ID tự tăng)
     public int insertAndGetId(CustomerModel customer) throws SQLException, ClassNotFoundException {
         // [SỬA]: Đổi tên bảng và tên cột khớp với CSDL Oracle của bạn
-        String sql = "INSERT INTO KHACH_HANG (SoDienThoai, HoTen, DiemTichLuy, HangThanhVien) VALUES (?, ?, 0, N'Mới')";
+        String sql = "INSERT INTO KHACH_HANG (SoDienThoai, HoTen, DiemTichLuy) VALUES (?, ?, 0)";
         
         try (Connection conn = getMyConnection();
              // [SỬA]: Chỉ định rõ cột MAKHACHHANG để lấy ID tự tăng trong Oracle

@@ -18,7 +18,7 @@ public class CustomerService {
         }
 
         // 2. Kiểm tra xem khách đã tồn tại chưa
-        CustomerModel existingCustomer = customerDAO.findByPhone(phone);
+        CustomerModel existingCustomer = customerDAO.findCustomerByPhone(phone);
         if (existingCustomer != null) {
             return existingCustomer; // Trả về khách cũ
         }
@@ -41,15 +41,10 @@ public class CustomerService {
     
     // Thêm hàm này vào CustomerService.java
     public CustomerModel findCustomerByPhone(String phone) {
-        try {
-            if (phone == null || phone.trim().isEmpty()) {
-                return null;
-            }
-            return customerDAO.findByPhone(phone);
-        } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
+        if (phone == null || phone.trim().isEmpty()) {
             return null;
         }
+        return customerDAO.findCustomerByPhone(phone);
     }
     
     // Thêm hàm này vào CustomerService.java

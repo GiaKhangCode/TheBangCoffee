@@ -14,6 +14,7 @@ import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.chart.renderer.category.StandardBarPainter;
+import org.jfree.chart.renderer.category.LineAndShapeRenderer; // Bổ sung cho Biểu đồ đường
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
 import org.jfree.chart.plot.PiePlot;
@@ -22,7 +23,6 @@ import com.toedter.calendar.JDateChooser;
 
 /**
  * Dashboard Panel - Giao diện Báo cáo & Thống kê (The Bang Coffee).
- * Thiết kế đồng bộ với RolePanel (Có 5 Tab chức năng).
  */
 public class DashboardPanel extends JPanel {
 
@@ -41,24 +41,48 @@ public class DashboardPanel extends JPanel {
 
     private JTabbedPane tabbedPane;
     
+    // Khai báo Báo Cáo Doanh Thu
     private StatCard cardTotalRevenue;
     private StatCard cardTotalOrders;
     private StatCard cardAvgOrder;
     private DefaultTableModel topSellingTableModel;
-    
     private DefaultCategoryDataset revenueDataset;
     private DefaultPieDataset categoryDataset;
+    private JComboBox<String> cbFilterRevenue;
+    private JButton btnFilterRevenue;
+    private JFreeChart revenueBarChart;
     
+    // Khai báo Báo Cáo Kho
     private StatCard cardTotalInventory;
     private StatCard cardLowStockCount;
     private StatCard cardImportMonth;
     private DefaultTableModel expiringTableModel; 
     private DefaultTableModel mostUsedTableModel; 
     
-    private JComboBox<String> cbFilterRevenue;
-    private JButton btnFilterRevenue;
     
-    private JFreeChart revenueBarChart;
+    private StatCard cardTotalShifts;
+    private StatCard cardTotalHours;
+    private StatCard cardAvgShiftRevenue;
+    private StatCard cardCanceledOrders;
+    
+    private JComboBox<String> cbFilterShift;
+    private JButton btnFilterShift;
+    
+    private DefaultCategoryDataset shiftRevenueDataset;
+    private JFreeChart shiftRevenueBarChart;
+    
+    private DefaultCategoryDataset workingHoursDataset;
+    private JFreeChart workingHoursLineChart;
+    
+    private StatCard cardTotalNewCustomers;
+    private StatCard cardRetentionRate;
+    private StatCard cardARPU;
+    private StatCard cardTotalPoints;
+    private JComboBox<String> cbFilterCustomer;
+    private JButton btnFilterCustomer;
+    private DefaultCategoryDataset customerGrowthDataset;
+    private JFreeChart customerGrowthLineChart;
+    
 
     public DashboardPanel() {
         initComponents();
@@ -69,31 +93,28 @@ public class DashboardPanel extends JPanel {
         setBackground(BG_LIGHT);
         setBorder(new EmptyBorder(15, 15, 15, 15));
 
-        // Khởi tạo TabbedPane mang phong cách Modern
         tabbedPane = new JTabbedPane(JTabbedPane.TOP);
         tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         tabbedPane.setBackground(Color.WHITE);
         tabbedPane.setForeground(TEXT_DARK);
         
-        // Thêm 5 tab Báo cáo
         tabbedPane.addTab("Báo cáo Doanh thu", createRevenueTab());
         tabbedPane.addTab("Báo cáo Bán hàng", createSalesTab());
         tabbedPane.addTab("Báo cáo Ca làm việc", createShiftTab());
         tabbedPane.addTab("Báo cáo Kho", createInventoryTab());
-        tabbedPane.addTab("Báo cáo Khách hàng", createCustomerTab());
+        tabbedPane.addTab("Báo cáo Khách hàng", createCustomerTab()); // Gọi hàm tạo Tab mới
 
         add(tabbedPane, BorderLayout.CENTER);
     }
 
     // ==========================================================
-    // TAB 1: BÁO CÁO DOANH THU (Doanh thu tổng quan, Biểu đồ)
+    // TAB 1: BÁO CÁO DOANH THU 
     // ==========================================================
     private JPanel createRevenueTab() {
         JPanel panel = new JPanel(new BorderLayout(0, 20));
         panel.setBackground(Color.WHITE);
         panel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        // 1. Stats Layer (3 thẻ thống kê trên cùng)
         JPanel statsPanel = new JPanel(new GridLayout(1, 3, 20, 0));
         statsPanel.setOpaque(false);
         cardTotalRevenue = new StatCard("Tổng Doanh Thu Ngày", "0 đ", "Cập nhật...");
@@ -104,11 +125,9 @@ public class DashboardPanel extends JPanel {
         statsPanel.add(cardTotalOrders);
         statsPanel.add(cardAvgOrder);
         
-        // 2. Center Layer (Biểu đồ và Bộ lọc)
         JPanel centerPanel = new JPanel(new BorderLayout(0, 20));
         centerPanel.setOpaque(false);
 
-        // Filter Bar (Bộ lọc thời gian)
         JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         filterPanel.setOpaque(false);
         cbFilterRevenue = new JComboBox<>(new String[]{"Hôm nay", "Tuần này", "Tháng này", "Tùy chỉnh"});
@@ -120,32 +139,28 @@ public class DashboardPanel extends JPanel {
         revenueDataset = new DefaultCategoryDataset();
         
         revenueBarChart = ChartFactory.createBarChart(
-                "Doanh Thu 7 Ngày Gần Nhất", // Tiêu đề biểu đồ
-                "Ngày",                      // Trục X
-                "Doanh thu (VNĐ)",           // Trục Y
-                revenueDataset,              // Dữ liệu
+                "Doanh Thu 7 Ngày Gần Nhất", 
+                "Thời gian",                     
+                "Doanh thu (VNĐ)",            
+                revenueDataset,              
                 PlotOrientation.VERTICAL,
                 false, true, false
         );
 
-        // Customize giao diện biểu đồ cho hiện đại (Material Design)
         CategoryPlot plot = revenueBarChart.getCategoryPlot();
-        plot.setBackgroundPaint(Color.WHITE); // Nền trắng
-        plot.setRangeGridlinePaint(new Color(220, 220, 220)); // Đường kẻ ngang màu xám nhạt
-        plot.setOutlineVisible(false); // Bỏ viền đen ngoài cùng
+        plot.setBackgroundPaint(Color.WHITE); 
+        plot.setRangeGridlinePaint(new Color(220, 220, 220)); 
+        plot.setOutlineVisible(false); 
 
-        // Đổi màu cột thành màu xanh chủ đạo của The Bang Coffee
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
         renderer.setSeriesPaint(0, PRIMARY_COLOR); 
-        renderer.setBarPainter(new StandardBarPainter()); // Bỏ hiệu ứng gradient bóng bẩy cũ kĩ của Java
-        renderer.setMaximumBarWidth(0.1); // Chỉnh độ rộng của cột cho thanh mảnh
+        renderer.setBarPainter(new StandardBarPainter()); 
+        renderer.setMaximumBarWidth(0.1); 
         
-        // Căn chỉnh Font chữ
         revenueBarChart.getTitle().setFont(new Font("Segoe UI", Font.BOLD, 18));
         plot.getDomainAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 12));
         plot.getRangeAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 12));
 
-        // Nhúng biểu đồ vào Panel
         ChartPanel chartPanel = new ChartPanel(revenueBarChart);
         chartPanel.setPreferredSize(new Dimension(800, 350));
         chartPanel.setBackground(Color.WHITE);
@@ -161,7 +176,7 @@ public class DashboardPanel extends JPanel {
     }
 
     // ==========================================================
-    // TAB 2: BÁO CÁO BÁN HÀNG (Món bán chạy, Tỉ lệ hủy đơn)
+    // TAB 2: BÁO CÁO BÁN HÀNG
     // ==========================================================
     private JPanel createSalesTab() {
         JPanel panel = new JPanel(new BorderLayout(15, 15));
@@ -172,7 +187,6 @@ public class DashboardPanel extends JPanel {
         lblTarget.setFont(new Font("Segoe UI", Font.BOLD, labelFont));
         lblTarget.setForeground(PRIMARY_COLOR);
 
-        // Bảng dữ liệu món bán chạy
         String[] columns = {"STT", "Tên Món Nước", "Danh Mục", "Số Lượng Bán", "Doanh Thu Mang Lại"};
         topSellingTableModel = new DefaultTableModel(null, columns) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -186,30 +200,26 @@ public class DashboardPanel extends JPanel {
         tableWrapper.add(lblTarget, BorderLayout.NORTH);
         tableWrapper.add(new JScrollPane(table), BorderLayout.CENTER);
 
-        // Khung biểu đồ tròn Placeholder (Tỉ lệ danh mục)
         categoryDataset = new DefaultPieDataset();
         JFreeChart pieChart = ChartFactory.createPieChart(
-                "Tỉ Lệ Bán Theo Danh Mục", // Tiêu đề
-                categoryDataset,           // Dữ liệu
-                true,                      // Có hiện chú thích (Legend)
+                "Tỉ Lệ Bán Theo Danh Mục", 
+                categoryDataset,           
+                true,                      
                 true, false
         );
 
-        // Customize cho biểu đồ tròn đẹp hơn
         pieChart.getTitle().setFont(new Font("Segoe UI", Font.BOLD, 16));
         pieChart.getLegend().setItemFont(new Font("Segoe UI", Font.PLAIN, 13));
         
         PiePlot piePlot = (PiePlot) pieChart.getPlot();
-        piePlot.setBackgroundPaint(Color.WHITE); // Nền trắng
-        piePlot.setOutlineVisible(false); // Bỏ viền
-        piePlot.setShadowPaint(null); // Bỏ đổ bóng cho phẳng (Flat design)
+        piePlot.setBackgroundPaint(Color.WHITE); 
+        piePlot.setOutlineVisible(false); 
+        piePlot.setShadowPaint(null); 
         
-        // Cài đặt hiển thị Label (Ví dụ: "Trà sữa: 60%")
-        piePlot.setLabelGenerator(new StandardPieSectionLabelGenerator("{0}: {2}")); // {0} là Tên, {2} là %
+        piePlot.setLabelGenerator(new StandardPieSectionLabelGenerator("{0}: {2}")); 
         piePlot.setLabelFont(new Font("Segoe UI", Font.PLAIN, 12));
         piePlot.setLabelBackgroundPaint(Color.WHITE);
 
-        // Nhúng biểu đồ vào Panel
         ChartPanel pieChartPanel = new ChartPanel(pieChart);
         pieChartPanel.setPreferredSize(new Dimension((int)(screenW * 0.3), 0));
         pieChartPanel.setBackground(Color.WHITE);
@@ -222,52 +232,166 @@ public class DashboardPanel extends JPanel {
     }
 
     // ==========================================================
-    // TAB 3: BÁO CÁO CA LÀM VIỆC (Hiệu suất nhân viên)
+    // TAB 3: BÁO CÁO CA LÀM VIỆC [ĐÃ ĐƯỢC VIẾT LẠI HOÀN TOÀN]
     // ==========================================================
     private JPanel createShiftTab() {
-        JPanel panel = new JPanel(new BorderLayout(0, 15));
+        JPanel panel = new JPanel(new BorderLayout(0, 20));
         panel.setBackground(Color.WHITE);
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20)); 
+        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        JLabel lblTitle = new JLabel("Hiệu Suất Theo Ca Làm Việc & Nhân Viên");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, titleFont));
-        lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
-        lblTitle.setForeground(PRIMARY_COLOR);
-        panel.add(lblTitle, BorderLayout.NORTH);
-
-        JPanel tablePanel = new JPanel(new BorderLayout(0, 10));
-        tablePanel.setOpaque(false);
-
-        String[] cols = {"Mã NV", "Tên Nhân Viên", "Số Ca Làm", "Tổng Số Đơn Đã Tạo", "Doanh Thu Mang Về"};
-        DefaultTableModel model = new DefaultTableModel(null, cols) {
-            @Override public boolean isCellEditable(int row, int column) { return false; } 
-        };
-        JTable table = new JTable(model);
-        ComponentUI.styleTable(table, TEXT_DARK, TEXT_DARK, PRIMARY_COLOR);
-        table.setRowHeight((int)(screenH * 0.040)); 
+        // 1. Stats Layer (4 thẻ thống kê nằm ngang)
+        JPanel statsPanel = new JPanel(new GridLayout(1, 4, 15, 0));
+        statsPanel.setOpaque(false);
         
-        tablePanel.add(new JScrollPane(table), BorderLayout.CENTER);
+        cardTotalShifts = new StatCard("Ca Đã Hoàn Thành", "0", "Ca làm việc");
+        cardTotalHours = new StatCard("Tổng Giờ Làm Việc", "0", "Giờ thực tế");
+        cardAvgShiftRevenue = new StatCard("Doanh Thu / Ca", "0 đ", "Trung bình");
+        cardCanceledOrders = new StatCard("Đơn Hủy / Lỗi", "0", "Hóa đơn");
 
-        JButton btnExport = ComponentUI.createModernButton("Xuất báo cáo Excel", PRIMARY_COLOR, Color.WHITE);
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        footer.setOpaque(false);
-        footer.add(btnExport);
+        statsPanel.add(cardTotalShifts);
+        statsPanel.add(cardTotalHours);
+        statsPanel.add(cardAvgShiftRevenue);
+        statsPanel.add(cardCanceledOrders);
 
-        panel.add(tablePanel, BorderLayout.CENTER);
-        panel.add(footer, BorderLayout.SOUTH);
+        // 2. Center Layer (Bộ lọc + 2 Biểu đồ)
+        JPanel centerPanel = new JPanel(new BorderLayout(0, 20));
+        centerPanel.setOpaque(false);
+
+        // Filter Bar 
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        filterPanel.setOpaque(false);
+        cbFilterShift = new JComboBox<>(new String[]{"Tuần này", "Tháng này", "Tùy chỉnh"});
+        btnFilterShift = ComponentUI.createModernButton("Lọc dữ liệu", PRIMARY_COLOR, Color.WHITE);
+
+        JLabel lblFilter = new JLabel("Lọc theo:");
+        lblFilter.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        
+        filterPanel.add(lblFilter);
+        filterPanel.add(cbFilterShift);
+        filterPanel.add(btnFilterShift);
+
+        // Khung chứa 2 biểu đồ (GridLayout chia đôi)
+        JPanel chartsPanel = new JPanel(new GridLayout(1, 2, 20, 0));
+        chartsPanel.setOpaque(false);
+
+        // --- BIỂU ĐỒ 1: BAR CHART (Doanh thu theo Loại Ca) ---
+        shiftRevenueDataset = new DefaultCategoryDataset();
+        shiftRevenueBarChart = ChartFactory.createBarChart(
+                "Doanh Thu Theo Mẫu Ca", 
+                "Loại Ca",                     
+                "Doanh thu (VNĐ)",            
+                shiftRevenueDataset,              
+                PlotOrientation.VERTICAL,
+                false, true, false
+        );
+
+        CategoryPlot barPlot = shiftRevenueBarChart.getCategoryPlot();
+        barPlot.setBackgroundPaint(Color.WHITE); 
+        barPlot.setRangeGridlinePaint(new Color(220, 220, 220)); 
+        barPlot.setOutlineVisible(false); 
+
+        BarRenderer barRenderer = (BarRenderer) barPlot.getRenderer();
+        barRenderer.setSeriesPaint(0, PRIMARY_COLOR); 
+        barRenderer.setBarPainter(new StandardBarPainter()); 
+        barRenderer.setMaximumBarWidth(0.15); 
+        
+        shiftRevenueBarChart.getTitle().setFont(new Font("Segoe UI", Font.BOLD, 16));
+        barPlot.getDomainAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 12));
+        barPlot.getRangeAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 12));
+
+        ChartPanel barChartPanel = new ChartPanel(shiftRevenueBarChart);
+        barChartPanel.setBackground(Color.WHITE);
+        barChartPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // --- BIỂU ĐỒ 2: LINE CHART (Xu hướng giờ làm việc) ---
+        workingHoursDataset = new DefaultCategoryDataset();
+        workingHoursLineChart = ChartFactory.createLineChart(
+                "Xu Hướng Giờ Làm Việc", 
+                "Thời gian",                        
+                "Tổng số giờ",           
+                workingHoursDataset,              
+                PlotOrientation.VERTICAL,
+                false, true, false
+        );
+
+        CategoryPlot linePlot = workingHoursLineChart.getCategoryPlot();
+        linePlot.setBackgroundPaint(Color.WHITE); 
+        linePlot.setRangeGridlinePaint(new Color(220, 220, 220)); 
+        linePlot.setOutlineVisible(false); 
+
+        LineAndShapeRenderer lineRenderer = (LineAndShapeRenderer) linePlot.getRenderer();
+        lineRenderer.setSeriesPaint(0, new Color(41, 128, 185)); // Màu xanh dương nhạt hơn cho đa dạng
+        lineRenderer.setSeriesStroke(0, new BasicStroke(3.0f)); 
+        lineRenderer.setSeriesShapesVisible(0, true); 
+
+        workingHoursLineChart.getTitle().setFont(new Font("Segoe UI", Font.BOLD, 16));
+        linePlot.getDomainAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 12));
+        linePlot.getRangeAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 12));
+
+        ChartPanel lineChartPanel = new ChartPanel(workingHoursLineChart);
+        lineChartPanel.setBackground(Color.WHITE);
+        lineChartPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Gắn vào khung
+        chartsPanel.add(barChartPanel);
+        chartsPanel.add(lineChartPanel);
+
+        centerPanel.add(filterPanel, BorderLayout.NORTH);
+        centerPanel.add(chartsPanel, BorderLayout.CENTER);
+
+        panel.add(statsPanel, BorderLayout.NORTH);
+        panel.add(centerPanel, BorderLayout.CENTER);
 
         return panel;
     }
 
     // ==========================================================
-    // TAB 4: BÁO CÁO KHO (Xuất/Nhập/Tồn)
+    // API CUNG CẤP CHO BÁO CÁO CA LÀM VIỆC
+    // ==========================================================
+    public String getSelectedShiftFilter() {
+        return cbFilterShift.getSelectedItem().toString();
+    }
+
+    public void addShiftFilterListener(ActionListener listener) {
+        btnFilterShift.addActionListener(listener);
+    }
+
+    public void updateShiftCards(String totalShifts, String totalHours, String avgRevenue, String canceledOrders) {
+        cardTotalShifts.setValue(totalShifts);
+        cardTotalHours.setValue(totalHours);
+        cardAvgShiftRevenue.setValue(avgRevenue);
+        cardCanceledOrders.setValue(canceledOrders);
+        if (!canceledOrders.equals("0")) cardCanceledOrders.setForeground(new Color(231, 76, 60)); // Báo đỏ nếu có đơn hủy
+    }
+
+    public void updateShiftRevenueChart(java.util.List<Object[]> dataList, String chartTitle) {
+        shiftRevenueBarChart.setTitle(new org.jfree.chart.title.TextTitle(chartTitle, new Font("Segoe UI", Font.BOLD, 16)));
+        shiftRevenueDataset.clear();
+        for (Object[] row : dataList) {
+            String shiftName = (String) row[0]; // Tên Ca (Ca Sáng, Ca Chiều...)
+            Long revenue = (Long) row[1];
+            shiftRevenueDataset.addValue(revenue, "Doanh Thu", shiftName);
+        }
+    }
+
+    public void updateWorkingHoursChart(java.util.List<Object[]> dataList, String chartTitle) {
+        workingHoursLineChart.setTitle(new org.jfree.chart.title.TextTitle(chartTitle, new Font("Segoe UI", Font.BOLD, 16)));
+        workingHoursDataset.clear();
+        for (Object[] row : dataList) {
+            String dateStr = (String) row[0]; // Ngày (DD/MM)
+            Double hours = (Double) row[1];   // Số giờ
+            workingHoursDataset.addValue(hours, "Giờ làm", dateStr);
+        }
+    }
+
+    // ==========================================================
+    // TAB 4: BÁO CÁO KHO 
     // ==========================================================
     private JPanel createInventoryTab() {
         JPanel panel = new JPanel(new BorderLayout(15, 15));
         panel.setBackground(Color.WHITE);
         panel.setBorder(new EmptyBorder(15, 15, 15, 15));
 
-        // 1. Stats Layer 
         JPanel statsPanel = new JPanel(new GridLayout(1, 3, 20, 0));
         statsPanel.setOpaque(false);
         cardTotalInventory = new StatCard("Tổng Vốn Tồn Kho", "0 đ", "");
@@ -278,16 +402,14 @@ public class DashboardPanel extends JPanel {
         statsPanel.add(cardLowStockCount);
         statsPanel.add(cardImportMonth);
         
-        // 2. Center Layer - Chia làm 2 bảng
-        JPanel centerPanel = new JPanel(new GridLayout(1, 2, 20, 0)); // Chia cột 1:2 khoảng cách 20px
+        JPanel centerPanel = new JPanel(new GridLayout(1, 2, 20, 0)); 
         centerPanel.setOpaque(false);
 
-        // --- BẢNG 1: NGUYÊN LIỆU GẦN HẾT HẠN ---
         JPanel expiringPanel = new JPanel(new BorderLayout(0, 10));
         expiringPanel.setOpaque(false);
         JLabel lblExpiring = new JLabel("Nguyên liệu sắp hết hạn (≤ 7 ngày)");
         lblExpiring.setFont(new Font("Segoe UI", Font.BOLD, labelFont));
-        lblExpiring.setForeground(new Color(220, 53, 69)); // Màu đỏ cảnh báo
+        lblExpiring.setForeground(new Color(220, 53, 69)); 
 
         String[] colsExpiring = {"STT", "Lô", "Tên Nguyên Liệu", "Còn Lại", "Hạn Sử Dụng"};
         expiringTableModel = new DefaultTableModel(null, colsExpiring) {
@@ -301,7 +423,6 @@ public class DashboardPanel extends JPanel {
         expiringPanel.add(lblExpiring, BorderLayout.NORTH);
         expiringPanel.add(new JScrollPane(tableExpiring), BorderLayout.CENTER);
 
-        // --- BẢNG 2: TOP TIÊU HAO NHIỀU NHẤT ---
         JPanel mostUsedPanel = new JPanel(new BorderLayout(0, 10));
         mostUsedPanel.setOpaque(false);
         JLabel lblMostUsed = new JLabel("Top tiêu hao nhiều nhất (Tháng này)");
@@ -320,7 +441,6 @@ public class DashboardPanel extends JPanel {
         mostUsedPanel.add(lblMostUsed, BorderLayout.NORTH);
         mostUsedPanel.add(new JScrollPane(tableMostUsed), BorderLayout.CENTER);
 
-        // Add 2 bảng vào layout
         centerPanel.add(expiringPanel);
         centerPanel.add(mostUsedPanel);
 
@@ -331,73 +451,100 @@ public class DashboardPanel extends JPanel {
     }
 
     // ==========================================================
-    // TAB 5: BÁO CÁO KHÁCH HÀNG (Lịch sử, Hạng thẻ)
+    // TAB 5: BÁO CÁO KHÁCH HÀNG [ĐÃ ĐƯỢC VIẾT LẠI HOÀN TOÀN]
     // ==========================================================
     private JPanel createCustomerTab() {
-        JPanel panel = new JPanel(new BorderLayout(15, 15));
+        JPanel panel = new JPanel(new BorderLayout(0, 20));
         panel.setBackground(Color.WHITE);
-        panel.setBorder(new EmptyBorder(15, 15, 15, 15));
+        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        JPanel topControlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
-        topControlsPanel.setOpaque(false);
-        topControlsPanel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(Color.LIGHT_GRAY), 
-                "Tra cứu Khách Hàng", 0, 0, 
-                new Font("Segoe UI", Font.BOLD, normalFont), TEXT_DARK));
-
-        JTextField txtPhone = new JTextField();
-        txtPhone.setPreferredSize(new Dimension(250, 35));
-        txtPhone.setFont(new Font("Segoe UI", Font.PLAIN, normalFont));
+        // 1. Stats Layer (4 thẻ thống kê nằm ngang)
+        JPanel statsPanel = new JPanel(new GridLayout(1, 4, 15, 0));
+        statsPanel.setOpaque(false);
         
-        JButton btnSearch = ComponentUI.createModernButton("Tìm Kiếm", PRIMARY_COLOR, Color.WHITE);
+        cardTotalNewCustomers = new StatCard("Khách Hàng Mới", "0", "Người");
+        cardRetentionRate = new StatCard("Tỷ Lệ Quay Lại", "0%", "Mua ≥ 2 lần");
+        cardARPU = new StatCard("ARPU (Doanh thu/Khách)", "0 đ", "Trung bình");
+        cardTotalPoints = new StatCard("Điểm Tích Lũy", "0", "Đã phát hành");
 
-        topControlsPanel.add(new JLabel("Số điện thoại:"));
-        topControlsPanel.add(txtPhone);
-        topControlsPanel.add(btnSearch);
+        statsPanel.add(cardTotalNewCustomers);
+        statsPanel.add(cardRetentionRate);
+        statsPanel.add(cardARPU);
+        statsPanel.add(cardTotalPoints);
 
-        JPanel tablePanel = new JPanel(new BorderLayout(0, 10));
-        tablePanel.setOpaque(false);
+        // 2. Center Layer (Bộ lọc + Biểu đồ Line Chart)
+        JPanel centerPanel = new JPanel(new BorderLayout(0, 20));
+        centerPanel.setOpaque(false);
 
-        JLabel lblTitle = new JLabel("Lịch sử mua hàng & Tích điểm");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, labelFont));
-        lblTitle.setForeground(PRIMARY_COLOR);
+        // Filter Bar (Lọc theo: Tuần, Tháng, Tùy chỉnh)
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        filterPanel.setOpaque(false);
+        cbFilterCustomer = new JComboBox<>(new String[]{"Tuần này", "Tháng này", "Tùy chỉnh"});
+        btnFilterCustomer = ComponentUI.createModernButton("Lọc dữ liệu", PRIMARY_COLOR, Color.WHITE);
 
-        String[] cols = {"Mã Đơn", "Ngày Mua", "Sản Phẩm Đã Mua", "Thành Tiền", "Điểm Tích Lũy"};
-        DefaultTableModel model = new DefaultTableModel(null, cols) {
-            @Override public boolean isCellEditable(int row, int column) { return false; } 
-        };
-        JTable table = new JTable(model);
-        ComponentUI.styleTable(table, TEXT_DARK, TEXT_DARK, PRIMARY_COLOR);
-        table.setRowHeight((int)(screenH * 0.040)); 
+        JLabel lblFilter = new JLabel("Lọc theo:");
+        lblFilter.setFont(new Font("Segoe UI", Font.BOLD, 14));
         
-        tablePanel.add(lblTitle, BorderLayout.NORTH);
-        tablePanel.add(new JScrollPane(table), BorderLayout.CENTER);
+        filterPanel.add(lblFilter);
+        filterPanel.add(cbFilterCustomer);
+        filterPanel.add(btnFilterCustomer);
 
-        panel.add(topControlsPanel, BorderLayout.NORTH);
-        panel.add(tablePanel, BorderLayout.CENTER);
+        // Khởi tạo Biểu đồ đường (Line Chart) cho Tăng trưởng
+        customerGrowthDataset = new DefaultCategoryDataset();
+        customerGrowthLineChart = ChartFactory.createLineChart(
+                "Tốc Độ Tăng Trưởng Khách Hàng Mới", // Tiêu đề biểu đồ
+                "Thời gian",                        // Trục X
+                "Số lượng khách (Người)",           // Trục Y
+                customerGrowthDataset,              // Dữ liệu
+                PlotOrientation.VERTICAL,
+                false, true, false
+        );
+
+        // Customize Biểu đồ đường
+        CategoryPlot plot = customerGrowthLineChart.getCategoryPlot();
+        plot.setBackgroundPaint(Color.WHITE); 
+        plot.setRangeGridlinePaint(new Color(220, 220, 220)); 
+        plot.setOutlineVisible(false); 
+
+        // Style cho đường nét (dày dặn, có nốt chấm)
+        LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
+        renderer.setSeriesPaint(0, PRIMARY_COLOR); 
+        renderer.setSeriesStroke(0, new BasicStroke(3.0f)); // Chỉnh độ dày của đường
+        renderer.setSeriesShapesVisible(0, true); // Hiện các chấm tròn tại điểm giao
+
+        // Căn chỉnh Font
+        customerGrowthLineChart.getTitle().setFont(new Font("Segoe UI", Font.BOLD, 18));
+        plot.getDomainAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 12));
+        plot.getRangeAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 12));
+
+        ChartPanel chartPanel = new ChartPanel(customerGrowthLineChart);
+        chartPanel.setPreferredSize(new Dimension(800, 350));
+        chartPanel.setBackground(Color.WHITE);
+        chartPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        centerPanel.add(filterPanel, BorderLayout.NORTH);
+        centerPanel.add(chartPanel, BorderLayout.CENTER);
+
+        panel.add(statsPanel, BorderLayout.NORTH);
+        panel.add(centerPanel, BorderLayout.CENTER);
 
         return panel;
     }
     
-    // Lấy giá trị đang chọn trong ComboBox
-    public String getSelectedRevenueFilter() {
-        return cbFilterRevenue.getSelectedItem().toString();
-    }
-
-    // Gắn tai nghe sự kiện cho nút "Lọc dữ liệu"
-    public void addRevenueFilterListener(ActionListener listener) {
-        btnFilterRevenue.addActionListener(listener);
-    }
+    // ==========================================================
+    // API CUNG CẤP CHO BÁO CÁO DOANH THU & KHO
+    // ==========================================================
+    public String getSelectedRevenueFilter() { return cbFilterRevenue.getSelectedItem().toString(); }
+    public void addRevenueFilterListener(ActionListener listener) { btnFilterRevenue.addActionListener(listener); }
     
     public void updateRevenueCards(String totalRev, String totalOrders, String avgOrder) {
-        // Class StatCard của bạn có hàm setValue() chứ? Nếu không, bạn cần sửa lớp StatCard để nó có hàm update giá trị.
         cardTotalRevenue.setValue(totalRev); 
         cardTotalOrders.setValue(totalOrders);
         cardAvgOrder.setValue(avgOrder);
     }
 
     public void updateTopSellingTable(java.util.List<Object[]> dataList) {
-        topSellingTableModel.setRowCount(0); // Xóa dữ liệu cũ
+        topSellingTableModel.setRowCount(0); 
         int stt = 1;
         for (Object[] row : dataList) {
             topSellingTableModel.addRow(new Object[]{
@@ -405,14 +552,13 @@ public class DashboardPanel extends JPanel {
                 row[0], // Tên món
                 row[1], // Danh mục
                 row[2], // SL Bán
-                String.format("%,d đ", (Long) row[3]) // Doanh thu mang lại
+                String.format("%,d đ", (Long) row[3]) // Doanh thu
             });
         }
     }
     
     public void updateRevenueChart(java.util.List<Object[]> dataList, String chartTitle) {
         revenueBarChart.setTitle(new org.jfree.chart.title.TextTitle(chartTitle, new Font("Segoe UI", Font.BOLD, 18)));
-        
         revenueDataset.clear(); 
         for (Object[] row : dataList) {
             String dateStr = (String) row[0];
@@ -441,7 +587,6 @@ public class DashboardPanel extends JPanel {
         expiringTableModel.setRowCount(0); 
         int stt = 1;
         for (Object[] row : dataList) {
-            // STT, Mã Lô, Tên, Số lượng còn, HSD
             expiringTableModel.addRow(new Object[]{ stt++, row[0], row[1], row[2], row[3] });
         }
     }
@@ -450,17 +595,46 @@ public class DashboardPanel extends JPanel {
         mostUsedTableModel.setRowCount(0); 
         int stt = 1;
         for (Object[] row : dataList) {
-            // STT, Tên NL, Tổng tiêu hao
             mostUsedTableModel.addRow(new Object[]{ stt++, row[0], row[1] });
         }
     }
     
-    // Hiển thị Popup chọn ngày (Dùng thư viện jcalendar)
+    // ==========================================================
+    // API MỚI CHO BÁO CÁO KHÁCH HÀNG
+    // ==========================================================
+    public String getSelectedCustomerFilter() {
+        return cbFilterCustomer.getSelectedItem().toString();
+    }
+
+    public void addCustomerFilterListener(ActionListener listener) {
+        btnFilterCustomer.addActionListener(listener);
+    }
+
+    public void updateCustomerCards(String newCustomers, String retentionRate, String arpu, String totalPoints) {
+        cardTotalNewCustomers.setValue(newCustomers);
+        cardRetentionRate.setValue(retentionRate);
+        cardARPU.setValue(arpu);
+        cardTotalPoints.setValue(totalPoints);
+    }
+
+    public void updateCustomerGrowthChart(java.util.List<Object[]> dataList, String chartTitle) {
+        customerGrowthLineChart.setTitle(new org.jfree.chart.title.TextTitle(chartTitle, new Font("Segoe UI", Font.BOLD, 18)));
+        customerGrowthDataset.clear();
+        for (Object[] row : dataList) {
+            String dateStr = (String) row[0];
+            Integer count = (Integer) row[1]; // Số lượng khách hàng mới
+            customerGrowthDataset.addValue(count, "Khách Mới", dateStr);
+        }
+    }
+
+    // ==========================================================
+    // POPUP TÙY CHỈNH THỜI GIAN
+    // ==========================================================
     public java.util.Date[] showCustomDateDialog() {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Chọn khoảng thời gian", true);
         dialog.setLayout(new BorderLayout(10, 10));
         dialog.setSize(400, 200);
-        dialog.setLocationRelativeTo(this); // Hiển thị ra giữa màn hình
+        dialog.setLocationRelativeTo(this); 
         dialog.getContentPane().setBackground(Color.WHITE);
 
         JPanel panel = new JPanel(new GridLayout(2, 2, 15, 15));
@@ -489,7 +663,6 @@ public class DashboardPanel extends JPanel {
         JButton btnOK = ComponentUI.createModernButton("Xác nhận", PRIMARY_COLOR, Color.WHITE);
         JButton btnCancel = ComponentUI.createModernButton("Hủy", Color.GRAY, Color.WHITE);
 
-        // Mảng để lưu trữ ngày kết quả trả về
         java.util.Date[] result = new java.util.Date[2];
 
         btnOK.addActionListener(e -> {
@@ -501,7 +674,6 @@ public class DashboardPanel extends JPanel {
                 JOptionPane.showMessageDialog(dialog, "Từ ngày không được lớn hơn Đến ngày!", "Lỗi", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            // Lưu kết quả và đóng dialog
             result[0] = dcStart.getDate();
             result[1] = dcEnd.getDate();
             dialog.dispose();
@@ -515,13 +687,13 @@ public class DashboardPanel extends JPanel {
         dialog.add(panel, BorderLayout.CENTER);
         dialog.add(btnPanel, BorderLayout.SOUTH);
 
-        dialog.setVisible(true); // Mở cửa sổ lên (nó sẽ chặn màn hình lại cho đến khi tắt)
+        dialog.setVisible(true); 
 
         return result[0] != null ? result : null;
     }
 
     // ==========================================================
-    // CÁC CLASS HỖ TRỢ VẼ GIAO DIỆN (Giữ nguyên từ bản cũ)
+    // CLASS HỖ TRỢ VẼ (Giữ nguyên)
     // ==========================================================
     private static class RoundedChartPlaceholder extends JPanel {
         private String message;
@@ -542,10 +714,10 @@ public class DashboardPanel extends JPanel {
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(new Color(240, 240, 240)); // Màu xám nhạt làm nền chờ
+            g2.setColor(new Color(240, 240, 240)); 
             g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
             g2.setColor(new Color(200, 200, 200));
-            g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 15, 15); // Viền
+            g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 15, 15); 
             g2.dispose();
             super.paintComponent(g);
         }

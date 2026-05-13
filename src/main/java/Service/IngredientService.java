@@ -48,4 +48,16 @@ public class IngredientService {
     public double getAveragePrice(int ingredientId) {
         return ingredientDAO.getAveragePrice(ingredientId);
     }
+    
+    public boolean addIngredientMasterData(String categoryName, String ingredientName, String unit, int threshold) {
+        return ingredientDAO.addIngredientMasterData(categoryName, ingredientName, unit, threshold);
+    }
+    
+    public List<Object[]> getIngredientBatches(int maNL) {
+        return ingredientDAO.getIngredientBatches(maNL);
+    }
+    
+    public String disposeBatch(int maLo, double soLuong, String lyDo) {
+        return ingredientDAO.disposeBatch(maLo, soLuong, lyDo);
+    }
 }
