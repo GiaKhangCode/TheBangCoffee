@@ -1,3 +1,4 @@
+View\RedeemPointsDialog$1.class
 Model\ShiftModel.class
 View\ProductEditDialog$WrapLayout.class
 View\StockPanel$10.class
@@ -5,9 +6,11 @@ View\StockPanel$ActionButtonEditor.class
 View\ProductEditDialog$DeleteActionPanel.class
 View\EmployeeSchedulePanel$IOSSwitch$1.class
 View\PosPanel$WrapLayout.class
+View\LoyaltyManagementPanel$ActionPanel.class
 View\ShiftSessionOpenDialog$3.class
 View\StockPanel$3.class
 View\EmployeeSchedulePanel$1.class
+View\CustomerManagementPanel$2.class
 View\PosPanel$7.class
 View\HeaderPanel.class
 View\MenuPanel$2.class
@@ -16,6 +19,7 @@ View\StockPanel$CenterRenderer.class
 View\StockPanel.class
 View\CategoryManagementPanel$3.class
 View\ToppingManagementPanel$ActionButtonEditor.class
+View\LoyaltyManagementPanel$1.class
 Model\AccountModel.class
 Model\ProductListModel.class
 View\ProductEditDialog$2.class
@@ -25,6 +29,7 @@ View\ForgotPasswordFrame$3.class
 View\PosPanel$DeleteActionButtonRenderer.class
 Controller\RoleController$2.class
 Common\AutoCompleteComboBox.class
+View\LoyaltyManagementPanel$ActionButtonRenderer.class
 View\CategoryManagementPanel$ActionButtonsPanel.class
 View\EmployeeSchedulePanel.class
 View\StockPanel$8.class
@@ -51,6 +56,7 @@ Common\EmailUtil.class
 Controller\RoleController$10.class
 Controller\RoleController.class
 View\RolePanel$DeleteActionButtonRenderer.class
+View\CustomerManagementPanel.class
 Service\CustomerService.class
 View\MainFrame.class
 View\StockPanel$ActionButtonRenderer.class
@@ -59,6 +65,7 @@ Service\ReportService.class
 View\ShiftSessionCloseDialog$3.class
 View\ToppingManagementPanel$ActionButtonRenderer.class
 View\OrderPanel$StatusCellRenderer.class
+Controller\CustomerController.class
 Service\RecipeService.class
 View\PosPanel$6.class
 View\ProductEditDialog$ProductActionButtonRenderer.class
@@ -92,6 +99,7 @@ View\StockPanel$PrintReceiptListener.class
 Model\RecipeModel.class
 Model\IngredientModel.class
 DatabaseAccessObject\ReportDAO.class
+View\CustomerManagementPanel$1.class
 Controller\RoleController$6.class
 View\ShiftSessionOpenDialog$2.class
 View\StockPanel$2.class
@@ -105,6 +113,7 @@ View\CategoryManagementPanel$ActionButtonsRenderer.class
 View\MenuPanel$3.class
 DatabaseAccessObject\CategoryDAO.class
 View\PaymentMethodDialog.class
+View\LoyaltyManagementPanel$2.class
 View\DashboardPanel$3.class
 View\RolePanel$2.class
 DatabaseAccessObject\ShiftDAO.class
@@ -123,6 +132,7 @@ View\ProductDetailDialog$DeleteActionPanel.class
 View\StockPanel$4.class
 Controller\StockPanelController$2.class
 DatabaseAccessObject\VariantDAO.class
+Controller\CustomerController$1.class
 Model\OrderModel.class
 View\MenuPanel$1.class
 Controller\RoleController$7.class
@@ -142,8 +152,10 @@ View\OrderPanel$3.class
 DatabaseAccessObject\IngredientTypeDAO.class
 Controller\RoleController$5.class
 View\ProductEditDialog$DeleteActionButtonEditor.class
+View\LoyaltyManagementPanel.class
 Service\OtpService$OtpDetails.class
 View\ProductDetailDialog$WrapLayout.class
+View\RedeemPointsDialog.class
 DatabaseAccessObject\RecipeDAO.class
 View\PosPanel$4.class
 View\RolePanel$DeleteActionButtonEditor.class
@@ -195,6 +207,7 @@ View\StockPanel$InventoryStatusRenderer.class
 View\DashboardPanel.class
 DatabaseAccessObject\WarehouseReceiptDAO.class
 Controller\ProductController$1.class
+View\LoyaltyManagementPanel$ActionButtonListener.class
 View\RegisterFrame$2.class
 View\ProductEditDialog$3.class
 View\ShiftSessionCloseDialog$2.class
@@ -217,6 +230,7 @@ View\PosPanel$8.class
 View\ProductDetailDialog$DeleteActionListener.class
 View\OrderPanel$4.class
 View\DashboardPanel$RoundedChartPlaceholder.class
+View\LoyaltyManagementPanel$ActionButtonEditor.class
 DatabaseAccessObject\AccountDAO.class
 Service\OtpService.class
 Controller\AccountController$1.class

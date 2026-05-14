@@ -47,8 +47,11 @@ public class PosPanel extends JPanel {
     
     private JLabel lblSubTotal;
     private JLabel lblVat;
+    private JLabel lblDiscount; // [MỚI] Hiển thị tiền giảm giá do dùng điểm
     private JLabel lblTotal;
+    private JLabel lblEarnedPoints; 
     private JButton btnClearCart;
+    private JButton btnUsePoints; // [MỚI] Nút bật Popup dùng điểm
     private JButton btnCreateOrder;
     
     // Listeners
@@ -373,9 +376,18 @@ public class PosPanel extends JPanel {
 
         lblSubTotal = createSummaryLabel("Tạm tính:");
         lblVat = createSummaryLabel("VAT:");
+        
+        lblDiscount = new JLabel("-0 đ", SwingConstants.RIGHT); // Dòng mới
+        lblDiscount.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblDiscount.setForeground(new Color(39, 174, 96)); // Xanh lá
+
         lblTotal = new JLabel("0 đ", SwingConstants.RIGHT);
         lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblTotal.setForeground(new Color(231, 76, 60)); 
+        
+        lblEarnedPoints = new JLabel(" ", SwingConstants.RIGHT);
+        lblEarnedPoints.setFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 13));
+        lblEarnedPoints.setForeground(new Color(39, 174, 96));
 
         gbc.gridx = 0; gbc.gridy = 0; summaryPanel.add(new JLabel("Tạm tính:", SwingConstants.LEFT), gbc);
         gbc.gridx = 1; gbc.gridy = 0; summaryPanel.add(lblSubTotal, gbc);
@@ -383,25 +395,38 @@ public class PosPanel extends JPanel {
         gbc.gridx = 0; gbc.gridy = 1; summaryPanel.add(new JLabel("VAT:", SwingConstants.LEFT), gbc);
         gbc.gridx = 1; gbc.gridy = 1; summaryPanel.add(lblVat, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2; 
+        // Chèn Chiết khấu vào hàng 2
+        gbc.gridx = 0; gbc.gridy = 2; summaryPanel.add(new JLabel("Chiết khấu (Điểm):", SwingConstants.LEFT), gbc);
+        gbc.gridx = 1; gbc.gridy = 2; summaryPanel.add(lblDiscount, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 3; 
         JLabel lblTotalText = new JLabel("THÀNH TIỀN:", SwingConstants.LEFT);
         lblTotalText.setFont(new Font("Segoe UI", Font.BOLD, 16));
         summaryPanel.add(lblTotalText, gbc);
         
-        gbc.gridx = 1; gbc.gridy = 2; summaryPanel.add(lblTotal, gbc);
+        gbc.gridx = 1; gbc.gridy = 3; summaryPanel.add(lblTotal, gbc);
 
-        JPanel actionPanel = new JPanel(new GridLayout(1, 2, 10, 0));
+        gbc.gridx = 0; gbc.gridy = 4; summaryPanel.add(new JLabel(""), gbc);
+        gbc.gridx = 1; gbc.gridy = 4; summaryPanel.add(lblEarnedPoints, gbc);
+
+        // Panel 3 nút bấm
+        JPanel actionPanel = new JPanel(new GridLayout(1, 3, 8, 0));
         actionPanel.setOpaque(false);
         actionPanel.setBorder(new EmptyBorder(15, 0, 0, 0));
 
         btnClearCart = createModernButton("Hủy đơn", new Color(241, 243, 245), TEXT_DARK);
+        btnUsePoints = createModernButton("Dùng điểm", new Color(230, 126, 34), Color.WHITE);
         btnCreateOrder = createModernButton("TẠO ĐƠN", PRIMARY_COLOR, Color.WHITE);
-        btnCreateOrder.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        
+        btnClearCart.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnUsePoints.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnCreateOrder.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
         actionPanel.add(btnClearCart);
+        actionPanel.add(btnUsePoints);
         actionPanel.add(btnCreateOrder);
 
-        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2;
+        gbc.gridx = 0; gbc.gridy = 5; gbc.gridwidth = 2;
         summaryPanel.add(actionPanel, gbc);
 
         bottomContainer.add(summaryPanel, BorderLayout.CENTER);
@@ -435,13 +460,12 @@ public class PosPanel extends JPanel {
         btn.setBackground(bg);
         btn.setForeground(fg);
         btn.setFocusPainted(false);
-        btn.setBorder(new EmptyBorder(10, 20, 10, 20));
+        btn.setBorder(new EmptyBorder(10, 10, 10, 10)); // Giảm padding để fit 3 nút
         btn.setContentAreaFilled(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
     }
 
-    // [CẬP NHẬT LỚN] Sử dụng hàm paint() để vẽ overlay đè lên MỌI thứ kể cả Hình Ảnh
     private JPanel createProductCard(ProductModel product, ActionListener onClick) {
         boolean isOutOfStock = product.getProductStatus() != null && product.getProductStatus().equalsIgnoreCase("Tạm hết");
 
@@ -450,10 +474,8 @@ public class PosPanel extends JPanel {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                // Vẽ nền thẻ
                 g2.setColor(Color.WHITE);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
-                // Vẽ viền
                 g2.setColor(new Color(220, 220, 220));
                 g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 15, 15);
                 g2.dispose();
@@ -461,25 +483,20 @@ public class PosPanel extends JPanel {
 
             @Override
             public void paint(Graphics g) {
-                // 1. Vẽ tất cả các component con bình thường trước (Ảnh, Text)
                 super.paint(g); 
 
-                // 2. Nếu món đang tạm hết thì vẽ màng phủ đè lên trên cùng
                 if (isOutOfStock) {
                     Graphics2D g2 = (Graphics2D) g.create();
                     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                     
-                    // Vẽ lớp phủ xám mờ đè lên toàn bộ thẻ
                     g2.setColor(new Color(230, 230, 230, 180)); 
                     g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
 
-                    // Vẽ một khối chữ nhật xám đậm giữa thẻ
                     int rectHeight = 35;
                     int rectY = (getHeight() - rectHeight) / 2;
                     g2.setColor(new Color(50, 50, 50, 200)); 
                     g2.fillRect(0, rectY, getWidth(), rectHeight);
 
-                    // Vẽ chữ "TẠM HẾT" màu trắng nằm ngang
                     g2.setColor(Color.WHITE); 
                     g2.setFont(new Font("Segoe UI", Font.BOLD, 16));
                     
@@ -511,7 +528,6 @@ public class PosPanel extends JPanel {
                 card.setBorder(new EmptyBorder(15, 15, 15, 15)); 
             }
             public void mouseClicked(MouseEvent e) {
-                // Chỉ cho phép Click nếu KHÔNG bị tạm hết
                 if (!isOutOfStock && onClick != null) {
                     onClick.actionPerformed(null);
                 }
@@ -610,10 +626,18 @@ public class PosPanel extends JPanel {
         }
     }
 
-    public void updateSummary(long subTotal, double vat, long total) {
+    // [CẬP NHẬT] Thêm tham số discount vào Summary
+    public void updateSummary(long subTotal, double vat, long discount, long total, int earnedPoints) {
         lblSubTotal.setText(String.format("%,d đ", subTotal));
         lblVat.setText(String.format("%,.0f đ", vat));
+        lblDiscount.setText(String.format("-%,d đ", discount)); 
         lblTotal.setText(String.format("%,d đ", total));
+        
+        if (earnedPoints > 0) {
+            lblEarnedPoints.setText(String.format("Dự kiến cộng: +%d điểm", earnedPoints));
+        } else {
+            lblEarnedPoints.setText(" ");
+        }
     }
 
     public boolean isTakeaway() { return rbTakeaway.isSelected(); }
@@ -628,6 +652,7 @@ public class PosPanel extends JPanel {
     public void addSearchListener(java.awt.event.KeyListener listener) { txtSearch.addKeyListener(listener); }
     public String getSearchText() { return txtSearch.getText().trim(); }
     public void addClearCartListener(ActionListener listener) { btnClearCart.addActionListener(listener); }
+    public void addUsePointsListener(ActionListener listener) { btnUsePoints.addActionListener(listener); } // [MỚI] Listener nút dùng điểm
     public void addCreateOrderListener(ActionListener listener) { btnCreateOrder.addActionListener(listener); }
 
     // ==========================================================
@@ -720,7 +745,6 @@ public class PosPanel extends JPanel {
         }
     }
     
-    // --- GIAO DIỆN XÓA ---
     public void setCartDeleteListener(DeleteActionListener listener) {
         this.cartDeleteListener = listener;
     }

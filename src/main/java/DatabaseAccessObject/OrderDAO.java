@@ -4,7 +4,7 @@ import Model.CartItemModel;
 import Model.OrderDetailModel;
 import Model.OrderModel;
 import Model.ToppingModel;
-import Model.SessionManager; // <-- THÊM IMPORT NÀY
+import Model.SessionManager; 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,12 +15,12 @@ import java.util.List;
 public class OrderDAO {
 
     public boolean createOrder(int accountId, Integer maKhachHang, List<CartItemModel> cart, long finalTotal, double totalVat, String prepStatus, String payStatus, boolean isTakeaway, boolean isHoliday, int pointsEarned, int pointsUsed) {
-        // [QUAN TRỌNG] Đã thêm MaPhienCa vào câu INSERT
         String insertOrderSQL = "INSERT INTO DON_HANG (MaTaiKhoan, MaKhachHang, TongTien, TongTienThue, ThanhTien, TrangThaiPhaChe, TrangThaiThanhToan, GhiChu, MaPhienCa) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         String insertOrderDetailSQL = "INSERT INTO CHI_TIET_DON_HANG (MaDonHang, MaBienThe, SoLuong, GiaTruocThue, TienThue, ThanhTien, GhiChuMon) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String insertToppingSQL = "INSERT INTO CHI_TIET_TOPPING (MaCTHD, MaTopping, SoLuong, GiaTruocThue, TienThue) VALUES (?, ?, ?, ?, ?)";
         
-        String updateCustomerPointsSQL = "UPDATE KHACH_HANG SET DiemTichLuy = DiemTichLuy + ? - ? WHERE MaKhachHang = ?";
+        // [QUAN TRỌNG] Chỉ TRỪ điểm từ cột DiemHienTai. KHÔNG đụng vào DiemTichLuy
+        String updateCustomerPointsSQL = "UPDATE KHACH_HANG SET DiemHienTai = DiemHienTai - ? WHERE MaKhachHang = ?";
 
         try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection()) {
             conn.setAutoCommit(false);
@@ -30,6 +30,15 @@ public class OrderDAO {
                 long subTotal = finalTotal - Math.round(totalVat);
                 String orderTypeNote = isHoliday ? "[LỄ] " : "";
                 orderTypeNote += isTakeaway ? "Mua mang đi" : "Dùng tại quán";
+                
+                // Gom toàn bộ Ghi chú của từng món thành 1 dòng Ghi chú tổng cho Đơn hàng
+                StringBuilder overallNote = new StringBuilder();
+                for (CartItemModel item : cart) {
+                    if (item.getNote() != null && !item.getNote().isEmpty()) {
+                        if (overallNote.length() > 0) overallNote.append("; ");
+                        overallNote.append(item.getNote());
+                    }
+                }
 
                 try (PreparedStatement psOrder = conn.prepareStatement(insertOrderSQL, new String[]{"MADONHANG"})) {
                     psOrder.setInt(1, accountId);
@@ -43,9 +52,8 @@ public class OrderDAO {
                     psOrder.setLong(5, finalTotal);
                     psOrder.setString(6, prepStatus);
                     psOrder.setString(7, payStatus);
-                    psOrder.setString(8, orderTypeNote); 
+                    psOrder.setString(8, overallNote.length() > 0 ? overallNote.toString() : ""); 
                     
-                    // [MỚI] Gán ID Ca đang làm việc lấy từ SessionManager
                     if (SessionManager.hasOpenShift()) {
                         psOrder.setInt(9, SessionManager.getCurrentMaPhienCa());
                     } else {
@@ -72,38 +80,31 @@ public class OrderDAO {
                     for (CartItemModel item : cart) {
                         int variantId = item.getSelectedVariant() != null ? item.getSelectedVariant().getVariantID() : 0;
                         
-                        // 1. Lấy giá món nước (Đã tự động xác định Mang về / Lễ / Tại quán từ Controller)
                         long mainSellingPrice = item.getMainSellingPrice(); 
                         
-                        // 2. BƯỚC SỬA LỖI: Tính tổng tiền Topping của 1 ly
                         long totalToppingPrice = 0;
                         if (item.getSelectedToppings() != null && !item.getSelectedToppings().isEmpty()) {
                             for (ToppingModel topping : item.getSelectedToppings()) {
-                                // Nếu là hàng tặng (Reward) thì topping giá 0đ
                                 long toppingPrice = item.isReward() ? 0 : topping.getPrice();
                                 totalToppingPrice += toppingPrice;
                             }
                         }
 
-                        // 3. Tính Thành tiền cho dòng này = (Giá Nước + Giá Topping) * Số lượng
                         long totalRowPrice = (mainSellingPrice + totalToppingPrice) * item.getQuantity();
 
-                        // 4. Tính toán thuế cho món nước (Giữ nguyên logic của bạn)
                         double vatRate = item.getProduct().getVat();
                         double priceBeforeTax = mainSellingPrice / (1.0 + (vatRate / 100.0));
                         double taxAmount = mainSellingPrice - priceBeforeTax;
 
-                        // Set tham số cho PreparedStatement
                         psDetail.setInt(1, orderId);
                         psDetail.setInt(2, variantId);
                         psDetail.setInt(3, item.getQuantity());
                         psDetail.setLong(4, Math.round(priceBeforeTax)); 
                         psDetail.setLong(5, Math.round(taxAmount));     
-                        psDetail.setLong(6, totalRowPrice); // <--- THÀNH TIỀN ĐÃ BAO GỒM TOPPING         
+                        psDetail.setLong(6, totalRowPrice); 
                         psDetail.setString(7, item.getNote()); 
                         psDetail.executeUpdate();
 
-                        // Lấy ID chi tiết đơn hàng vừa tạo
                         int detailId = -1;
                         try (ResultSet rs = psDetail.getGeneratedKeys()) {
                             if (rs.next()) {
@@ -130,11 +131,11 @@ public class OrderDAO {
                     }
                 }
                 
-                if (maKhachHang != null && (pointsEarned > 0 || pointsUsed > 0)) {
+                // Nếu khách hàng có xài điểm thì trừ thẳng luôn (Không quan tâm prep/pay status)
+                if (maKhachHang != null && pointsUsed > 0) {
                     try (PreparedStatement psUpdatePoints = conn.prepareStatement(updateCustomerPointsSQL)) {
-                        psUpdatePoints.setInt(1, pointsEarned);
-                        psUpdatePoints.setInt(2, pointsUsed);
-                        psUpdatePoints.setInt(3, maKhachHang);
+                        psUpdatePoints.setInt(1, pointsUsed);
+                        psUpdatePoints.setInt(2, maKhachHang);
                         psUpdatePoints.executeUpdate();
                     }
                 }
@@ -238,7 +239,6 @@ public class OrderDAO {
     }
 
     public boolean updatePaymentStatus(int orderId, String newStatus, String phuongThucThanhToan) {
-        // Thêm cột PhuongThucThanhToan vào câu lệnh SQL
         String sql = "UPDATE DON_HANG SET TrangThaiThanhToan = ?, PhuongThucThanhToan = ? WHERE MaDonHang = ?";
         
         try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection();

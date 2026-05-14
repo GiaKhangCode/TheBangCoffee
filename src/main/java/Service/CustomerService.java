@@ -2,6 +2,7 @@ package Service;
 
 import DatabaseAccessObject.CustomerDAO;
 import Model.CustomerModel;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class CustomerService {
@@ -12,31 +13,27 @@ public class CustomerService {
     }
 
     public CustomerModel processCustomerForOrder(String phone, String name) throws SQLException, ClassNotFoundException {
-        // 1. Khách vãng lai (Không nhập SĐT)
         if (phone == null || phone.trim().isEmpty()) {
             return null; 
         }
 
-        // 2. Kiểm tra xem khách đã tồn tại chưa
         CustomerModel existingCustomer = customerDAO.findCustomerByPhone(phone);
         if (existingCustomer != null) {
-            return existingCustomer; // Trả về khách cũ
+            return existingCustomer; 
         }
 
-        // 3. Khách mới: Yêu cầu phải có tên
         if (name == null || name.trim().isEmpty()) {
-            name = "Khách Hàng"; // Tên mặc định nếu thu ngân quên nhập
+            name = "Khách Hàng"; 
         }
 
-        CustomerModel newCustomer = new CustomerModel(0, phone, name, 0, "Đồng");
+        CustomerModel newCustomer = new CustomerModel(0, phone, name, 0, 0, "Mới");
         int newId = customerDAO.insertAndGetId(newCustomer);
         
         if (newId > 0) {
-            newCustomer.setMaKH(newId); // Cập nhật ID cho object
+            newCustomer.setMaKH(newId); 
             return newCustomer;
         }
-
-        return null; // Lỗi CSDL
+        return null; 
     }
     
     public CustomerModel findCustomerByPhone(String phone) {
@@ -51,8 +48,7 @@ public class CustomerService {
             return null;
         }
         
-        // Tạo model khách hàng với điểm mặc định = 0, hạng "Mới"
-        CustomerModel newCustomer = new CustomerModel(0, phone, name, 0, "Mới");
+        CustomerModel newCustomer = new CustomerModel(0, phone, name, 0, 0, "Mới");
         int newId = customerDAO.insertAndGetId(newCustomer);
         
         if (newId > 0) {
@@ -62,8 +58,36 @@ public class CustomerService {
         return null;
     }
 
-    // [SỬA LỖI ORA-00904] Nhận điểm đã tính toán từ Java Controller đẩy xuống
     public void addPointsToCustomerByOrderId(int orderId, int pointsToAdd) {
         customerDAO.addPointsToCustomerByOrderId(orderId, pointsToAdd);
+    }
+
+    public ResultSet getAllTiers() throws SQLException, ClassNotFoundException {
+        return customerDAO.getAllTiers();
+    }
+
+    public void saveTier(int maHang, String tenHang, int diemYeuCau) throws SQLException, ClassNotFoundException {
+        customerDAO.saveTier(maHang, tenHang, diemYeuCau);
+    }
+
+    public String deleteTier(int maHang) throws SQLException, ClassNotFoundException {
+        return customerDAO.deleteTier(maHang);
+    }
+
+    public String syncTiers() throws SQLException, ClassNotFoundException {
+        return customerDAO.syncTiers();
+    }
+
+    public int[] getPointRule() throws SQLException, ClassNotFoundException {
+        return customerDAO.getPointRule();
+    }
+
+    // [CẬP NHẬT] Thêm tham số diemDoiLy
+    public void updatePointRule(int tienTich, int giaTri, int diemDoiLy) throws SQLException, ClassNotFoundException {
+        customerDAO.updatePointRule(tienTich, giaTri, diemDoiLy);
+    }
+    
+    public ResultSet getAllCustomers() throws SQLException, ClassNotFoundException {
+        return customerDAO.getAllCustomers();
     }
 }

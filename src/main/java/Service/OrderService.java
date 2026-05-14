@@ -19,7 +19,6 @@ public class OrderService {
         this.orderDAO = new OrderDAO();
     }
 
-    // [ĐÃ SỬA] Đổi status thành prepStatus và payStatus
     public boolean createOrder(int accountId, Integer maKhachHang, List<CartItemModel> cart, long finalTotal, double totalVat, String prepStatus, String payStatus, boolean isTakeaway, boolean isHoliday, int pointsEarned, int pointsUsed) {
         if (cart == null || cart.isEmpty()) {
             return false;
@@ -114,7 +113,6 @@ public class OrderService {
         return orderDAO.getOrderDetailsByOrderId(orderId);
     }
 
-    // [ĐÃ SỬA] Tách ra làm 2 hàm Service
     public boolean updatePreparationStatus(int orderId, String newStatus) {
         return orderDAO.updatePreparationStatus(orderId, newStatus);
     }

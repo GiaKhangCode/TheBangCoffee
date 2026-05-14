@@ -8,6 +8,7 @@ D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\ConnectDatabase\Con
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\ConnectDatabase\ConnectionUtils.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\Controller\AccountController.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\Controller\CategoryController.java
+D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\Controller\CustomerController.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\Controller\DashboardController.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\Controller\PosController.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\Controller\ProductController.java
@@ -76,11 +77,13 @@ D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\Service\WarehouseRe
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\AppColor.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\CategoryManagementPanel.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\ContentBasePanel.java
+D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\CustomerManagementPanel.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\DashboardPanel.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\EmployeeSchedulePanel.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\ForgotPasswordFrame.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\HeaderPanel.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\LoginFrame.java
+D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\LoyaltyManagementPanel.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\MainFrame.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\MenuPanel.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\NavButton.java
@@ -91,6 +94,7 @@ D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\PaymentMethodD
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\PosPanel.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\ProductDetailDialog.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\ProductEditDialog.java
+D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\RedeemPointsDialog.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\RegisterFrame.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\RolePanel.java
 D:\XuanPhuc\Source_code\Javafile\TheBangCoffee\src\main\java\View\ShiftSessionCloseDialog.java

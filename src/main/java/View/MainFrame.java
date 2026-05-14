@@ -3,6 +3,7 @@ package View;
 import Model.SessionManager;
 import Common.ValidationUtil;
 import Controller.AccountController;
+import Controller.CustomerController;
 import Controller.PosController; // Import PosController để sử dụng
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -18,15 +19,22 @@ public class MainFrame extends JFrame {
     private JPanel mainContainer; 
     private JPanel contentArea;
     private CardLayout cardLayout;
+    
+    // Các Panel cũ
     private StockPanel stockPanel;
     private MenuPanel menuPanel;
-    private Map<String, NavButton> navButtons;
-    private NavButton activeButton;
     private RolePanel rolePanel;
     private EmployeeSchedulePanel shiftPanel;
     private PosPanel posPanel; 
     private DashboardPanel dashboardPanel;
     private OrderPanel orderPanel; 
+    
+    // [MỚI] Khai báo 2 Panel Khách hàng và Tích điểm
+    private CustomerManagementPanel customerPanel;
+    private LoyaltyManagementPanel loyaltyPanel;
+    
+    private Map<String, NavButton> navButtons;
+    private NavButton activeButton;
     
     // Khai báo PosController để các Controller khác có thể gọi hàm reload
     private PosController posController;
@@ -68,9 +76,16 @@ public class MainFrame extends JFrame {
         sidebar.add(logoTitle);
 
         navButtons = new HashMap<>();
+        
+        // --- DANH SÁCH MENU SIDEBAR ---
         addMenuButton("Tạo đơn", "POS", "Order");
         addMenuButton("Quản lý đơn hàng", "BILL", "OrderList");
         addMenuButton("Menu đồ uống", "MENU", "Menu");
+        
+        // [MỚI] Thêm 2 nút vào Sidebar (Không gộp chung)
+        addMenuButton("Khách hàng", "USER", "Customer");
+        addMenuButton("Cấu hình Tích điểm", "GIFT", "Loyalty");
+        
         addMenuButton("Nhập kho", "STOCK", "Stock");
         addMenuButton("Quản lý ca làm việc", "STAFF", "Staff");
         addMenuButton("Tài khoản & Phân quyền", "ROLE", "Role");
@@ -98,7 +113,7 @@ public class MainFrame extends JFrame {
         contentArea = new JPanel(cardLayout);
         contentArea.setOpaque(false);
 
-        // Khởi tạo các panel chức năng
+        // --- KHỞI TẠO VÀ THÊM CÁC PANEL VÀO CARDLAYOUT ---
         this.dashboardPanel = new DashboardPanel();
         contentArea.add(this.dashboardPanel, "Stats");
         
@@ -109,10 +124,17 @@ public class MainFrame extends JFrame {
         contentArea.add(this.orderPanel, "OrderList");
         
         this.menuPanel = new MenuPanel();
-        // [QUAN TRỌNG] Gọi setupPanels(this) để truyền MainFrame vào MenuPanel
-        // Nhờ vậy CategoryController và ToppingController mới có thể truy cập được MainFrame
         this.menuPanel.setupPanels(this); 
         contentArea.add(this.menuPanel, "Menu"); 
+        
+        // [MỚI] Khởi tạo 2 Panel mới và thêm vào ContentArea
+        this.customerPanel = new CustomerManagementPanel();
+        contentArea.add(this.customerPanel, "Customer");
+        
+        this.loyaltyPanel = new LoyaltyManagementPanel();
+        contentArea.add(this.loyaltyPanel, "Loyalty");
+        
+        new CustomerController(this.customerPanel, this.loyaltyPanel);
         
         this.stockPanel = new StockPanel(); 
         contentArea.add(this.stockPanel, "Stock"); 
@@ -200,7 +222,7 @@ public class MainFrame extends JFrame {
 
     public static void main(String[] args) {}
     
-    // Các Getter Panel
+    // --- Các Getter Panel ---
     public StockPanel getStockPanel(){ return stockPanel; }
     public MenuPanel getMenuPanel(){ return menuPanel; }
     public RolePanel getRolePanel(){ return rolePanel; }
@@ -208,6 +230,10 @@ public class MainFrame extends JFrame {
     public EmployeeSchedulePanel getShiftPanel(){ return shiftPanel; }
     public OrderPanel getOrderPanel() { return orderPanel; }
     public DashboardPanel getDashboardPanel(){ return dashboardPanel; }
+    
+    // [MỚI] Getter cho 2 Panel mới để Controller gọi tới
+    public CustomerManagementPanel getCustomerPanel() { return customerPanel; }
+    public LoyaltyManagementPanel getLoyaltyPanel() { return loyaltyPanel; }
 
     // Getter & Setter cho PosController để reload data từ xa
     public PosController getPosController() { return posController; }
