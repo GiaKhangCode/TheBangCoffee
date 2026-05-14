@@ -21,6 +21,7 @@ public class StockPanel extends JPanel {
     private final Color PRIMARY_COLOR = new Color(67, 142, 104);
     private final Color TEXT_DARK = new Color(33, 37, 41);
     private final Color TEXT_MUTED = new Color(108, 117, 125);
+    private final Color PRINT_COLOR = new Color(142, 68, 173); // [MỚI] Màu tím cho nút in
 
     private CardLayout cardLayout;
     private JPanel mainContainer;
@@ -29,7 +30,7 @@ public class StockPanel extends JPanel {
     private JPanel inventoryListView;
     private JPanel receiptFormView;
     private JPanel historyView;
-    private JPanel categoryView; // [MỚI] View Quản lý loại NL
+    private JPanel categoryView; 
 
     // Models
     private DefaultTableModel inventoryModel;
@@ -38,7 +39,7 @@ public class StockPanel extends JPanel {
     private DefaultTableModel historyModel;
     private DefaultTableModel itemModel; 
     
-    // [MỚI] Model & Table cho Loại NL
+    // Model & Table cho Loại NL
     private JTable categoryTable;
     private DefaultTableModel categoryModel;
     
@@ -48,18 +49,18 @@ public class StockPanel extends JPanel {
     private JButton btnSubmit;
     private JButton btnHistory;
     
-    private JButton btnManageCategory; // [MỚI] Nút chuyển view sang Quản lý loại NL
+    private JButton btnManageCategory; 
     private JButton btnAddNewIngredient;
     
     // Listeners
     private ActionButtonListener inventoryActionListener;
     private ActionButtonListener historyActionListener;
-    private ActionButtonListener categoryActionListener; // [MỚI] Listener cho Sửa loại NL
+    private ActionButtonListener categoryActionListener; 
     
     // --- Form Phiếu Nhập Kho ---
     private AutoCompleteComboBox<IngredientTypeModel> cbCategory; 
     private AutoCompleteComboBox<String> cbIngredient;
-    private JButton btnAddCategory; // Nút này sẽ được dời sang categoryView
+    private JButton btnAddCategory; 
     private JTextField txtUnit; 
     private JTextField txtUnitCapacity; 
     private JTextField txtQuantity;     
@@ -84,12 +85,12 @@ public class StockPanel extends JPanel {
         initInventoryListView();
         initHistoryView(); 
         initReceiptFormView();
-        initCategoryView(); // [MỚI] Khởi tạo giao diện Category
+        initCategoryView(); 
 
         mainContainer.add(inventoryListView, "InventoryList");
         mainContainer.add(historyView, "HistoryList");
         mainContainer.add(receiptFormView, "ReceiptForm");
-        mainContainer.add(categoryView, "CategoryList"); // [MỚI] Thêm vào CardLayout
+        mainContainer.add(categoryView, "CategoryList"); 
 
         add(mainContainer, BorderLayout.CENTER);
     }
@@ -122,22 +123,21 @@ public class StockPanel extends JPanel {
         rightActions.setOpaque(false);
 
         btnHistory = ComponentUI.createModernButton("Lịch sử nhập hàng", new Color(240, 240, 240), TEXT_DARK);
-        btnManageCategory = ComponentUI.createModernButton("Quản lý loại NL", new Color(240, 240, 240), TEXT_DARK); // [MỚI] Nút chuyển view
+        btnManageCategory = ComponentUI.createModernButton("Quản lý loại NL", new Color(240, 240, 240), TEXT_DARK); 
         
         cbCategory = new AutoCompleteComboBox<>(); 
-        // [ĐÃ XÓA] btnAddCategory khỏi giao diện kho chính
         
         btnAddNewIngredient = ComponentUI.createModernButton("Thêm Nguyên Liệu", new Color(0, 122, 255), Color.WHITE);
         JButton btnImport = ComponentUI.createModernButton("Nhập Hàng", PRIMARY_COLOR, Color.WHITE);
         
         btnHistory.addActionListener(e -> cardLayout.show(mainContainer, "HistoryList"));
-        btnManageCategory.addActionListener(e -> cardLayout.show(mainContainer, "CategoryList")); // [MỚI] Mở tab Loại NL
+        btnManageCategory.addActionListener(e -> cardLayout.show(mainContainer, "CategoryList")); 
         btnImport.addActionListener(e -> {
             editingReceipt = null; 
             cardLayout.show(mainContainer, "ReceiptForm");
         });
 
-        rightActions.add(btnManageCategory); // Thêm nút Quản lý loại
+        rightActions.add(btnManageCategory); 
         rightActions.add(btnHistory);
         rightActions.add(btnAddNewIngredient);
         rightActions.add(btnImport);
@@ -188,9 +188,6 @@ public class StockPanel extends JPanel {
         inventoryListView.add(centerWrapper, BorderLayout.CENTER);
     }
     
-    // ==========================================================
-    // [MỚI] VIEW QUẢN LÝ LOẠI NGUYÊN LIỆU
-    // ==========================================================
     private void initCategoryView() {
         categoryView = new JPanel(new BorderLayout(0, 20));
         categoryView.setOpaque(false);
@@ -201,7 +198,6 @@ public class StockPanel extends JPanel {
         JPanel headerActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
         headerActions.setOpaque(false);
         
-        // [MỚI] Nút thêm loại được dời vào đây
         btnAddCategory = ComponentUI.createModernButton("+ Thêm loại mới", PRIMARY_COLOR, Color.WHITE);
         
         JButton btnBack = new JButton("← Quay lại kho"); btnBack.setFont(new Font("Segoe UI", Font.BOLD, 14)); btnBack.setForeground(PRIMARY_COLOR);
@@ -231,7 +227,6 @@ public class StockPanel extends JPanel {
         }
 
         TableColumn actionCol = categoryTable.getColumnModel().getColumn(2);
-        // Bảng Loại chỉ hiện nút "Sửa"
         actionCol.setCellRenderer(new ActionButtonRenderer(false, true, false)); 
         actionCol.setCellEditor(new ActionButtonEditor(new ActionButtonListener() {
             @Override public void onEdit(int row) { if (categoryActionListener != null) categoryActionListener.onEdit(row); }
@@ -244,7 +239,6 @@ public class StockPanel extends JPanel {
         categoryView.add(header, BorderLayout.NORTH); categoryView.add(scroll, BorderLayout.CENTER);
     }
     
-    // API Controller tương tác với CategoryView
     public DefaultTableModel getCategoryModel() { return categoryModel; }
     public JTable getCategoryTable() { return categoryTable; }
     
@@ -446,7 +440,6 @@ public class StockPanel extends JPanel {
         return panel;
     }
     
-    // Lắng nghe sự kiện thêm Dữ liệu gốc
     public void addAddNewIngredientListener(ActionListener listener) {
         btnAddNewIngredient.addActionListener(listener);
     }
@@ -713,7 +706,13 @@ public class StockPanel extends JPanel {
         return JOptionPane.showInputDialog(this, "Nhập tên loại nguyên liệu mới:", "Thêm Loại Nguyên Liệu", JOptionPane.QUESTION_MESSAGE);
     }
     
-    public void showReceiptDetailTableDialog(int receiptID, List<Object[]> details) {
+    // [MỚI] Interface cho tính năng in phiếu nhập kho
+    public interface PrintReceiptListener {
+        void onPrint(int receiptID);
+    }
+
+    // [CẬP NHẬT] Thêm tham số printListener và chèn nút "In phiếu nhập" vào Footer của hộp thoại
+    public void showReceiptDetailTableDialog(int receiptID, List<Object[]> details, PrintReceiptListener printListener) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Chi tiết phiếu nhập #" + receiptID, true);
         dialog.setLayout(new BorderLayout(10, 10));
         dialog.setSize(850, 450);
@@ -733,12 +732,25 @@ public class StockPanel extends JPanel {
         JTable table = new JTable(model);
         ComponentUI.styleTable(table, TEXT_DARK, TEXT_DARK, PRIMARY_COLOR);
 
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 10));
+        // Bố cục mới cho Footer: In ở bên trái, Tổng tiền ở bên phải
+        JPanel footer = new JPanel(new BorderLayout());
+        footer.setBorder(new EmptyBorder(10, 20, 10, 20));
         footer.setOpaque(false);
+        
+        JButton btnPrint = ComponentUI.createModernButton("In phiếu nhập", PRINT_COLOR, Color.WHITE);
+        btnPrint.addActionListener(e -> {
+            if (printListener != null) {
+                printListener.onPrint(receiptID);
+            }
+            dialog.dispose();
+        });
+        
         JLabel lblTotal = new JLabel("Tổng giá trị phiếu: " + String.format("%,d VNĐ", total));
         lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lblTotal.setForeground(new Color(231, 76, 60));
-        footer.add(lblTotal);
+        
+        footer.add(btnPrint, BorderLayout.WEST);
+        footer.add(lblTotal, BorderLayout.EAST);
 
         dialog.add(new JScrollPane(table), BorderLayout.CENTER);
         dialog.add(footer, BorderLayout.SOUTH);

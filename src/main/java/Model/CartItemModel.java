@@ -72,8 +72,20 @@ public class CartItemModel {
     }
  
     public long getTotalPrice() {
-        return getUnitPrice() * quantity;
+    // 1. Lấy giá của món nước (Size)
+    long basePrice = selectedVariant.getDineInPrice(); // Hoặc giá mang về tùy logic
+
+    // 2. Tính tổng giá Topping
+    long toppingPrice = 0;
+    if (selectedToppings != null) {
+        for (ToppingModel topping : selectedToppings) {
+            toppingPrice += topping.getPrice(); 
+        }
     }
+
+    // 3. Trả về: (Giá nước + Giá topping) * Số lượng
+    return (basePrice + toppingPrice) * quantity;
+}
     public double getTotalVatAmount() {
         return getMainVatAmount() + getToppingsVatAmount();
     }

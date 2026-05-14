@@ -45,7 +45,7 @@ public class ShiftSessionCloseDialog extends JDialog {
 
     private void initComponents(double tienDauCa, double doanhThu, int hdThanhToan, int hdChuaThanhToan) {
         setUndecorated(true);
-        setSize(850, 750); // Tăng chiều cao để không bị cuộn
+        setSize(850, 680); 
         setLocationRelativeTo(getParent());
 
         JPanel formPanel = new JPanel(new BorderLayout());
@@ -123,17 +123,30 @@ public class ShiftSessionCloseDialog extends JDialog {
 
         contentPanel.add(new JLabel("<html><b>Ghi chú:</b></html>"));
         txtGhiChu = new JTextArea(3, 20);
-        txtGhiChu.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
-        contentPanel.add(new JScrollPane(txtGhiChu));
+        txtGhiChu.setLineWrap(true);
+        txtGhiChu.setWrapStyleWord(true);
+        
+        JScrollPane scrollGhiChu = new JScrollPane(txtGhiChu);
+        scrollGhiChu.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
+        contentPanel.add(scrollGhiChu);
 
-        formPanel.add(contentPanel, BorderLayout.CENTER);
+        // [MỚI] Bọc ContentPanel vào JScrollPane để tạo thanh cuộn
+        JScrollPane mainScrollPane = new JScrollPane(contentPanel);
+        mainScrollPane.setBorder(null); // Bỏ viền của ScrollPane để nhìn đẹp hơn
+        mainScrollPane.getVerticalScrollBar().setUnitIncrement(16); // Cuộn mượt hơn
+        mainScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER); // Tắt cuộn ngang
+        
+        formPanel.add(mainScrollPane, BorderLayout.CENTER);
 
         // BUTTONS
         JPanel btnPnl = new JPanel(new GridLayout(1, 3, 10, 0));
         btnPnl.setBorder(new EmptyBorder(15, 20, 20, 20));
+        btnPnl.setBackground(Color.WHITE);
+        
         btnCancel = createBtn("Huỷ bỏ", Color.LIGHT_GRAY, TEXT_DARK);
         btnCloseShift = createBtn("Đóng ca", PRIMARY_COLOR, Color.WHITE);
         btnCloseAndPrint = createBtn("Đóng ca và in", ORANGE_COLOR, Color.WHITE);
+        
         btnPnl.add(btnCancel); btnPnl.add(btnCloseShift); btnPnl.add(btnCloseAndPrint);
         formPanel.add(btnPnl, BorderLayout.SOUTH);
 

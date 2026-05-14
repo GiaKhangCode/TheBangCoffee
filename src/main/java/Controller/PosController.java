@@ -9,6 +9,7 @@ import Model.ProductModel;
 import Model.ToppingModel;
 import Model.VariantModel;
 import Service.CustomerService;
+import Service.InvoiceService;
 import Service.OrderService;
 import Service.ProductCategoryService;
 import Service.ProductService;
@@ -37,6 +38,7 @@ public class PosController {
     private VariantService variantService;
     private ToppingService toppingService;
     private CustomerService customerService;
+    private InvoiceService invoiceService;
     
     // Data cho POS
     private List<ProductModel> allProducts;
@@ -61,6 +63,7 @@ public class PosController {
         this.variantService = new VariantService();
         this.toppingService = new ToppingService();
         this.customerService = new CustomerService();
+        this.invoiceService = new InvoiceService();
         
         initView();
         initPosListeners();
@@ -396,7 +399,7 @@ public class PosController {
         });
         
         orderPanel.addPayListener(e -> {
-            changeOrderPaymentStatus("Đã thanh toán", "Xác nhận thu tiền: Khách hàng đã thanh toán thành công?");
+            changeOrderPaymentStatus("Đã thanh toán");
         });
         
         orderPanel.addCancelListener(e -> {
@@ -423,6 +426,13 @@ public class PosController {
                 } else {
                     JOptionPane.showMessageDialog(orderPanel, "Có lỗi xảy ra khi hoàn thành món (Hoặc nguyên liệu không đủ)!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
+            }
+        });
+        
+        orderPanel.addPrintInvoiceListener(e -> {
+            if (currentSelectedOrderId > 0) {
+                // Tham số false để mở cửa sổ Preview xem trước khi in
+                invoiceService.printInvoice(currentSelectedOrderId, false); 
             }
         });
     }
@@ -502,20 +512,29 @@ public class PosController {
         }
     }
     
-    private void changeOrderPaymentStatus(String newStatus, String msg) {
+    private void changeOrderPaymentStatus(String newStatus) {
         if (currentSelectedOrderId <= 0) return;
         
-        int confirm = JOptionPane.showConfirmDialog(orderPanel, msg, "Xác nhận", JOptionPane.YES_NO_OPTION);
+        // Gọi Custom Dialog mới thiết kế
+        Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(orderPanel);
+        View.PaymentMethodDialog dialog = new View.PaymentMethodDialog(parentFrame, currentSelectedOrderId);
+        dialog.setVisible(true); // Popup sẽ dừng code ở đây chờ người dùng bấm nút
             
-        if (confirm == JOptionPane.YES_OPTION) {
-            boolean isSuccess = orderService.updatePaymentStatus(currentSelectedOrderId, newStatus);
+        int choice = dialog.getSelectedOption();
+
+        // Xử lý nếu người dùng chọn Tiền mặt (0) hoặc Chuyển khoản (1)
+        if (choice == 0 || choice == 1) {
+            String phuongThucThanhToan = (choice == 0) ? "Tiền mặt" : "Chuyển khoản";
+            
+            boolean isSuccess = orderService.updatePaymentStatus(currentSelectedOrderId, newStatus, phuongThucThanhToan);
+            
             if (isSuccess) {
-                // [MỚI] Kiểm tra cộng điểm nếu hoàn tất thanh toán
                 if (newStatus.equals("Đã thanh toán")) {
                     checkAndRewardPoints(currentSelectedOrderId, null, "Đã thanh toán");
                 }
                 loadOrderList(); 
                 loadOrderDetails(currentSelectedOrderId); 
+                JOptionPane.showMessageDialog(orderPanel, "Xác nhận thanh toán thành công bằng " + phuongThucThanhToan + "!");
             } else {
                 JOptionPane.showMessageDialog(orderPanel, "Không thể cập nhật trạng thái thanh toán!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
@@ -536,10 +555,10 @@ public class PosController {
             
             boolean paySuccess = true;
             if (order.getPaymentStatus().equals("Đã thanh toán")) {
-                paySuccess = orderService.updatePaymentStatus(currentSelectedOrderId, "Đã hoàn tiền");
+                paySuccess = orderService.updatePaymentStatus(currentSelectedOrderId, "Đã hoàn tiền", "Chưa thanh toán");
                 JOptionPane.showMessageDialog(orderPanel, "Đơn hàng đã thanh toán trước đó. Vui lòng hoàn lại tiền cho khách: " + String.format("%,d đ", order.getFinalTotal()));
             } else {
-                paySuccess = orderService.updatePaymentStatus(currentSelectedOrderId, "Đã hủy");
+                paySuccess = orderService.updatePaymentStatus(currentSelectedOrderId, "Đã hủy", "Chưa thanh toán");
             }
 
             if (prepSuccess && paySuccess) {

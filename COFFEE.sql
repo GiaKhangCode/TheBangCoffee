@@ -1092,6 +1092,4 @@ VALUES (N'Thêm Trân châu đen', 10000, 4, 50, 8);
 
 COMMIT;
 
-select * from DON_HANG;
-
 

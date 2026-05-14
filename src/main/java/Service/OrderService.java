@@ -119,8 +119,8 @@ public class OrderService {
         return orderDAO.updatePreparationStatus(orderId, newStatus);
     }
 
-    public boolean updatePaymentStatus(int orderId, String newStatus) {
-        return orderDAO.updatePaymentStatus(orderId, newStatus);
+    public boolean updatePaymentStatus(int orderId, String newStatus, String phuongThucThanhToan) {
+        return orderDAO.updatePaymentStatus(orderId, newStatus, phuongThucThanhToan);
     }
 
     // Hàm then chốt: Vừa đổi trạng thái vừa trừ kho

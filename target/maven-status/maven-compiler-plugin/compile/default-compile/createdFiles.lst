@@ -82,6 +82,7 @@ Service\ProductService.class
 Controller\CategoryController.class
 View\RolePanel$4.class
 Model\ShiftSession.class
+View\StockPanel$PrintReceiptListener.class
 Model\RecipeModel.class
 Model\IngredientModel.class
 DatabaseAccessObject\ProductCategoryDAO.class
@@ -97,6 +98,7 @@ Controller\RoleController$9.class
 View\CategoryManagementPanel$ActionButtonsRenderer.class
 View\MenuPanel$3.class
 DatabaseAccessObject\CategoryDAO.class
+View\PaymentMethodDialog.class
 View\DashboardPanel$3.class
 View\RolePanel$2.class
 View\ProductDetailDialog$ProductActionButtonRenderer.class
@@ -119,6 +121,7 @@ DatabaseAccessObject\VariantDAO.class
 Model\OrderModel.class
 View\MenuPanel$1.class
 Controller\RoleController$7.class
+View\PaymentMethodDialog$1.class
 View\ProductDetailDialog$ProductActionButtonEditor.class
 Controller\ShiftController.class
 View\RolePanel$3.class
@@ -247,6 +250,7 @@ View\ProductEditDialog$4.class
 Common\AutoCompleteComboBox$1.class
 View\ProductEditDialog$ProductActionButtonEditor.class
 Controller\RoleController$1.class
+Service\InvoiceService.class
 View\StockPanel$ReceiptItem.class
 Controller\PosController.class
 Model\WarehouseReceiptListModel.class

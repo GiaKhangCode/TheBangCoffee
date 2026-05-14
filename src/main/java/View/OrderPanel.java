@@ -16,6 +16,7 @@ public class OrderPanel extends JPanel {
     private final Color DANGER_COLOR = new Color(231, 76, 60);
     private final Color INFO_COLOR = new Color(41, 128, 185);
     private final Color WARNING_COLOR = new Color(243, 156, 18);
+    private final Color PRINT_COLOR = new Color(142, 68, 173); // [MỚI] Màu tím cho nút In hóa đơn
 
     // --- LEFT PANEL (DANH SÁCH ĐƠN HÀNG) ---
     private JTextField txtSearch;
@@ -29,7 +30,7 @@ public class OrderPanel extends JPanel {
     private JLabel lblOrderTime;
     private JLabel lblOrderType;
     
-    // [ĐÃ SỬA] Tách thành 2 Label trạng thái
+    // Tách thành 2 Label trạng thái
     private JLabel lblPrepStatus;
     private JLabel lblPayStatus;
     
@@ -39,9 +40,10 @@ public class OrderPanel extends JPanel {
 
     // Nút cập nhật trạng thái
     private JButton btnAccept;   // Tiếp nhận
-    private JButton btnComplete; // Hoàn thành (Sẽ kích hoạt trừ kho ở Controller)
+    private JButton btnComplete; // Hoàn thành
     private JButton btnPay;      // Đã thanh toán
     private JButton btnCancel;   // Hủy đơn
+    private JButton btnPrintInvoice; // [MỚI] In / Xuất hóa đơn
 
     public OrderPanel() {
         initComponents();
@@ -94,7 +96,6 @@ public class OrderPanel extends JPanel {
             }
         });
 
-        // [ĐÃ SỬA] Cập nhật bộ lọc để bao quát 2 loại trạng thái
         String[] statuses = {"Tất cả", "Chờ tiếp nhận", "Đang pha chế", "Đã hoàn thành", "Chưa thanh toán", "Đã thanh toán", "Đã hủy"};
         cbStatusFilter = new JComboBox<>(statuses);
         cbStatusFilter.setPreferredSize(new Dimension(150, 40));
@@ -109,7 +110,7 @@ public class OrderPanel extends JPanel {
         topBar.add(cbStatusFilter);
         topBar.add(btnRefresh);
 
-        // 2. Bảng Danh Sách Đơn Hàng [ĐÃ SỬA CỘT]
+        // 2. Bảng Danh Sách Đơn Hàng
         String[] cols = {"Mã Đơn", "Thời Gian", "Loại Đơn", "Pha Chế", "Thanh Toán", "Tổng Tiền"};
         orderTableModel = new DefaultTableModel(cols, 0) {
             @Override
@@ -124,11 +125,11 @@ public class OrderPanel extends JPanel {
         tcm.getColumn(0).setPreferredWidth(70);
         tcm.getColumn(1).setPreferredWidth(130);
         tcm.getColumn(2).setPreferredWidth(100);
-        tcm.getColumn(3).setPreferredWidth(120); // Cột Pha Chế
-        tcm.getColumn(4).setPreferredWidth(120); // Cột Thanh Toán
+        tcm.getColumn(3).setPreferredWidth(120); 
+        tcm.getColumn(4).setPreferredWidth(120); 
         tcm.getColumn(5).setPreferredWidth(110);
 
-        // [MỚI] Gắn Custom Renderer để tô màu 2 cột trạng thái
+        // Gắn Custom Renderer để tô màu 2 cột trạng thái
         StatusCellRenderer statusRenderer = new StatusCellRenderer();
         tcm.getColumn(3).setCellRenderer(statusRenderer);
         tcm.getColumn(4).setCellRenderer(statusRenderer);
@@ -171,7 +172,6 @@ public class OrderPanel extends JPanel {
         lblOrderType.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblOrderType.setForeground(TEXT_DARK);
 
-        // [ĐÃ SỬA] Tách Label
         lblPrepStatus = new JLabel("Pha chế: --");
         lblPrepStatus.setFont(new Font("Segoe UI", Font.BOLD, 14));
         
@@ -219,15 +219,17 @@ public class OrderPanel extends JPanel {
         lblTotalAmount.setForeground(DANGER_COLOR);
         footerPanel.add(lblTotalAmount, BorderLayout.NORTH);
 
-        // Các nút hành động (Grid 2 dòng 2 cột)
-        JPanel actionPanel = new JPanel(new GridLayout(2, 2, 10, 10));
+        // Các nút hành động [ĐÃ CẬP NHẬT: Lưới 3 dòng, 2 cột để chứa 5 nút]
+        JPanel actionPanel = new JPanel(new GridLayout(3, 2, 10, 10));
         actionPanel.setOpaque(false);
 
-        // [ĐÃ SỬA] Thay đổi text của nút cho rõ nghĩa
         btnAccept = createModernButton("Tiếp nhận món", INFO_COLOR, Color.WHITE);
         btnComplete = createModernButton("Hoàn thành món", SUCCESS_COLOR, Color.WHITE);
         btnPay = createModernButton("Xác nhận đã thu tiền", PRIMARY_COLOR, Color.WHITE);
         btnCancel = createModernButton("Hủy đơn hàng", DANGER_COLOR, Color.WHITE);
+        
+        // [MỚI] Nút In / Xuất hóa đơn
+        btnPrintInvoice = createModernButton("In Hóa Đơn", PRINT_COLOR, Color.WHITE);
 
         setActionsEnabled(false);
 
@@ -235,6 +237,7 @@ public class OrderPanel extends JPanel {
         actionPanel.add(btnComplete);
         actionPanel.add(btnPay);
         actionPanel.add(btnCancel);
+        actionPanel.add(btnPrintInvoice); // Thêm nút In vào Lưới
 
         footerPanel.add(actionPanel, BorderLayout.CENTER);
 
@@ -267,7 +270,7 @@ public class OrderPanel extends JPanel {
                     default: setForeground(TEXT_DARK);
                 }
                 
-                if (isSelected) setForeground(Color.WHITE); // Giữ màu trắng nếu dòng đang được bôi đen
+                if (isSelected) setForeground(Color.WHITE); 
             }
             return c;
         }
@@ -327,6 +330,8 @@ public class OrderPanel extends JPanel {
     public void addCompleteListener(ActionListener listener) { btnComplete.addActionListener(listener); }
     public void addPayListener(ActionListener listener) { btnPay.addActionListener(listener); }
     public void addCancelListener(ActionListener listener) { btnCancel.addActionListener(listener); }
+    // [MỚI] Listener cho nút In hóa đơn
+    public void addPrintInvoiceListener(ActionListener listener) { btnPrintInvoice.addActionListener(listener); }
 
     // Getters
     public String getSearchText() { return txtSearch.getText().trim(); }
@@ -336,7 +341,6 @@ public class OrderPanel extends JPanel {
     public DefaultTableModel getOrderTableModel() { return orderTableModel; }
     public DefaultTableModel getDetailTableModel() { return detailTableModel; }
 
-    // [ĐÃ SỬA] Thêm tham số prepStatus và payStatus
     public void setOrderInfo(String id, String time, String type, String prepStatus, String payStatus, String total) {
         lblOrderId.setText("Mã đơn: #" + id);
         lblOrderTime.setText("Thời gian: " + time);
@@ -381,14 +385,16 @@ public class OrderPanel extends JPanel {
         setActionsEnabled(false);
     }
 
-    /**
-     * [ĐÃ SỬA LẠI LOGIC]
-     * Tự động bật/tắt các nút thao tác dựa trên 2 Trạng thái độc lập.
-     */
     public void updateActionButtons(String prepStatus, String payStatus) {
-        // Nếu đơn đã hủy -> Đóng băng toàn bộ
+        // [CẬP NHẬT] Miễn là có chọn 1 đơn hàng (thông qua việc gọi hàm này), nút in hóa đơn luôn khả dụng
+        btnPrintInvoice.setEnabled(true);
+
+        // Nếu đơn đã hủy -> Đóng băng toàn bộ các nút xử lý trạng thái
         if (prepStatus.equals("Đã hủy")) {
-            setActionsEnabled(false);
+            btnAccept.setEnabled(false);
+            btnComplete.setEnabled(false);
+            btnPay.setEnabled(false);
+            btnCancel.setEnabled(false);
             return;
         }
 
@@ -408,5 +414,6 @@ public class OrderPanel extends JPanel {
         btnComplete.setEnabled(enabled);
         btnPay.setEnabled(enabled);
         btnCancel.setEnabled(enabled);
+        btnPrintInvoice.setEnabled(enabled); // [CẬP NHẬT] Đóng băng cả nút In khi chưa chọn đơn nào
     }
 }

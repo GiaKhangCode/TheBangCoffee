@@ -34,6 +34,18 @@
             <artifactId>jfreechart</artifactId>
             <version>1.5.4</version>
         </dependency>
-    
+        
+        <dependency>
+        <groupId>net.sf.jasperreports</groupId>
+        <artifactId>jasperreports</artifactId>
+        <version>6.21.0</version>
+    </dependency>
+
+    <!-- Thư viện iTextPDF (Phiên bản chuyên dụng tương thích với Jasper để xuất PDF) -->
+    <dependency>
+        <groupId>com.lowagie</groupId>
+        <artifactId>itext</artifactId>
+        <version>2.1.7</version> 
+    </dependency>
     </dependencies>
 </project>

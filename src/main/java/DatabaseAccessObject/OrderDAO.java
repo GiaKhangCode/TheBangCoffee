@@ -71,21 +71,39 @@ public class OrderDAO {
 
                     for (CartItemModel item : cart) {
                         int variantId = item.getSelectedVariant() != null ? item.getSelectedVariant().getVariantID() : 0;
+                        
+                        // 1. Lấy giá món nước (Đã tự động xác định Mang về / Lễ / Tại quán từ Controller)
                         long mainSellingPrice = item.getMainSellingPrice(); 
+                        
+                        // 2. BƯỚC SỬA LỖI: Tính tổng tiền Topping của 1 ly
+                        long totalToppingPrice = 0;
+                        if (item.getSelectedToppings() != null && !item.getSelectedToppings().isEmpty()) {
+                            for (ToppingModel topping : item.getSelectedToppings()) {
+                                // Nếu là hàng tặng (Reward) thì topping giá 0đ
+                                long toppingPrice = item.isReward() ? 0 : topping.getPrice();
+                                totalToppingPrice += toppingPrice;
+                            }
+                        }
+
+                        // 3. Tính Thành tiền cho dòng này = (Giá Nước + Giá Topping) * Số lượng
+                        long totalRowPrice = (mainSellingPrice + totalToppingPrice) * item.getQuantity();
+
+                        // 4. Tính toán thuế cho món nước (Giữ nguyên logic của bạn)
                         double vatRate = item.getProduct().getVat();
                         double priceBeforeTax = mainSellingPrice / (1.0 + (vatRate / 100.0));
                         double taxAmount = mainSellingPrice - priceBeforeTax;
-                        long totalRowPrice = mainSellingPrice * item.getQuantity();
 
+                        // Set tham số cho PreparedStatement
                         psDetail.setInt(1, orderId);
                         psDetail.setInt(2, variantId);
                         psDetail.setInt(3, item.getQuantity());
                         psDetail.setLong(4, Math.round(priceBeforeTax)); 
                         psDetail.setLong(5, Math.round(taxAmount));     
-                        psDetail.setLong(6, totalRowPrice);             
+                        psDetail.setLong(6, totalRowPrice); // <--- THÀNH TIỀN ĐÃ BAO GỒM TOPPING         
                         psDetail.setString(7, item.getNote()); 
                         psDetail.executeUpdate();
 
+                        // Lấy ID chi tiết đơn hàng vừa tạo
                         int detailId = -1;
                         try (ResultSet rs = psDetail.getGeneratedKeys()) {
                             if (rs.next()) {
@@ -219,14 +237,23 @@ public class OrderDAO {
         } catch (Exception e) { e.printStackTrace(); return false; }
     }
 
-    public boolean updatePaymentStatus(int orderId, String newStatus) {
-        String sql = "UPDATE DON_HANG SET TrangThaiThanhToan = ? WHERE MaDonHang = ?";
+    public boolean updatePaymentStatus(int orderId, String newStatus, String phuongThucThanhToan) {
+        // Thêm cột PhuongThucThanhToan vào câu lệnh SQL
+        String sql = "UPDATE DON_HANG SET TrangThaiThanhToan = ?, PhuongThucThanhToan = ? WHERE MaDonHang = ?";
+        
         try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
+             
             ps.setString(1, newStatus);
-            ps.setInt(2, orderId);
+            ps.setString(2, phuongThucThanhToan);
+            ps.setInt(3, orderId);
+            
             return ps.executeUpdate() > 0;
-        } catch (Exception e) { e.printStackTrace(); return false; }
+            
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+            return false; 
+        }
     }
 
     public boolean completeAndDeductStock(int orderId) {

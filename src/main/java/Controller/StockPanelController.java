@@ -218,7 +218,11 @@ public class StockPanelController {
                 List<Object[]> detailData = warehouseReceiptService.getReceiptDetailList(receiptID);
 
                 if (detailData != null && !detailData.isEmpty()) {
-                    stockPanelView.showReceiptDetailTableDialog(receiptID, detailData);
+                    stockPanelView.showReceiptDetailTableDialog(receiptID, detailData, (idToPrint) -> {
+                    // [GỌI HÀM IN Ở ĐÂY]
+                    Service.InvoiceService invoiceService = new Service.InvoiceService();
+                    invoiceService.printWarehouseReceipt(idToPrint);
+                    });
                 } else {
                     JOptionPane.showMessageDialog(null, "Không tìm thấy dữ liệu chi tiết cho phiếu này!", "Thông báo", JOptionPane.WARNING_MESSAGE);
                 }

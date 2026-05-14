@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="PhieuNhapKho" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="a1b2c3d4-e5f6-7890-abcd-ef1234567890">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Oracle_Connection"/>
+	
+	<parameter name="p_MaPhieuNhap" class="java.lang.Integer"/>
+	
+	<queryString>
+		<![CDATA[SELECT 
+    pnk.MaPhieuNhap,
+    TO_CHAR(pnk.NgayNhap, 'DD/MM/YYYY HH24:MI') AS NgayNhap,
+    pnk.TongGiaTri,
+    pnk.GhiChu,
+    nd.HoTen AS NguoiLap,
+    nl.TenNguyenLieu,
+    nl.DonViTinh,
+    ctpn.DinhLuong,
+    ctpn.SoLuong,
+    ctpn.GiaTruocThue,
+    ctpn.TienThue,
+    ctpn.ThanhTien
+FROM PHIEU_NHAP_KHO pnk
+JOIN TAI_KHOAN tk ON pnk.MaTaiKhoan = tk.MaTaiKhoan
+JOIN NGUOI_DUNG nd ON tk.MaNguoiDung = nd.MaNguoiDung
+JOIN CHI_TIET_PHIEU_NHAP ctpn ON pnk.MaPhieuNhap = ctpn.MaPhieuNhap
+JOIN NGUYEN_LIEU nl ON ctpn.MaNguyenLieu = nl.MaNguyenLieu
+WHERE pnk.MaPhieuNhap = $P{p_MaPhieuNhap}]]>
+	</queryString>
+	
+	<field name="MAPHIEUNHAP" class="java.math.BigDecimal"/>
+	<field name="NGAYNHAP" class="java.lang.String"/>
+	<field name="TONGGIATRI" class="java.math.BigDecimal"/>
+	<field name="GHICHU" class="java.lang.String"/>
+	<field name="NGUOILAP" class="java.lang.String"/>
+	<field name="TENNGUYENLIEU" class="java.lang.String"/>
+	<field name="DONVITINH" class="java.lang.String"/>
+	<field name="DINHLUONG" class="java.math.BigDecimal"/>
+	<field name="SOLUONG" class="java.math.BigDecimal"/>
+	<field name="GIATRUOCTHUE" class="java.math.BigDecimal"/>
+	<field name="TIENTHUE" class="java.math.BigDecimal"/>
+	<field name="THANHTIEN" class="java.math.BigDecimal"/>
+
+	<!-- TITLE: TIÊU ĐỀ PHIẾU NHẬP -->
+	<title>
+		<band height="90" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="250" height="20" forecolor="#438E68" uuid="title-1"/>
+				<textElement verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[EXTRA LATTE COFFEE]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="20" width="250" height="15" forecolor="#666666" uuid="title-2"/>
+				<textElement verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[Khu phố 6, P. Linh Trung, TP. Thủ Đức]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="50" width="555" height="30" uuid="title-3"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="20" isBold="true"/>
+				</textElement>
+				<text><![CDATA[PHIẾU NHẬP KHO NGUYÊN LIỆU]]></text>
+			</staticText>
+		</band>
+	</title>
+
+	<!-- PAGE HEADER: THÔNG TIN CHUNG PHIẾU NHẬP -->
+	<pageHeader>
+		<band height="70" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="5" width="80" height="20" uuid="ph-1"/>
+				<textElement verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Mã phiếu nhập:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="80" y="5" width="200" height="20" uuid="ph-2"/>
+				<textElement verticalAlignment="Middle"><font isBold="true" forecolor="#E74C3C"/></textElement>
+				<textFieldExpression><![CDATA["PN-" + $F{MAPHIEUNHAP}]]></textFieldExpression>
+			</textField>
+			
+			<staticText>
+				<reportElement x="0" y="30" width="80" height="20" uuid="ph-3"/>
+				<textElement verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Ngày nhập:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="80" y="30" width="200" height="20" uuid="ph-4"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{NGAYNHAP}]]></textFieldExpression>
+			</textField>
+
+			<staticText>
+				<reportElement x="320" y="5" width="70" height="20" uuid="ph-5"/>
+				<textElement verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Người lập:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="390" y="5" width="165" height="20" uuid="ph-6"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{NGUOILAP}]]></textFieldExpression>
+			</textField>
+
+			<staticText>
+				<reportElement x="320" y="30" width="70" height="20" uuid="ph-7"/>
+				<textElement verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Ghi chú:]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="390" y="30" width="165" height="40" uuid="ph-8"/>
+				<textElement verticalAlignment="Top"/>
+				<textFieldExpression><![CDATA[$F{GHICHU} != null ? $F{GHICHU} : "Không có ghi chú"]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+
+	<!-- COLUMN HEADER: TIÊU ĐỀ BẢNG CHI TIẾT -->
+	<columnHeader>
+		<band height="30" splitType="Stretch">
+			<rectangle>
+				<reportElement x="0" y="0" width="555" height="30" backcolor="#F5F5F5" uuid="ch-rect"/>
+				<graphicElement><pen lineColor="#CCCCCC"/></graphicElement>
+			</rectangle>
+			
+			<staticText>
+				<reportElement x="0" y="0" width="30" height="30" uuid="ch-1"/>
+				<box><pen lineWidth="0.5" lineColor="#CCCCCC"/></box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[STT]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="30" y="0" width="140" height="30" uuid="ch-2"/>
+				<box leftPadding="5"><pen lineWidth="0.5" lineColor="#CCCCCC"/></box>
+				<textElement verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Tên Nguyên Liệu]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="170" y="0" width="45" height="30" uuid="ch-3"/>
+				<box><pen lineWidth="0.5" lineColor="#CCCCCC"/></box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[ĐVT]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="215" y="0" width="50" height="30" uuid="ch-4"/>
+				<box><pen lineWidth="0.5" lineColor="#CCCCCC"/></box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Đ.Lượng]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="265" y="0" width="40" height="30" uuid="ch-5"/>
+				<box><pen lineWidth="0.5" lineColor="#CCCCCC"/></box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[SL]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="305" y="0" width="80" height="30" uuid="ch-6"/>
+				<box rightPadding="5"><pen lineWidth="0.5" lineColor="#CCCCCC"/></box>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Giá T.Thuế]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="385" y="0" width="60" height="30" uuid="ch-7"/>
+				<box rightPadding="5"><pen lineWidth="0.5" lineColor="#CCCCCC"/></box>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Tiền Thuế]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="445" y="0" width="110" height="30" uuid="ch-8"/>
+				<box rightPadding="5"><pen lineWidth="0.5" lineColor="#CCCCCC"/></box>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Thành Tiền]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+
+	<!-- DETAIL: DỮ LIỆU TỪNG DÒNG -->
+	<detail>
+		<band height="30" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="30" height="30" uuid="dt-1"/>
+				<box><pen lineWidth="0.5" lineColor="#CCCCCC"/></box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$V{REPORT_COUNT}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="30" y="0" width="140" height="30" uuid="dt-2"/>
+				<box leftPadding="5"><pen lineWidth="0.5" lineColor="#CCCCCC"/></box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{TENNGUYENLIEU}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="170" y="0" width="45" height="30" uuid="dt-3"/>
+				<box><pen lineWidth="0.5" lineColor="#CCCCCC"/></box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{DONVITINH}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="215" y="0" width="50" height="30" uuid="dt-4"/>
+				<box><pen lineWidth="0.5" lineColor="#CCCCCC"/></box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{DINHLUONG}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="265" y="0" width="40" height="30" uuid="dt-5"/>
+				<box><pen lineWidth="0.5" lineColor="#CCCCCC"/></box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{SOLUONG}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0 đ">
+				<reportElement x="305" y="0" width="80" height="30" uuid="dt-6"/>
+				<box rightPadding="5"><pen lineWidth="0.5" lineColor="#CCCCCC"/></box>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{GIATRUOCTHUE}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0 đ">
+				<reportElement x="385" y="0" width="60" height="30" uuid="dt-7"/>
+				<box rightPadding="5"><pen lineWidth="0.5" lineColor="#CCCCCC"/></box>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{TIENTHUE}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0 đ">
+				<reportElement x="445" y="0" width="110" height="30" uuid="dt-8"/>
+				<box rightPadding="5"><pen lineWidth="0.5" lineColor="#CCCCCC"/></box>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<textFieldExpression><![CDATA[$F{THANHTIEN}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+
+	<!-- SUMMARY: TỔNG KẾT VÀ CHỮ KÝ -->
+	<summary>
+		<band height="150" splitType="Stretch">
+			<staticText>
+				<reportElement x="265" y="10" width="180" height="25" uuid="sum-1"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[TỔNG GIÁ TRỊ PHIẾU:]]></text>
+			</staticText>
+			<textField pattern="#,##0 đ">
+				<reportElement x="445" y="10" width="110" height="25" forecolor="#E74C3C" uuid="sum-2"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{TONGGIATRI}]]></textFieldExpression>
+			</textField>
+			
+			<staticText>
+				<reportElement x="50" y="60" width="150" height="20" uuid="sum-3"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Thủ kho / Kế toán]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="50" y="80" width="150" height="20" forecolor="#999999" uuid="sum-4"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font isItalic="true"/></textElement>
+				<text><![CDATA[(Ký, ghi rõ họ tên)]]></text>
+			</staticText>
+			
+			<staticText>
+				<reportElement x="350" y="60" width="150" height="20" uuid="sum-5"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Người lập phiếu]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="350" y="80" width="150" height="20" forecolor="#999999" uuid="sum-6"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font isItalic="true"/></textElement>
+				<text><![CDATA[(Ký, ghi rõ họ tên)]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="350" y="130" width="150" height="20" uuid="sum-7"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<textFieldExpression><![CDATA[$F{NGUOILAP}]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>
