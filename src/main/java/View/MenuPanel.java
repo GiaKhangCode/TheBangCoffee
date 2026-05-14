@@ -3,6 +3,7 @@ package View;
 import Model.ProductListModel;
 import Model.ProductModel;
 import Controller.CategoryController;
+import Controller.ToppingController;
  
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -18,7 +19,6 @@ public class MenuPanel extends JPanel {
     private final Color TEXT_MUTED = new Color(108, 117, 125);
  
     private JTabbedPane tabbedPane;
-    // --- UI của Tab Đồ Uống ---
     private JPanel productTab;
     private JPanel gridPanel;
     private JButton btnAddProduct;
@@ -26,44 +26,65 @@ public class MenuPanel extends JPanel {
     private ImageIcon defaultImage;
     private ProductClickListener productClickListener;
  
-    // --- UI của Tab Danh Mục ---
     private CategoryManagementPanel categoryPanel;
+    private ToppingManagementPanel toppingPanel;
+    
+    // [MỚI] Thêm biến lưu trữ MainFrame để truyền vào CategoryController
+    private MainFrame mainFrame;
  
     public MenuPanel() {
+        // Có thể lấy tham chiếu MainFrame lúc add vào UI cha, nhưng sẽ tiện hơn 
+        // nếu ta lấy từ WindowAncestor sau, hoặc tạm thời ta sẽ setMainFrame từ ngoài.
+    }
+    
+    // [MỚI] Hàm khởi tạo các Tab sau khi đã set MainFrame
+    public void setupPanels(MainFrame frame) {
+        this.mainFrame = frame;
+        
         setLayout(new BorderLayout());
-        setBackground(Color.WHITE); // Phủ nền trắng toàn bộ
+        setBackground(Color.WHITE); 
         setOpaque(true);
-        setBorder(new EmptyBorder(10, 10, 10, 10)); // Ép sát viền (10px)
+        setBorder(new EmptyBorder(10, 10, 10, 10)); 
         loadDefaultImage();
  
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 14));
         tabbedPane.setBackground(Color.WHITE);
         tabbedPane.setForeground(TEXT_DARK);
+        
         // Khởi tạo Tab 1: Đồ uống
         initProductTab();
+        
         // Khởi tạo Tab 2: Danh mục
         categoryPanel = new CategoryManagementPanel();
- 
         try {
-            new CategoryController(categoryPanel);
+            // [SỬA] Truyền mainFrame vào CategoryController
+            new CategoryController(categoryPanel, this.mainFrame);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        // Khởi tạo Tab 3: Topping
+        toppingPanel = new ToppingManagementPanel();
+        try {
+            new ToppingController(toppingPanel);
         } catch (Exception e) {
             e.printStackTrace();
         }
  
         tabbedPane.addTab("Quản Lý Đồ Uống", productTab);
         tabbedPane.addTab("Quản Lý Danh Mục", categoryPanel);
+        tabbedPane.addTab("Quản Lý Topping", toppingPanel);
+        
         add(tabbedPane, BorderLayout.CENTER);
     }
  
     private void initProductTab() {
-        // Thu gọn padding tab đồ uống
         productTab = new JPanel(new BorderLayout(0, 10));
         productTab.setBackground(Color.WHITE);
         productTab.setOpaque(true);
         productTab.setBorder(new EmptyBorder(10, 10, 10, 10));
  
-        // Header (Tìm kiếm & Thêm món)
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(Color.WHITE);
         headerPanel.setOpaque(true);
@@ -112,8 +133,7 @@ public class MenuPanel extends JPanel {
         headerPanel.add(leftPanel, BorderLayout.WEST);
         headerPanel.add(rightPanel, BorderLayout.EAST);
  
-        // Lưới sản phẩm
-        gridPanel = new ScrollablePanel(new GridLayout(0, 4, 15, 15)); // Giảm khoảng cách giữa các khối (gap) xuống 15px
+        gridPanel = new ScrollablePanel(new GridLayout(0, 4, 15, 15)); 
         gridPanel.setBackground(Color.WHITE);
         gridPanel.setOpaque(true);
         gridPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -240,6 +260,9 @@ public class MenuPanel extends JPanel {
  
     public CategoryManagementPanel getCategoryPanel() {
         return categoryPanel;
+    }
+    public ToppingManagementPanel getToppingPanel() {
+        return toppingPanel;
     }
  
     public interface ProductClickListener {

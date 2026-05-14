@@ -290,7 +290,6 @@ public class PosPanel extends JPanel {
         lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
         panel.add(lblTitle, BorderLayout.NORTH);
 
-        // [SỬA LẠI] Cột SL bị khóa lại, chỉ mở cột 3 (Xóa)
         String[] cols = {"Món", "SL", "Giá", "Xóa"};
         cartTableModel = new DefaultTableModel(cols, 0) {
             @Override
@@ -442,29 +441,78 @@ public class PosPanel extends JPanel {
         return btn;
     }
 
+    // [CẬP NHẬT LỚN] Sử dụng hàm paint() để vẽ overlay đè lên MỌI thứ kể cả Hình Ảnh
     private JPanel createProductCard(ProductModel product, ActionListener onClick) {
+        boolean isOutOfStock = product.getProductStatus() != null && product.getProductStatus().equalsIgnoreCase("Tạm hết");
+
         JPanel card = new JPanel(new BorderLayout(0, 15)) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                // Vẽ nền thẻ
                 g2.setColor(Color.WHITE);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+                // Vẽ viền
                 g2.setColor(new Color(220, 220, 220));
-                g2.drawRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 15, 15);
                 g2.dispose();
+            }
+
+            @Override
+            public void paint(Graphics g) {
+                // 1. Vẽ tất cả các component con bình thường trước (Ảnh, Text)
+                super.paint(g); 
+
+                // 2. Nếu món đang tạm hết thì vẽ màng phủ đè lên trên cùng
+                if (isOutOfStock) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    
+                    // Vẽ lớp phủ xám mờ đè lên toàn bộ thẻ
+                    g2.setColor(new Color(230, 230, 230, 180)); 
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+
+                    // Vẽ một khối chữ nhật xám đậm giữa thẻ
+                    int rectHeight = 35;
+                    int rectY = (getHeight() - rectHeight) / 2;
+                    g2.setColor(new Color(50, 50, 50, 200)); 
+                    g2.fillRect(0, rectY, getWidth(), rectHeight);
+
+                    // Vẽ chữ "TẠM HẾT" màu trắng nằm ngang
+                    g2.setColor(Color.WHITE); 
+                    g2.setFont(new Font("Segoe UI", Font.BOLD, 16));
+                    
+                    String text = "TẠM HẾT";
+                    FontMetrics fm = g2.getFontMetrics();
+                    int textWidth = fm.stringWidth(text);
+                    int textAscent = fm.getAscent();
+                    
+                    int textX = (getWidth() - textWidth) / 2;
+                    int textY = rectY + ((rectHeight - fm.getHeight()) / 2) + textAscent;
+                    
+                    g2.drawString(text, textX, textY);
+                    g2.dispose();
+                }
             }
         };
 
         card.setOpaque(false);
         card.setBorder(new EmptyBorder(15, 15, 15, 15));
-        card.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        card.setCursor(isOutOfStock ? new Cursor(Cursor.DEFAULT_CURSOR) : new Cursor(Cursor.HAND_CURSOR));
         card.setPreferredSize(new Dimension(175, 230));
 
         card.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) { card.setBorder(BorderFactory.createLineBorder(PRIMARY_COLOR, 2, true)); }
-            public void mouseExited(MouseEvent e) { card.setBorder(new EmptyBorder(15, 15, 15, 15)); }
+            public void mouseEntered(MouseEvent e) { 
+                if (!isOutOfStock) card.setBorder(BorderFactory.createLineBorder(PRIMARY_COLOR, 2, true)); 
+            }
+            public void mouseExited(MouseEvent e) { 
+                card.setBorder(new EmptyBorder(15, 15, 15, 15)); 
+            }
             public void mouseClicked(MouseEvent e) {
-                if (onClick != null) {
+                // Chỉ cho phép Click nếu KHÔNG bị tạm hết
+                if (!isOutOfStock && onClick != null) {
                     onClick.actionPerformed(null);
                 }
             }
@@ -488,7 +536,14 @@ public class PosPanel extends JPanel {
         lblName.setFont(new Font("Segoe UI", Font.BOLD, 16));
 
         JLabel lblPrice = new JLabel(String.format("%,d đ", product.getDineInPrice()));
-        lblPrice.setForeground(PRIMARY_COLOR);
+        
+        if (isOutOfStock) {
+            lblName.setForeground(Color.GRAY);
+            lblPrice.setForeground(Color.GRAY);
+        } else {
+            lblName.setForeground(Color.BLACK);
+            lblPrice.setForeground(PRIMARY_COLOR);
+        }
 
         lblName.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblPrice.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -528,7 +583,9 @@ public class PosPanel extends JPanel {
     }
 
     public void addProductCard(ProductModel product, ActionListener onClick) {
-        if (product.getProductStatus().equals("Ngừng bán")) return;
+        if (product.getProductStatus() != null && product.getProductStatus().equalsIgnoreCase("Ngừng bán")) {
+            return;
+        }
         productGridPanel.add(createProductCard(product, onClick));
         productGridPanel.revalidate();
         productGridPanel.repaint();

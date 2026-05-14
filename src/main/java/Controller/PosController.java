@@ -8,10 +8,10 @@ import Model.OrderModel;
 import Model.ProductModel;
 import Model.ToppingModel;
 import Model.VariantModel;
+import Service.CategoryService;
 import Service.CustomerService;
 import Service.InvoiceService;
 import Service.OrderService;
-import Service.ProductCategoryService;
 import Service.ProductService;
 import Service.ToppingService;
 import Service.VariantService;
@@ -23,6 +23,7 @@ import View.PosPanel;
 import javax.swing.*;
 import java.awt.Color;
 import java.awt.Frame;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class PosController {
     private OrderPanel orderPanel;
     
     private ProductService productService;
-    private ProductCategoryService categoryService;
+    private CategoryService categoryService;
     private OrderService orderService;
     private VariantService variantService;
     private ToppingService toppingService;
@@ -47,9 +48,7 @@ public class PosController {
     
     private Integer currentCustomerId = null; 
     
-    // Data cho Order Tracking
     private int currentSelectedOrderId = -1;
-    private int currentCategoryId = 0;
 
     public PosController(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
@@ -57,7 +56,7 @@ public class PosController {
         this.orderPanel = mainFrame.getOrderPanel(); 
         
         this.productService = new ProductService();
-        this.categoryService = new ProductCategoryService();
+        this.categoryService = new CategoryService();
         this.orderService = new OrderService();
         this.currentCart = new ArrayList<>();
         this.variantService = new VariantService();
@@ -65,22 +64,31 @@ public class PosController {
         this.customerService = new CustomerService();
         this.invoiceService = new InvoiceService();
         
+        // [MỚI] Lưu trữ reference của Controller này vào MainFrame để các Controller khác gọi ké
+        this.mainFrame.setPosController(this);
+        
         initView();
         initPosListeners();
         initOrderPanelListeners(); 
     }
 
+    // Hàm reload lại toàn bộ dữ liệu POS (Danh mục và Sản phẩm)
+    public void reloadPosData() {
+        try {
+            loadCategories();
+            allProducts = productService.getProductList().getProductList(); 
+            filterProducts(); // Lọc lại các sản phẩm ngay lập tức
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void initView() {
-        loadCategories();
-        allProducts = productService.getProductList().getProductList(); 
-        displayProducts(allProducts);
+        reloadPosData();
         updateCartView();
         loadOrderList(); 
     }
 
-    // =========================================================================
-    // KHU VỰC 1: XỬ LÝ SỰ KIỆN CHO MÀN HÌNH TẠO ĐƠN (POS)
-    // =========================================================================
     private void initPosListeners() {
         posPanel.addSearchListener(new java.awt.event.KeyAdapter() {
             @Override
@@ -144,7 +152,7 @@ public class PosController {
                 JOptionPane.showMessageDialog(posPanel, "Giỏ hàng trống!");
                 return;
             }
- 
+
             String inventoryCheckMsg = orderService.validateInventory(currentCart);
             if (inventoryCheckMsg != null) {
                 JOptionPane.showMessageDialog(posPanel, 
@@ -156,7 +164,7 @@ public class PosController {
             double totalVat = 0; 
             int pointsEarned = 0; 
             int pointsUsed = 0;  
- 
+
             for (CartItemModel item : currentCart) {
                 finalTotal += item.getTotalPrice();
                 totalVat += item.getTotalVatAmount();
@@ -166,16 +174,16 @@ public class PosController {
                     pointsEarned += item.getQuantity(); // Đếm số ly nhưng ta sẽ khoan cộng
                 }
             }
- 
+
             int confirm = JOptionPane.showConfirmDialog(posPanel, 
                     "Bạn có chắc muốn tạo đơn hàng này?\nTổng tiền: " + String.format("%,d đ", finalTotal), 
                     "Xác nhận tạo đơn", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
- 
+
             if (confirm == JOptionPane.YES_OPTION) {
                 int currentAccountId = 1; 
                 boolean isTakeaway = posPanel.isTakeaway();
                 boolean isHoliday = posPanel.isHoliday();
- 
+
                 if (currentCustomerId == null && !posPanel.getCustomerName().isEmpty() && !posPanel.getCustomerPhone().isEmpty()) {
                     try {
                         CustomerModel newCus = customerService.registerNewCustomer(posPanel.getCustomerPhone(), posPanel.getCustomerName());
@@ -185,8 +193,8 @@ public class PosController {
                         return;
                     }
                 }
- 
-                // [CẬP NHẬT] Gửi điểm vào là 0 để hoãn cộng điểm tích lũy, đợi khi "Hoàn Thành" + "Đã Thanh Toán"
+
+                // Gửi điểm vào là 0 để hoãn cộng điểm tích lũy, đợi khi "Hoàn Thành" + "Đã Thanh Toán"
                 boolean isSuccess = orderService.createOrder(
                     currentAccountId, 
                     currentCustomerId,       
@@ -197,10 +205,10 @@ public class PosController {
                     "Chưa thanh toán",
                     isTakeaway, 
                     isHoliday,
-                    0, // Truyền 0 để chưa tích điểm vội
+                    0, 
                     pointsUsed
                 );
- 
+
                 if (isSuccess) {
                     JOptionPane.showMessageDialog(posPanel, "Tạo đơn hàng thành công (Chờ tiếp nhận)!");
                     currentCart.clear(); 
@@ -249,22 +257,32 @@ public class PosController {
         }
     }
 
-    private void loadCategories() {
+    private void loadCategories() throws SQLException, ClassNotFoundException {
         posPanel.clearCategories();
         posPanel.addCategoryButton("Tất cả", currentCategoryFilter.equals("Tất cả"), e -> {
             currentCategoryFilter = "Tất cả";
-            loadCategories(); 
+            try { 
+                loadCategories();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
             filterProducts();
         });
 
-        List<CategoryModel> categories = categoryService.getAllCategory().getProductCategoryList();
+        List<CategoryModel> categories = categoryService.getAllCategories();
         if (categories != null) {
             for (CategoryModel cat : categories) {
-                posPanel.addCategoryButton(cat.getCategoryName(), currentCategoryFilter.equals(cat.getCategoryName()), e -> {
-                    currentCategoryFilter = cat.getCategoryName();
-                    loadCategories();
-                    filterProducts();
-                });
+                if (cat.getCategoryStatus().equals("Đang sử dụng")) {
+                    posPanel.addCategoryButton(cat.getCategoryName(), currentCategoryFilter.equals(cat.getCategoryName()), e -> {
+                        currentCategoryFilter = cat.getCategoryName();
+                        try {
+                            loadCategories();
+                        } catch (Exception ex) {
+                           ex.printStackTrace();
+                        }
+                        filterProducts();
+                    });
+                }
             }
         }
     }
@@ -274,11 +292,33 @@ public class PosController {
         if (keyword.equals("tìm kiếm tên món...")) keyword = "";
 
         List<ProductModel> filteredList = new ArrayList<>();
-        for (ProductModel p : allProducts) {
-            boolean matchCategory = currentCategoryFilter.equals("Tất cả") || p.getCategoryName().equals(currentCategoryFilter);
-            boolean matchName = p.getProductName().toLowerCase().contains(keyword);
-            if (matchCategory && matchName) filteredList.add(p);
+        
+        try {
+            List<CategoryModel> activeCategories = categoryService.getAllCategories();
+            
+            for (ProductModel p : allProducts) {
+                boolean isCategoryActive = false;
+                for (CategoryModel cat : activeCategories) {
+                    if (cat.getCategoryName().equals(p.getCategoryName()) && cat.getCategoryStatus().equals("Đang sử dụng")) {
+                        isCategoryActive = true;
+                        break;
+                    }
+                }
+                
+                if (!isCategoryActive) continue;
+                
+                if (p.getProductStatus() != null && p.getProductStatus().equalsIgnoreCase("Ngừng bán")) {
+                    continue; 
+                }
+
+                boolean matchCategory = currentCategoryFilter.equals("Tất cả") || p.getCategoryName().equals(currentCategoryFilter);
+                boolean matchName = p.getProductName().toLowerCase().contains(keyword);
+                if (matchCategory && matchName) filteredList.add(p);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        
         displayProducts(filteredList);
     }
 
@@ -286,6 +326,7 @@ public class PosController {
         posPanel.clearProducts();
         for (ProductModel p : products) {
             posPanel.addProductCard(p, e -> {
+                // View đã chặn click nếu Tạm hết nên sẽ không bao giờ lọt vào đây
                 List<VariantModel> variants = variantService.getVariantsByProductId(p.getProductID());
                 List<ToppingModel> toppings = toppingService.getToppingsByProductID(p.getProductID());
                 
@@ -366,10 +407,6 @@ public class PosController {
         posPanel.updateSummary(subTotal, totalVat, finalTotal);
     }
 
-    // =========================================================================
-    // KHU VỰC 2: XỬ LÝ SỰ KIỆN CHO MÀN HÌNH QUẢN LÝ ĐƠN HÀNG (ORDER TRACKING)
-    // =========================================================================
-    
     private void initOrderPanelListeners() {
         orderPanel.addSearchListener(new java.awt.event.KeyAdapter() {
             @Override
@@ -417,10 +454,7 @@ public class PosController {
                 boolean isSuccess = orderService.completeOrderAndDeductInventory(currentSelectedOrderId);
                 if (isSuccess) {
                     JOptionPane.showMessageDialog(orderPanel, "Hoàn thành món và trừ kho thành công!");
-                    
-                    // [MỚI] Kiểm tra và cộng điểm nếu đã thanh toán
                     checkAndRewardPoints(currentSelectedOrderId, "Đã hoàn thành", null);
-                    
                     loadOrderList();
                     loadOrderDetails(currentSelectedOrderId);
                 } else {
@@ -431,7 +465,6 @@ public class PosController {
         
         orderPanel.addPrintInvoiceListener(e -> {
             if (currentSelectedOrderId > 0) {
-                // Tham số false để mở cửa sổ Preview xem trước khi in
                 invoiceService.printInvoice(currentSelectedOrderId, false); 
             }
         });
@@ -515,14 +548,12 @@ public class PosController {
     private void changeOrderPaymentStatus(String newStatus) {
         if (currentSelectedOrderId <= 0) return;
         
-        // Gọi Custom Dialog mới thiết kế
         Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(orderPanel);
         View.PaymentMethodDialog dialog = new View.PaymentMethodDialog(parentFrame, currentSelectedOrderId);
-        dialog.setVisible(true); // Popup sẽ dừng code ở đây chờ người dùng bấm nút
+        dialog.setVisible(true); 
             
         int choice = dialog.getSelectedOption();
 
-        // Xử lý nếu người dùng chọn Tiền mặt (0) hoặc Chuyển khoản (1)
         if (choice == 0 || choice == 1) {
             String phuongThucThanhToan = (choice == 0) ? "Tiền mặt" : "Chuyển khoản";
             
@@ -570,33 +601,26 @@ public class PosController {
         }
     }
 
-    // =========================================================================
-    // [SỬA LỖI ORA-00904] XỬ LÝ LOGIC TÍNH TOÁN BẰNG JAVA THAY VÌ BẰNG SQL
-    // =========================================================================
     private void checkAndRewardPoints(int orderId, String newPrepStatus, String newPayStatus) {
         OrderModel order = orderService.getOrderById(orderId);
         if (order == null) return;
 
-        // Ưu tiên trạng thái mới truyền vào (vì Database có thể chưa kịp load lại hoàn toàn)
         String prep = newPrepStatus != null ? newPrepStatus : order.getPreparationStatus();
         String pay = newPayStatus != null ? newPayStatus : order.getPaymentStatus();
 
         if ("Đã hoàn thành".equals(prep) && "Đã thanh toán".equals(pay)) {
             try {
-                // Fetch details đã có sẵn của OrderService
                 List<OrderDetailModel> details = orderService.getOrderDetailsByOrderId(orderId);
                 int pointsToAdd = 0;
                 
                 if (details != null) {
                     for (OrderDetailModel d : details) {
-                        // Bỏ qua các món có giá = 0 (hàng tặng) hoặc tên món chứa chữ "quy đổi điểm"
                         if (d.getTotalRowPrice() > 0 && !d.getDisplayName().contains("Hàng quy đổi điểm")) {
                             pointsToAdd += d.getQuantity();
                         }
                     }
                 }
                 
-                // Cập nhật xuống CSDL nếu có điểm để cộng
                 if (pointsToAdd > 0) {
                     customerService.addPointsToCustomerByOrderId(orderId, pointsToAdd);
                 }

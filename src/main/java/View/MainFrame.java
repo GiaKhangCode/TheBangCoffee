@@ -3,6 +3,7 @@ package View;
 import Model.SessionManager;
 import Common.ValidationUtil;
 import Controller.AccountController;
+import Controller.PosController; // Import PosController để sử dụng
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -26,6 +27,9 @@ public class MainFrame extends JFrame {
     private PosPanel posPanel; 
     private DashboardPanel dashboardPanel;
     private OrderPanel orderPanel; 
+    
+    // Khai báo PosController để các Controller khác có thể gọi hàm reload
+    private PosController posController;
     
     public MainFrame() throws SQLException {
         initComponents();
@@ -75,7 +79,7 @@ public class MainFrame extends JFrame {
         
         sidebar.add(Box.createVerticalGlue());
         
-        // [MỚI] Khởi tạo nút Mở/Đóng ca. Mặc định là Mở ca. Controller sẽ đổi tên sau.
+        // Khởi tạo nút Mở/Đóng ca. Mặc định là Mở ca. Controller sẽ đổi tên sau.
         addMenuButton("Mở ca", "LOCK", "ShiftToggle"); 
         addMenuButton("Đăng xuất", "EXIT", "Logout");
         
@@ -94,6 +98,7 @@ public class MainFrame extends JFrame {
         contentArea = new JPanel(cardLayout);
         contentArea.setOpaque(false);
 
+        // Khởi tạo các panel chức năng
         this.dashboardPanel = new DashboardPanel();
         contentArea.add(this.dashboardPanel, "Stats");
         
@@ -104,6 +109,9 @@ public class MainFrame extends JFrame {
         contentArea.add(this.orderPanel, "OrderList");
         
         this.menuPanel = new MenuPanel();
+        // [QUAN TRỌNG] Gọi setupPanels(this) để truyền MainFrame vào MenuPanel
+        // Nhờ vậy CategoryController và ToppingController mới có thể truy cập được MainFrame
+        this.menuPanel.setupPanels(this); 
         contentArea.add(this.menuPanel, "Menu"); 
         
         this.stockPanel = new StockPanel(); 
@@ -153,7 +161,7 @@ public class MainFrame extends JFrame {
             return;
         }
         
-        // [QUAN TRỌNG] KHÓA TAB POS KHI CHƯA MỞ CA
+        // KHÓA TAB POS KHI CHƯA MỞ CA
         if (cardName.equals("Order") && !SessionManager.hasOpenShift()) {
             JOptionPane.showMessageDialog(this, "Bạn chưa mở ca! Vui lòng Mở ca làm việc trước khi vào chức năng Bán hàng.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
@@ -176,14 +184,14 @@ public class MainFrame extends JFrame {
         }
     }
     
-    // [MỚI] Hàm cập nhật chữ của nút (Mở ca / Đóng ca)
+    // Hàm cập nhật chữ của nút (Mở ca / Đóng ca)
     public void setShiftButtonState(boolean hasOpenShift) {
         if (navButtons != null && navButtons.containsKey("ShiftToggle")) {
             navButtons.get("ShiftToggle").setText(hasOpenShift ? "Đóng ca" : "Mở ca");
         }
     }
 
-    // [MỚI] Lắng nghe sự kiện của nút Mở/Đóng ca
+    // Lắng nghe sự kiện của nút Mở/Đóng ca
     public void addShiftToggleListener(ActionListener listener) {
         if (navButtons != null && navButtons.containsKey("ShiftToggle")) {
             navButtons.get("ShiftToggle").addActionListener(listener);
@@ -192,13 +200,19 @@ public class MainFrame extends JFrame {
 
     public static void main(String[] args) {}
     
+    // Các Getter Panel
     public StockPanel getStockPanel(){ return stockPanel; }
     public MenuPanel getMenuPanel(){ return menuPanel; }
     public RolePanel getRolePanel(){ return rolePanel; }
     public PosPanel getPosPanel(){ return posPanel; }
     public EmployeeSchedulePanel getShiftPanel(){ return shiftPanel; }
     public OrderPanel getOrderPanel() { return orderPanel; }
-    
+    public DashboardPanel getDashboardPanel(){ return dashboardPanel; }
+
+    // Getter & Setter cho PosController để reload data từ xa
+    public PosController getPosController() { return posController; }
+    public void setPosController(PosController posController) { this.posController = posController; }
+
     public void setRoleMenuVisible(boolean isVisible) {
         if (navButtons != null && navButtons.containsKey("Role")) {
             NavButton roleBtn = navButtons.get("Role");
@@ -207,6 +221,4 @@ public class MainFrame extends JFrame {
             sidebar.repaint();
         }
     }
-        
-    public DashboardPanel getDashboardPanel(){ return dashboardPanel; }
 }

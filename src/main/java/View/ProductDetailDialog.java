@@ -17,13 +17,12 @@ import java.util.Map;
 public class ProductDetailDialog extends JDialog {
 
     private JTabbedPane tabbedPane;
-    private JPanel tabInfo, tabCategory, tabTopping;
+    private JPanel tabInfo;
 
     private Color PRIMARY_COLOR = AppColor.PRIMARY;
     private Color TEXT_DARK = AppColor.TEXT_DARK;
     private Color TEXT_MUTED = AppColor.TEXT_MUTED;
 
-    // [SỬA] Đổi tên biến và thêm 3 loại giá
     private JTextField txtProductName, txtDineInPrice, txtTakeawayPrice, txtHolidayPrice, txtVat; 
     private JComboBox<String> cbCategory;
     private JTextArea txtDescription;
@@ -40,20 +39,13 @@ public class ProductDetailDialog extends JDialog {
 
     private JButton btnSave, btnUpload;
     
-    // Quản lý Danh mục và Topping
-    private JTable categoryTable, toppingTable;
-    private DefaultTableModel categoryModel, toppingModel;
-    private JButton btnAddCategory, btnAddTopping;
-    
-    private ProductActionListener categoryTableListener;
-    private ProductActionListener toppingTableListener;
     private DeleteActionListener variantDeleteListener;
     
     private boolean hasEditPermission = true;
     private boolean hasDeletePermission = true;
 
     public ProductDetailDialog(Frame parent) {
-        super(parent, "QUẢN LÝ MÓN VÀ DANH MỤC", true);
+        super(parent, "THÊM SẢN PHẨM MỚI", true);
         initComponents();
     }
 
@@ -66,7 +58,7 @@ public class ProductDetailDialog extends JDialog {
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(PRIMARY_COLOR);
         header.setPreferredSize(new Dimension(getWidth(), 50));
-        JLabel title = new JLabel("  QUẢN LÝ MÓN & DANH MỤC TÙY CHỌN");
+        JLabel title = new JLabel("  THÊM SẢN PHẨM MỚI");
         title.setFont(new Font("Segoe UI", Font.BOLD, 18));
         title.setForeground(Color.WHITE);
         header.add(title, BorderLayout.WEST);
@@ -77,12 +69,8 @@ public class ProductDetailDialog extends JDialog {
         tabbedPane.setBackground(Color.WHITE);
         
         initTabInfo();
-        initTabCategory();
-        initTabTopping(); 
 
         tabbedPane.addTab("Thông tin chung", tabInfo);
-        tabbedPane.addTab("Quản lý Loại SP", tabCategory);
-        tabbedPane.addTab("Quản lý Topping", tabTopping);
         
         add(tabbedPane, BorderLayout.CENTER);
 
@@ -115,7 +103,6 @@ public class ProductDetailDialog extends JDialog {
         txtProductName = createStyledTextField("");
         cbCategory = new JComboBox<>();
         
-        // [SỬA] Khởi tạo 3 ô nhập giá
         txtDineInPrice = createStyledTextField("0");
         txtTakeawayPrice = createStyledTextField("0");
         txtHolidayPrice = createStyledTextField("0");
@@ -132,7 +119,6 @@ public class ProductDetailDialog extends JDialog {
         gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.0; leftPanel.add(new JLabel("Danh mục: *"), gbc);
         gbc.gridx = 1; gbc.gridy = 1; gbc.weightx = 1.0; leftPanel.add(cbCategory, gbc);
         
-        // [SỬA] Bố cục lại phần hiển thị Giá
         JPanel pricePanel1 = new JPanel(new GridLayout(1, 2, 10, 0));
         pricePanel1.setOpaque(false);
         pricePanel1.add(createInputWrapper("Giá tại quán:", txtDineInPrice));
@@ -182,7 +168,6 @@ public class ProductDetailDialog extends JDialog {
         JPanel varCtrlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         varCtrlPanel.setOpaque(false); varCtrlPanel.add(btnAddVariant);
         
-        // [SỬA LẠI] Model có 6 cột: ID, Tên Size, Tại quán, Mang về, Ngày lễ, Xóa
         String[] varCols = {"ID", "Tên Size (M, L...)", "Tại quán", "Mang về", "Ngày lễ", "Xóa"};
         variantModel = new DefaultTableModel(varCols, 0) { 
             @Override 
@@ -196,7 +181,6 @@ public class ProductDetailDialog extends JDialog {
         // Ẩn cột ID đi
         variantTable.removeColumn(variantTable.getColumnModel().getColumn(0));
         
-        // [SỬA LẠI] Cột Xóa bây giờ là cột thứ 4 trên giao diện (sau khi ẩn ID)
         TableColumn delCol = variantTable.getColumnModel().getColumn(4);
         delCol.setCellRenderer(new DeleteActionButtonRenderer(new DeleteActionPanel()));
         delCol.setCellEditor(new DeleteActionButtonEditor(row -> {
@@ -240,60 +224,6 @@ public class ProductDetailDialog extends JDialog {
         tabInfo.add(rightContainer, BorderLayout.CENTER);
     }
 
-    private void initTabCategory() {
-        tabCategory = new JPanel(new BorderLayout(15, 15));
-        tabCategory.setBackground(Color.WHITE); tabCategory.setBorder(new EmptyBorder(20, 20, 20, 20));
-
-        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        controlPanel.setOpaque(false);
-        btnAddCategory = createModernButton("Thêm Loại SP", PRIMARY_COLOR, Color.WHITE);
-        controlPanel.add(btnAddCategory);
-
-        String[] cols = {"Mã Loại", "Tên Loại Sản Phẩm", "Trạng Thái", "Thuế Mặc định (%)", "Hành động"};
-        categoryModel = new DefaultTableModel(cols, 0) { 
-            @Override public boolean isCellEditable(int r, int c) { return c == 4; } 
-        };
-        categoryTable = new JTable(categoryModel); 
-        styleTable(categoryTable); categoryTable.setRowHeight(45); 
-
-        TableColumn actionCol = categoryTable.getColumnModel().getColumn(4);
-        actionCol.setCellRenderer(new ProductActionButtonRenderer(new ProductActionPanel()));
-        actionCol.setCellEditor(new ProductActionButtonEditor(new ProductActionListener() {
-            @Override public void onEdit(int row) { if (categoryTableListener != null) categoryTableListener.onEdit(row); }
-            @Override public void onDelete(int row) { if (categoryTableListener != null) categoryTableListener.onDelete(row); }
-        }, new ProductActionPanel()));
-
-        tabCategory.add(controlPanel, BorderLayout.NORTH);
-        tabCategory.add(new JScrollPane(categoryTable), BorderLayout.CENTER);
-    }
-
-    private void initTabTopping() {
-        tabTopping = new JPanel(new BorderLayout(15, 15));
-        tabTopping.setBackground(Color.WHITE); tabTopping.setBorder(new EmptyBorder(20, 20, 20, 20));
-
-        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        controlPanel.setOpaque(false);
-        btnAddTopping = createModernButton("Thêm Topping", PRIMARY_COLOR, Color.WHITE);
-        controlPanel.add(btnAddTopping);
-
-        String[] cols = {"Mã", "Tên Topping", "Giá Bán", "Mã NL Trừ", "Hao hụt", "Thuế GTGT", "Hành động"};
-        toppingModel = new DefaultTableModel(cols, 0) { 
-            @Override public boolean isCellEditable(int r, int c) { return c == 6; } 
-        };
-        toppingTable = new JTable(toppingModel); 
-        styleTable(toppingTable); toppingTable.setRowHeight(45); 
-
-        TableColumn actionCol = toppingTable.getColumnModel().getColumn(6);
-        actionCol.setCellRenderer(new ProductActionButtonRenderer(new ProductActionPanel()));
-        actionCol.setCellEditor(new ProductActionButtonEditor(new ProductActionListener() {
-            @Override public void onEdit(int row) { if (toppingTableListener != null) toppingTableListener.onEdit(row); }
-            @Override public void onDelete(int row) { if (toppingTableListener != null) toppingTableListener.onDelete(row); }
-        }, new ProductActionPanel()));
-
-        tabTopping.add(controlPanel, BorderLayout.NORTH);
-        tabTopping.add(new JScrollPane(toppingTable), BorderLayout.CENTER);
-    }
-
     private JPanel createSectionPanel(String title) {
         JPanel p = new JPanel(); p.setBackground(Color.WHITE);
         p.setBorder(new TitledBorder(new LineBorder(new Color(230, 230, 230)), title, TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 14)));
@@ -328,38 +258,22 @@ public class ProductDetailDialog extends JDialog {
         return btn;
     }
 
-    private void styleTable(JTable table) {
-        table.setRowHeight(40); table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
-        table.getTableHeader().setBackground(new Color(242, 242, 242));
-        table.getTableHeader().setForeground(TEXT_DARK);
-        table.setShowGrid(false); table.setIntercellSpacing(new Dimension(0, 0));
-        table.setSelectionBackground(new Color(PRIMARY_COLOR.getRed(), PRIMARY_COLOR.getGreen(), PRIMARY_COLOR.getBlue(), 30));
-    }
-
     // ==== PUBLIC API DÀNH CHO CONTROLLER ====
     public void loadCategoryData(ProductCategoryListModel dataList) {
-        categoryModel.setRowCount(0); cbCategory.removeAllItems();
+        cbCategory.removeAllItems();
         if (dataList != null && dataList.getProductCategoryList() != null) {
             for (CategoryModel cat : dataList.getProductCategoryList()) {
-                categoryModel.addRow(new Object[]{
-                    cat.getCategoryID(), cat.getCategoryName(), cat.getCategoryStatus(), cat.getDefaultVat(), "Sửa / Xóa"
-                });
                 cbCategory.addItem(cat.getCategoryName());
             }
         }
     }
 
     public void loadToppingData(ArrayList<ToppingModel> toppingList) {
-        toppingModel.setRowCount(0);
         toppingsPanel.removeAll();
         toppingCheckboxMap.clear();
 
         if (toppingList != null) {
             for (ToppingModel top : toppingList) {
-                toppingModel.addRow(new Object[]{ 
-                    top.getToppingID(), top.getToppingName(), top.getPrice(), top.getIngredientID(), top.getLossAmount(), top.getVat(), "Sửa / Xóa" 
-                });
                 JCheckBox cb = new JCheckBox(top.getLabel());
                 cb.setFont(new Font("Segoe UI", Font.PLAIN, 13)); cb.setOpaque(false);
                 toppingCheckboxMap.put(top.getToppingID(), cb);
@@ -373,7 +287,6 @@ public class ProductDetailDialog extends JDialog {
         variantModel.setRowCount(0);
         if(variants != null) {
             for(VariantModel v : variants) {
-                // Đổ đủ 6 trường vào model
                 variantModel.addRow(new Object[]{ 
                     v.getVariantID(), 
                     v.getSizeName(), 
@@ -398,7 +311,6 @@ public class ProductDetailDialog extends JDialog {
         List<VariantModel> list = new ArrayList<>();
         for(int i = 0; i < variantModel.getRowCount(); i++) {
             
-            // 1. Lấy ID an toàn
             int id = 0;
             try {
                 if (variantModel.getValueAt(i, 0) != null) {
@@ -406,13 +318,11 @@ public class ProductDetailDialog extends JDialog {
                 }
             } catch (Exception e) { id = 0; }
             
-            // 2. Lấy Tên 
             String name = "";
             if (variantModel.getValueAt(i, 1) != null) {
                 name = variantModel.getValueAt(i, 1).toString().trim();
             }
             
-            // 3. Lấy 3 loại giá
             long dineInPrice = 0, takeawayPrice = 0, holidayPrice = 0;
             try { 
                 if (variantModel.getValueAt(i, 2) != null) dineInPrice = Long.parseLong(variantModel.getValueAt(i, 2).toString().trim().replace(",", "")); 
@@ -445,15 +355,9 @@ public class ProductDetailDialog extends JDialog {
     // GETTERS & LISTENERS
     public void addChooseImageListener(ActionListener listener) { btnUpload.addActionListener(listener); }
     public void addSaveListener(ActionListener listener) { btnSave.addActionListener(listener); }
-    public void addAddCategoryListener(ActionListener listener) { btnAddCategory.addActionListener(listener); }
-    public void addAddToppingListener(ActionListener listener) { btnAddTopping.addActionListener(listener); }
-    
-    public void setCategoryTableListener(ProductActionListener listener) { this.categoryTableListener = listener; }
-    public void setToppingTableListener(ProductActionListener listener) { this.toppingTableListener = listener; }
     
     public String getProductName() { return txtProductName.getText().trim(); }
     
-    // [SỬA] Đổi getPrice thành 3 hàm Getter cho từng loại giá
     public long getDineInPrice() {
         try { return Long.parseLong(txtDineInPrice.getText().trim().replace(".", "").replace(",", "")); } 
         catch (Exception e) { return 0; }
@@ -478,22 +382,12 @@ public class ProductDetailDialog extends JDialog {
     }
     public String getDescription (){ return txtDescription.getText().trim(); }
 
-    public int getCategoryIdAt(int row) { return (int) categoryModel.getValueAt(row, 0); }
-    public String getCategoryNameAt(int row) { return (String) categoryModel.getValueAt(row, 1); }
-    public int getToppingIdAt(int row) { return (int) toppingModel.getValueAt(row, 0); }
-    public String getToppingNameAt(int row) { return (String) toppingModel.getValueAt(row, 1); }
-    public long getToppingPriceAt(int row) { return (long) toppingModel.getValueAt(row, 2); }
-    public int getToppingIngredientIdAt(int row) { return (int) toppingModel.getValueAt(row, 3); }
-    public double getToppingLossAmountAt(int row) { return (double) toppingModel.getValueAt(row, 4); }
-    public double getToppingVatAt(int row) { return (double) toppingModel.getValueAt(row, 5); }
-    
     public String getVariantNameAt(int row) {
         Object val = variantModel.getValueAt(row, 1);
         return val != null ? val.toString().trim() : "";
     }
     
     class WrapLayout extends FlowLayout {
-        // ... (Giữ nguyên WrapLayout của bạn)
         public WrapLayout(int align, int hgap, int vgap) { super(align, hgap, vgap); }
         @Override public Dimension preferredLayoutSize(Container target) { return layoutSize(target, true); }
         @Override public Dimension minimumLayoutSize(Container target) {
@@ -525,48 +419,6 @@ public class ProductDetailDialog extends JDialog {
         }
     }
 
-    public interface ProductActionListener { void onEdit(int row); void onDelete(int row); }
-
-    class ProductActionPanel extends JPanel {
-        protected JButton btnEdit = new JButton("Sửa");
-        protected JButton btnDelete = new JButton("Xóa");
-        public ProductActionPanel() {
-            setLayout(new FlowLayout(FlowLayout.CENTER, 5, 8)); setOpaque(true);
-            styleButton(btnEdit, new Color(0, 122, 255), 60, 30);
-            styleButton(btnDelete, new Color(255, 59, 48), 60, 30);
-            add(btnEdit); add(btnDelete);
-        }
-        protected void styleButton(JButton btn, Color color, int width, int height) {
-            btn.setFont(new Font("Segoe UI", Font.BOLD, 12)); btn.setForeground(color);
-            btn.setBackground(Color.WHITE); btn.setBorder(BorderFactory.createLineBorder(color, 1));
-            btn.setFocusPainted(false); btn.setPreferredSize(new Dimension(width, height));
-            btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        }
-    }
-
-    class ProductActionButtonRenderer implements TableCellRenderer {
-        protected JPanel panel;
-        public ProductActionButtonRenderer(JPanel panel) { this.panel = panel; }
-        @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE); return panel;
-        }
-    }
-
-    class ProductActionButtonEditor extends DefaultCellEditor {
-        protected ProductActionPanel panel;
-        protected ProductActionListener listener;
-        protected int currentRow;
-        public ProductActionButtonEditor(ProductActionListener listener, ProductActionPanel panel) {
-            super(new JCheckBox()); this.listener = listener; this.panel = panel;
-            this.panel.btnEdit.addActionListener(e -> { stopCellEditing(); listener.onEdit(currentRow); });
-            this.panel.btnDelete.addActionListener(e -> { stopCellEditing(); listener.onDelete(currentRow); });
-        }
-        @Override public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            currentRow = row; panel.setBackground(table.getSelectionBackground()); return panel;
-        }
-        @Override public Object getCellEditorValue() { return ""; }
-    }
-    
     public interface DeleteActionListener { void onDelete(int row); }
 
     class DeleteActionPanel extends JPanel {
@@ -610,7 +462,6 @@ public class ProductDetailDialog extends JDialog {
         
         txtProductName.setText(""); 
         
-        // [SỬA] Xóa trắng 3 ô giá
         txtDineInPrice.setText("0"); 
         txtTakeawayPrice.setText("0"); 
         txtHolidayPrice.setText("0"); 

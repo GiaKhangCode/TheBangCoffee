@@ -3,7 +3,7 @@ package View;
 import Common.AutoCompleteComboBox;
 import Model.ToppingModel;
 import Model.VariantModel;
-import Model.RecipeModel; // Đảm bảo import RecipeModel
+import Model.RecipeModel; 
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
@@ -36,7 +36,6 @@ public class ProductEditDialog extends JDialog {
     private JPanel toppingsPanel;
     private Map<Integer, JCheckBox> toppingCheckboxMap = new LinkedHashMap<>();
 
-    // [ĐÃ SỬA] Đổi sang AutoCompleteComboBox
     private AutoCompleteComboBox<VariantModel> cbVariantRecipe; 
     private AutoCompleteComboBox<String> cbIngredient;
     
@@ -46,22 +45,25 @@ public class ProductEditDialog extends JDialog {
     private JTable recipeTable;
     private DefaultTableModel recipeModel;
     
-    // [ĐÃ SỬA] Đổi nút Thêm vào bảng
     private JButton btnAddRecipeToTable;
     private JButton btnSaveRecipe;
     private JLabel lblTotalCost; 
 
     private JButton btnUpload, btnUpdate, btnDelete;
+    private JLabel lblTitle;
     
+    private boolean isCreateMode; // Biến xác định chế độ: True = Thêm mới, False = Sửa
     private boolean hasEditPermission = true;
     private boolean hasDeletePermission = true;
     
     private ProductActionListener recipeTableListener; 
     private DeleteActionListener variantDeleteListener;
 
-    public ProductEditDialog(Frame parent) {
-        super(parent, "CHI TIẾT SẢN PHẨM", true);
+    public ProductEditDialog(Frame parent, boolean isCreateMode) {
+        super(parent, isCreateMode ? "THÊM MỚI SẢN PHẨM" : "CHI TIẾT SẢN PHẨM", true);
+        this.isCreateMode = isCreateMode;
         initComponents();
+        setupMode();
     }
 
     private void initComponents() {
@@ -73,10 +75,11 @@ public class ProductEditDialog extends JDialog {
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(PRIMARY_COLOR);
         header.setPreferredSize(new Dimension(getWidth(), 50));
-        JLabel title = new JLabel("  THÔNG TIN CHI TIẾT & CẬP NHẬT MÓN");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        title.setForeground(Color.WHITE);
-        header.add(title, BorderLayout.WEST);
+        
+        lblTitle = new JLabel("  THÔNG TIN CHI TIẾT SẢN PHẨM");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblTitle.setForeground(Color.WHITE);
+        header.add(lblTitle, BorderLayout.WEST);
         add(header, BorderLayout.NORTH);
 
         tabbedPane = new JTabbedPane();
@@ -100,6 +103,21 @@ public class ProductEditDialog extends JDialog {
         
         footer.add(btnCancel);
         add(footer, BorderLayout.SOUTH);
+    }
+    
+    private void setupMode() {
+        if (isCreateMode) {
+            lblTitle.setText("  THÊM MỚI SẢN PHẨM");
+            btnUpdate.setText("Tạo Sản Phẩm");
+            btnDelete.setVisible(false); // Ẩn nút xóa khi tạo mới
+            
+            // Xóa rỗng form
+            clearForm();
+        } else {
+            lblTitle.setText("  THÔNG TIN CHI TIẾT & CẬP NHẬT MÓN");
+            btnUpdate.setText("Cập nhật toàn bộ SP");
+            btnDelete.setVisible(true);
+        }
     }
 
     private void initTabInfo() {
@@ -226,7 +244,6 @@ public class ProductEditDialog extends JDialog {
         btnDelete = createModernButton("Xóa sản phẩm", DANGER_COLOR, Color.WHITE); leftFooter.add(btnDelete);
         JPanel rightFooter = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0)); rightFooter.setOpaque(false);
         
-        // [SỬA LẠI] Nút Cập Nhật ở Tab Info
         btnUpdate = createModernButton("Cập nhật toàn bộ SP", PRIMARY_COLOR, Color.WHITE); 
         rightFooter.add(btnUpdate);
 
@@ -255,14 +272,12 @@ public class ProductEditDialog extends JDialog {
         gbc.insets = new Insets(5, 10, 5, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // [ĐÃ SỬA] Đổi sang AutoComplete
         cbVariantRecipe = new AutoCompleteComboBox<>();
         cbIngredient = new AutoCompleteComboBox<>();
         
         txtUnit = createStyledTextField(""); txtUnit.setEditable(false);
         txtQuantitative = createStyledTextField("");
         
-        // [ĐÃ SỬA] Đổi text nút thành "Thêm vào bảng"
         btnAddRecipeToTable = createModernButton("+ Thêm vào bảng", PRIMARY_COLOR, Color.WHITE);
 
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.2; inputPanel.add(new JLabel("Áp dụng cho Size:"), gbc);
@@ -279,7 +294,6 @@ public class ProductEditDialog extends JDialog {
         
         gbc.gridx = 4; gbc.gridy = 1; gbc.weightx = 0.2; inputPanel.add(btnAddRecipeToTable, gbc);
 
-        // THÊM MỘT CỘT ẨN CHỨA TRẠNG THÁI DÒNG ("NEW", "EDITED", "OLD")
         String[] cols = {"STT", "Mã NL", "Tên Nguyên Liệu", "Đơn vị", "Số lượng cần", "Hành động", "Trạng Thái Dòng"};
         recipeModel = new DefaultTableModel(cols, 0) { 
             @Override public boolean isCellEditable(int r, int c) { return c == 5; } 
@@ -289,7 +303,6 @@ public class ProductEditDialog extends JDialog {
         recipeTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         recipeTable.getTableHeader().setBackground(new Color(242, 242, 242));
         
-        // Ẩn cột Trạng thái dòng (Chỉ dùng cho logic xử lý ngầm)
         recipeTable.removeColumn(recipeTable.getColumnModel().getColumn(6));
 
         TableColumn actionCol = recipeTable.getColumnModel().getColumn(5);
@@ -301,7 +314,7 @@ public class ProductEditDialog extends JDialog {
         
         JPanel recipeFooter = new JPanel(new BorderLayout());
         recipeFooter.setOpaque(false);
-        recipeFooter.setBorder(new EmptyBorder(10, 0, 0, 0)); // Tạo một chút khoảng cách ở phía trên
+        recipeFooter.setBorder(new EmptyBorder(10, 0, 0, 0)); 
 
         lblTotalCost = new JLabel("Giá vốn ước tính: 0 đ");
         lblTotalCost.setFont(new Font("Segoe UI", Font.BOLD, 16));
@@ -309,7 +322,6 @@ public class ProductEditDialog extends JDialog {
         
         btnSaveRecipe = createModernButton("Lưu công thức Size này", PRIMARY_COLOR, Color.WHITE);
         
-        // Gắn label sang trái (WEST) và nút bấm sang phải (EAST)
         recipeFooter.add(lblTotalCost, BorderLayout.WEST);
         recipeFooter.add(btnSaveRecipe, BorderLayout.EAST);
 
@@ -357,7 +369,7 @@ public class ProductEditDialog extends JDialog {
     public void setIngredientList(ArrayList<String> ingredients){
         this.allIngredientsCache = ingredients;
         if(ingredients != null) {
-            cbIngredient.setData(ingredients); // [SỬA LẠI] Gọi hàm setData cho AutoComplete
+            cbIngredient.setData(ingredients); 
         }
     }
     
@@ -378,7 +390,7 @@ public class ProductEditDialog extends JDialog {
                 
                 cbList.add(v);
             }
-            if (cbVariantRecipe != null) cbVariantRecipe.setData(cbList); // [SỬA LẠI] Dùng setData
+            if (cbVariantRecipe != null) cbVariantRecipe.setData(cbList); 
         }
     }
 
@@ -439,22 +451,19 @@ public class ProductEditDialog extends JDialog {
         if (recipes != null && !recipes.isEmpty()) {
             int stt = 1;
             for (Model.RecipeModel r : recipes) {
-                // Thêm một trường Status ngầm là "OLD" để đánh dấu dòng này được load từ DB lên
                 recipeModel.addRow(new Object[]{ stt++, r.getIngredientID(), r.getIngredientName(), r.getUnit(), r.getQuantityRequired(), "Sửa / Xóa", "OLD" });
             }
         }
     }
     
-    // [THÊM MỚI] Hàm lấy dữ liệu toàn bộ bảng công thức
     public List<RecipeModel> getRecipesFromTable() {
         List<RecipeModel> list = new ArrayList<>();
         for(int i = 0; i < recipeModel.getRowCount(); i++) {
             try {
                 int ingId = Integer.parseInt(recipeModel.getValueAt(i, 1).toString());
                 double qty = Double.parseDouble(recipeModel.getValueAt(i, 4).toString());
-                String status = recipeModel.getValueAt(i, 6).toString(); // Lấy cờ "NEW", "EDITED", "OLD"
+                String status = recipeModel.getValueAt(i, 6).toString();
                 
-                // Mượn field description của RecipeModel để lưu cờ trạng thái này tạm
                 RecipeModel rec = new RecipeModel(0, ingId, qty);
                 rec.setIngredientName(status); 
                 list.add(rec);
@@ -463,22 +472,18 @@ public class ProductEditDialog extends JDialog {
         return list;
     }
 
-    // [THÊM MỚI] Hàm thêm một dòng mới vào bảng công thức
     public void addRecipeRow(int ingId, String ingName, String unit, double qty) {
         int rowCount = recipeModel.getRowCount();
         recipeModel.addRow(new Object[]{ rowCount + 1, ingId, ingName, unit, qty, "Sửa / Xóa", "NEW" });
     }
     
-    // [THÊM MỚI] Đánh dấu dòng là Edited
     public void markRecipeRowAsEdited(int row, double newQty) {
         recipeModel.setValueAt(newQty, row, 4);
         recipeModel.setValueAt("EDITED", row, 6);
     }
     
-    // [THÊM MỚI] Xóa mềm (Hoặc xóa hẳn trên bảng)
     public void removeRecipeRow(int row) {
         recipeModel.removeRow(row);
-        // Cập nhật lại STT
         for (int i = 0; i < recipeModel.getRowCount(); i++) {
             recipeModel.setValueAt(i + 1, i, 0);
         }
@@ -516,14 +521,33 @@ public class ProductEditDialog extends JDialog {
             variantModel.removeRow(row);
         }
     }
+    
+    public void clearForm() {
+        if(txtProductName == null) return;
+        txtProductName.setText(""); 
+        txtDineInPrice.setText("0"); 
+        txtTakeawayPrice.setText("0"); 
+        txtHolidayPrice.setText("0"); 
+        txtVat.setText("8");
+        txtDescription.setText("");
+        
+        if(cbCategory.getItemCount() > 0) cbCategory.setSelectedIndex(0); 
+        rbOnSale.setSelected(true);
+        setImage(null);
+        
+        if (variantModel != null) variantModel.setRowCount(0);
+        if (toppingCheckboxMap != null) {
+            for (JCheckBox cb : toppingCheckboxMap.values()) cb.setSelected(false);
+        }
+        if (recipeModel != null) recipeModel.setRowCount(0);
+        setEstimatedCost(0);
+    }
 
     public void addChooseImageListener(ActionListener listener) { btnUpload.addActionListener(listener); }
     public void addUpdateListener(ActionListener listener) { btnUpdate.addActionListener(listener); }
     public void addDeleteListener(ActionListener listener) { btnDelete.addActionListener(listener); }
     
-    // [ĐÃ SỬA LẠI NÚT LƯU]
     public void addAddRecipeToTableListener(ActionListener listener) { btnAddRecipeToTable.addActionListener(listener); }
-    
     public void addVariantSelectionListener(ItemListener listener) { cbVariantRecipe.addItemListener(listener); }
 
     public String getProductName() { return txtProductName.getText().trim(); }

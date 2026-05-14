@@ -8,14 +8,15 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
 import java.util.List;
 
 public class CategoryManagementPanel extends JPanel {
     private final Color PRIMARY_COLOR = new Color(67, 142, 104); 
-    private final Color EDIT_COLOR = new Color(41, 128, 185);    
     private final Color HIDE_COLOR = new Color(231, 76, 60);     
     private final Color DISABLED_BG = new Color(245, 245, 245);  
 
+    private JTextField txtSearch;
     private JButton btnAddCategory;
     private JTable table;
     private DefaultTableModel tableModel;
@@ -29,23 +30,48 @@ public class CategoryManagementPanel extends JPanel {
     private ToggleStatusCallback toggleCallback;
 
     public CategoryManagementPanel() {
-        setLayout(new BorderLayout(0, 10)); 
+        setLayout(new BorderLayout(15, 15)); 
         setBackground(Color.WHITE);         
         setOpaque(true);
-        setBorder(new EmptyBorder(10, 10, 10, 10)); 
+        setBorder(new EmptyBorder(20, 20, 20, 20)); 
 
         add(createTopPanel(), BorderLayout.NORTH);
         add(createTablePanel(), BorderLayout.CENTER);
     }
 
     // ==========================================
-    // 1. TẠO THANH CÔNG CỤ (CHỈ CÓ NÚT THÊM MỚI)
+    // 1. TẠO THANH CÔNG CỤ (TÌM KIẾM VÀ THÊM MỚI)
     // ==========================================
     private JPanel createTopPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 10)); // Canh phải cho đẹp
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230))); 
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setOpaque(false);
 
+        // --- Tìm Kiếm (Bên trái) ---
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        searchPanel.setOpaque(false);
+        txtSearch = new JTextField(25);
+        txtSearch.setPreferredSize(new Dimension(300, 40));
+        txtSearch.setText("Tìm kiếm danh mục...");
+        txtSearch.setForeground(Color.GRAY);
+        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        
+        txtSearch.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                if (txtSearch.getText().equals("Tìm kiếm danh mục...")) {
+                    txtSearch.setText(""); txtSearch.setForeground(Color.BLACK);
+                }
+            }
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                if (txtSearch.getText().isEmpty()) {
+                    txtSearch.setText("Tìm kiếm danh mục..."); txtSearch.setForeground(Color.GRAY);
+                }
+            }
+        });
+        searchPanel.add(txtSearch);
+
+        // --- Thêm Mới (Bên phải) ---
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        btnPanel.setOpaque(false);
         btnAddCategory = new JButton("+ Thêm Danh Mục");
         btnAddCategory.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnAddCategory.setBackground(PRIMARY_COLOR);
@@ -55,8 +81,10 @@ public class CategoryManagementPanel extends JPanel {
         btnAddCategory.setPreferredSize(new Dimension(180, 40));
 
         btnAddCategory.addActionListener(e -> showAddDialog());
+        btnPanel.add(btnAddCategory);
 
-        panel.add(btnAddCategory);
+        panel.add(searchPanel, BorderLayout.WEST);
+        panel.add(btnPanel, BorderLayout.EAST);
 
         return panel;
     }
@@ -82,7 +110,8 @@ public class CategoryManagementPanel extends JPanel {
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         table.getTableHeader().setBackground(new Color(245, 245, 245));
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.setShowVerticalLines(false);
+        table.setShowGrid(false);
+        table.setIntercellSpacing(new Dimension(0, 0));
 
         table.getColumnModel().getColumn(0).setPreferredWidth(50);
         table.getColumnModel().getColumn(1).setPreferredWidth(250);
@@ -120,8 +149,11 @@ public class CategoryManagementPanel extends JPanel {
     }
 
     // ==========================================
-    // 3. DIALOG VÀ CALLBACKS
+    // 3. DIALOG VÀ CALLBACKS & API
     // ==========================================
+    public void addSearchListener(KeyAdapter adapter) { txtSearch.addKeyListener(adapter); }
+    public String getSearchText() { return txtSearch.getText().trim(); }
+
     public void setAddAction(AddCategoryCallback callback) { this.addCallback = callback; }
     public void setEditAction(EditCategoryCallback callback) { this.editCallback = callback; }
     public void setToggleStatusAction(ToggleStatusCallback callback) { this.toggleCallback = callback; }
@@ -141,7 +173,7 @@ public class CategoryManagementPanel extends JPanel {
 
     private void showAddDialog() {
         JTextField txtAddName = new JTextField();
-        JTextField txtAddVat = new JTextField("8"); // Mặc định 8%
+        JTextField txtAddVat = new JTextField("8");
 
         Object[] message = { "Tên danh mục:", txtAddName, "Thuế VAT (%):", txtAddVat };
         int option = JOptionPane.showConfirmDialog(this, message, "Thêm Danh Mục Mới", JOptionPane.OK_CANCEL_OPTION);
@@ -180,42 +212,43 @@ public class CategoryManagementPanel extends JPanel {
     }
 
     // ==========================================
-    // 4. LỚP PANEL GỘP 2 NÚT (Sửa & Ẩn)
+    // 4. LỚP PANEL GỘP 2 NÚT ĐỒNG BỘ UI
     // ==========================================
     class ActionButtonsPanel extends JPanel {
         JButton btnEdit;
         JButton btnToggle;
 
         public ActionButtonsPanel() {
-            setLayout(new FlowLayout(FlowLayout.CENTER, 5, 2));
+            setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
             setOpaque(true);
+            setBackground(Color.WHITE);
 
             btnEdit = new JButton("Sửa");
-            btnEdit.setBackground(EDIT_COLOR);
-            btnEdit.setForeground(Color.WHITE);
-            btnEdit.setFont(new Font("Segoe UI", Font.BOLD, 12));
-            btnEdit.setFocusPainted(false);
-            btnEdit.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
             btnToggle = new JButton("Ẩn");
-            btnToggle.setBackground(HIDE_COLOR);
-            btnToggle.setForeground(Color.WHITE);
-            btnToggle.setFont(new Font("Segoe UI", Font.BOLD, 12));
-            btnToggle.setFocusPainted(false);
-            btnToggle.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
             add(btnEdit);
             add(btnToggle);
         }
 
+        private void styleBtn(JButton b, Color c) {
+            b.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            b.setForeground(c);
+            b.setBackground(Color.WHITE);
+            b.setBorder(new LineBorder(c, 1));
+            b.setPreferredSize(new Dimension(80, 25)); // Kích thước cố định để cân xứng cho cả chữ Hiện / Ẩn
+            b.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        }
+
         public void updateData(String status, boolean isSelected, JTable table) {
-            if ("Đã ẩn".equals(status)) {
-                btnToggle.setText("Sử dụng lại");
-                btnToggle.setBackground(PRIMARY_COLOR); // Màu xanh lá
+            styleBtn(btnEdit, new Color(0, 122, 255)); // Sửa luôn là màu xanh viền
+
+            if ("Đã ẩn".equals(status) || "Tạm ngừng sử dụng".equals(status)) {
+                btnToggle.setText("Hiện lại");
+                styleBtn(btnToggle, PRIMARY_COLOR); 
                 setBackground(DISABLED_BG); 
             } else {
                 btnToggle.setText("Ẩn");
-                btnToggle.setBackground(HIDE_COLOR);    // Màu đỏ
+                styleBtn(btnToggle, HIDE_COLOR);
                 setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
             }
         }
