@@ -5,6 +5,7 @@ View\StockPanel$ActionButtonEditor.class
 View\ProductEditDialog$DeleteActionPanel.class
 View\EmployeeSchedulePanel$IOSSwitch$1.class
 View\PosPanel$WrapLayout.class
+View\ShiftSessionOpenDialog$3.class
 View\StockPanel$3.class
 View\EmployeeSchedulePanel$1.class
 View\PosPanel$7.class
@@ -32,6 +33,7 @@ Controller\ProductController$2.class
 View\PosPanel$DeleteActionButtonEditor.class
 View\ProductEditDialog$1.class
 DatabaseAccessObject\SessionDAO.class
+View\ShiftSessionCloseDialog.class
 View\RolePanel$6.class
 View\ProductDetailDialog$DeleteActionButtonEditor.class
 View\ProductDetailDialog$ProductActionPanel.class
@@ -40,6 +42,7 @@ Controller\RoleController$3.class
 View\OrderPanel$1.class
 View\RolePanel.class
 View\PosPanel$1.class
+View\ShiftSessionOpenDialog.class
 Common\EmailUtil.class
 Controller\RoleController$10.class
 Controller\RoleController.class
@@ -49,6 +52,7 @@ View\MainFrame.class
 View\StockPanel$ActionButtonRenderer.class
 Common\ValidationUtil.class
 Service\ReportService.class
+View\ShiftSessionCloseDialog$3.class
 View\OrderPanel$StatusCellRenderer.class
 Service\RecipeService.class
 View\PosPanel$6.class
@@ -77,11 +81,13 @@ Service\SessionService.class
 Service\ProductService.class
 Controller\CategoryController.class
 View\RolePanel$4.class
+Model\ShiftSession.class
 Model\RecipeModel.class
 Model\IngredientModel.class
 DatabaseAccessObject\ProductCategoryDAO.class
 DatabaseAccessObject\ReportDAO.class
 Controller\RoleController$6.class
+View\ShiftSessionOpenDialog$2.class
 View\StockPanel$2.class
 View\OrderOptionDialog$1.class
 View\LoginFrame$3.class
@@ -166,6 +172,7 @@ View\ProductDetailDialog$5.class
 Model\IngredientListModel.class
 View\ProductEditDialog$DeleteActionButtonRenderer.class
 Model\WarehouseReceiptModel.class
+View\ShiftSessionOpenDialog$1.class
 Common\EmailUtil$1.class
 Controller\PosController$1.class
 Controller\StockPanelController.class
@@ -188,6 +195,7 @@ DatabaseAccessObject\WarehouseReceiptDAO.class
 Controller\ProductController$1.class
 View\RegisterFrame$2.class
 View\ProductEditDialog$3.class
+View\ShiftSessionCloseDialog$2.class
 DatabaseAccessObject\ToppingDAO.class
 View\RolePanel$7.class
 Service\RoleService.class
@@ -219,12 +227,14 @@ View\ContentBasePanel$RoundedCard.class
 View\PosPanel$DeleteActionPanel.class
 View\ContentBasePanel.class
 View\StockPanel$9.class
+View\ShiftSessionCloseDialog$1.class
 View\StatCard.class
 View\ProductEditDialog$ProductActionPanel.class
 View\EmployeeSchedulePanel$ShiftCard.class
 View\ProductDetailDialog$3.class
 View\CategoryManagementPanel.class
 View\RolePanel$DeleteActionPanel.class
+DatabaseAccessObject\ShiftSessionDAO.class
 Controller\ProductController$3.class
 Service\AccountService.class
 View\RegisterFrame$3.class

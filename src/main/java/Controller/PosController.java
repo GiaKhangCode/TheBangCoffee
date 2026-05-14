@@ -129,81 +129,6 @@ public class PosController {
             }
         });
 
-//        posPanel.addCreateOrderListener(e -> {
-//            if (currentCart.isEmpty()) {
-//                JOptionPane.showMessageDialog(posPanel, "Giỏ hàng trống!");
-//                return;
-//            }
-//
-//            // [ĐÃ XÓA]: Loại bỏ bước kiểm tra tồn kho ở đây (Vì đã dời sang nút Thêm/Tăng số lượng)
-//            
-//            long finalTotal = 0; 
-//            double totalVat = 0; 
-//            for (CartItemModel item : currentCart) {
-//                finalTotal += item.getTotalPrice();
-//                totalVat += item.getTotalVatAmount();
-//            }
-//
-//            int confirm = JOptionPane.showConfirmDialog(posPanel, 
-//                    "Bạn có chắc muốn tạo đơn hàng này?\nTổng tiền: " + String.format("%,d đ", finalTotal), 
-//                    "Xác nhận tạo đơn", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-//
-//            if (confirm == JOptionPane.YES_OPTION) {
-//                int currentAccountId = 1; // [HARDCODE] 
-//                boolean isTakeaway = posPanel.isTakeaway();
-//                boolean isHoliday = posPanel.isHoliday();
-//
-//                if (currentCustomerId == null && !posPanel.getCustomerName().isEmpty() && !posPanel.getCustomerPhone().isEmpty()) {
-//                    try {
-//                        CustomerModel newCus = customerService.registerNewCustomer(posPanel.getCustomerPhone(), posPanel.getCustomerName());
-//                        if (newCus != null) currentCustomerId = newCus.getMaKH();
-//                    } catch (Exception ex) {
-//                        JOptionPane.showMessageDialog(posPanel, "Lỗi khi lưu khách hàng mới!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-//                        return;
-//                    }
-//                }
-//
-////                boolean isSuccess = orderService.createOrder(
-////                    currentAccountId, 
-////                    currentCustomerId,       
-////                    currentCart, 
-////                    finalTotal, 
-////                    Math.round(totalVat), 
-////                    "Chờ tiếp nhận",   
-////                    "Chưa thanh toán", 
-////                    isTakeaway, 
-////                    isHoliday
-////                );
-//                
-//                boolean isSuccess = orderService.createOrder(
-//                    currentAccountId, 
-//                    currentCustomerId,       
-//                    currentCart, 
-//                    finalTotal, 
-//                    Math.round(totalVat), 
-//                    "Chờ tiếp nhận",   
-//                    "Chưa thanh toán", 
-//                    isTakeaway, 
-//                    isHoliday,
-//                    pointsEarned,
-//                    pointsUsed
-//                );
-//
-//                if (isSuccess) {
-//                    JOptionPane.showMessageDialog(posPanel, "Tạo đơn hàng thành công (Chờ tiếp nhận)!");
-//                    currentCart.clear(); 
-//                    updateCartView();   
-//                    
-//                    posPanel.clearCustomerInfo(); 
-//                    currentCustomerId = null;
-//                    
-//                    loadOrderList(); 
-//                } else {
-//                    JOptionPane.showMessageDialog(posPanel, "Lỗi khi tạo đơn hàng. Vui lòng kiểm tra lại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-//                }
-//            }
-//        });
-        
         posPanel.setCartDeleteListener(row -> {
             if (row >= 0 && row < currentCart.size()) {
                 currentCart.remove(row);
@@ -226,17 +151,16 @@ public class PosController {
             }
             long finalTotal = 0; 
             double totalVat = 0; 
-            int pointsEarned = 0; // [MỚI] Tích điểm
-            int pointsUsed = 0;   // [MỚI] Dùng điểm
+            int pointsEarned = 0; 
+            int pointsUsed = 0;  
  
             for (CartItemModel item : currentCart) {
                 finalTotal += item.getTotalPrice();
                 totalVat += item.getTotalVatAmount();
-                // [MỚI] Logic tích/trừ điểm: Hàng tặng không tích điểm
                 if (item.isReward()) {
                     pointsUsed += (item.getQuantity() * 12);
                 } else {
-                    pointsEarned += item.getQuantity(); // 1 ly mua = 1 điểm
+                    pointsEarned += item.getQuantity(); // Đếm số ly nhưng ta sẽ khoan cộng
                 }
             }
  
@@ -259,7 +183,7 @@ public class PosController {
                     }
                 }
  
-                // [SỬA] Gửi thêm pointsEarned và pointsUsed
+                // [CẬP NHẬT] Gửi điểm vào là 0 để hoãn cộng điểm tích lũy, đợi khi "Hoàn Thành" + "Đã Thanh Toán"
                 boolean isSuccess = orderService.createOrder(
                     currentAccountId, 
                     currentCustomerId,       
@@ -270,7 +194,7 @@ public class PosController {
                     "Chưa thanh toán",
                     isTakeaway, 
                     isHoliday,
-                    pointsEarned,
+                    0, // Truyền 0 để chưa tích điểm vội
                     pointsUsed
                 );
  
@@ -365,7 +289,6 @@ public class PosController {
                 boolean isTakeaway = posPanel.isTakeaway();
                 boolean isHoliday = posPanel.isHoliday();
 
-                // Lấy điểm hiện tại của khách hàng (nếu có khách hàng đang chọn)
                 int currentPoints = 0;
                 if (currentCustomerId != null) {
                     CustomerModel c = customerService.findCustomerByPhone(posPanel.getCustomerPhone());
@@ -375,20 +298,16 @@ public class PosController {
                 Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(posPanel);
                 OrderOptionDialog dialog = new OrderOptionDialog(parentFrame, p, variants, toppings, isTakeaway, isHoliday, currentPoints);
 
-                // [CẬP NHẬT] Gắn logic kiểm tra kho vào nút (+) của Dialog
                 dialog.setInventoryValidator((newQty, variant, selToppings) -> {
-                    // 1. Clone giỏ hàng hiện tại ra giỏ ảo để test
                     List<CartItemModel> testCart = new ArrayList<>();
                     for(CartItemModel item : currentCart) {
                         CartItemModel cloneItem = new CartItemModel(item.getProduct(), item.getSelectedVariant(), item.getSelectedToppings(), item.getQuantity(), item.getNote());
-                        cloneItem.setReward(item.isReward()); // Nhớ clone cả trạng thái điểm
+                        cloneItem.setReward(item.isReward()); 
                         testCart.add(cloneItem);
                     }
                     
-                    // 2. Thử thêm lượng hàng mới vào giỏ ảo
                     boolean merged = false;
                     for(CartItemModel testItem : testCart) {
-                        // Gọi hàm isSameItem (Ở đây tạm truyền isReward = false vì check kho không quan tâm hàng tặng hay mua)
                         if (testItem.isSameItem(p, variant, selToppings, "", false)) { 
                             testItem.setQuantity(testItem.getQuantity() + newQty);
                             merged = true; break;
@@ -398,25 +317,21 @@ public class PosController {
                         testCart.add(new CartItemModel(p, variant, selToppings, newQty, ""));
                     }
                     
-                    // 3. Đẩy giỏ ảo xuống Service để quét DB xem có đủ nguyên liệu pha chế không
                     return orderService.validateInventory(testCart);
                 });
 
                 dialog.setVisible(true);
 
-                // KHI NGƯỜI DÙNG BẤM "THÊM VÀO GIỎ" HOẶC "QUY ĐỔI ĐIỂM"
                 if (dialog.isConfirmed()) {
                     Model.VariantModel selectedSize = dialog.getSelectedVariant();
                     List<Model.ToppingModel> selectedToppings = dialog.getSelectedToppings();
                     int qty = dialog.getQuantity();
                     String note = dialog.getFinalNote();
                     
-                    // Lấy cờ Đổi điểm từ Dialog
                     boolean isReward = dialog.isReward(); 
                     
                     boolean isExist = false;
                     for (CartItemModel existingItem : currentCart) {
-                        // [CẬP NHẬT] Truyền thêm isReward vào hàm isSameItem
                         if (existingItem.isSameItem(p, selectedSize, selectedToppings, note, isReward)) {
                             existingItem.setQuantity(existingItem.getQuantity() + qty);
                             isExist = true;
@@ -427,7 +342,6 @@ public class PosController {
                     if (!isExist) {
                         CartItemModel item = new CartItemModel(p, selectedSize, selectedToppings, qty, note);
                         item.setOrderType(isTakeaway, isHoliday);
-                        // [CẬP NHẬT] Set cờ hàng quy đổi để model tính giá = 0đ
                         item.setReward(isReward); 
                         currentCart.add(item);
                     }
@@ -442,7 +356,6 @@ public class PosController {
         long finalTotal = 0; 
         double totalVat = 0; 
         for (CartItemModel item : currentCart) {
-            finalTotal += item.getTotalPrice();
             finalTotal += item.getTotalPrice();
             totalVat += item.getTotalVatAmount(); 
         }
@@ -501,6 +414,10 @@ public class PosController {
                 boolean isSuccess = orderService.completeOrderAndDeductInventory(currentSelectedOrderId);
                 if (isSuccess) {
                     JOptionPane.showMessageDialog(orderPanel, "Hoàn thành món và trừ kho thành công!");
+                    
+                    // [MỚI] Kiểm tra và cộng điểm nếu đã thanh toán
+                    checkAndRewardPoints(currentSelectedOrderId, "Đã hoàn thành", null);
+                    
                     loadOrderList();
                     loadOrderDetails(currentSelectedOrderId);
                 } else {
@@ -574,6 +491,9 @@ public class PosController {
         if (confirm == JOptionPane.YES_OPTION) {
             boolean isSuccess = orderService.updatePreparationStatus(currentSelectedOrderId, newStatus);
             if (isSuccess) {
+                if (newStatus.equals("Đã hoàn thành")) {
+                    checkAndRewardPoints(currentSelectedOrderId, "Đã hoàn thành", null);
+                }
                 loadOrderList(); 
                 loadOrderDetails(currentSelectedOrderId); 
             } else {
@@ -590,6 +510,10 @@ public class PosController {
         if (confirm == JOptionPane.YES_OPTION) {
             boolean isSuccess = orderService.updatePaymentStatus(currentSelectedOrderId, newStatus);
             if (isSuccess) {
+                // [MỚI] Kiểm tra cộng điểm nếu hoàn tất thanh toán
+                if (newStatus.equals("Đã thanh toán")) {
+                    checkAndRewardPoints(currentSelectedOrderId, null, "Đã thanh toán");
+                }
                 loadOrderList(); 
                 loadOrderDetails(currentSelectedOrderId); 
             } else {
@@ -623,6 +547,42 @@ public class PosController {
                 loadOrderDetails(currentSelectedOrderId); 
             } else {
                 JOptionPane.showMessageDialog(orderPanel, "Có lỗi xảy ra khi hủy đơn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    // =========================================================================
+    // [SỬA LỖI ORA-00904] XỬ LÝ LOGIC TÍNH TOÁN BẰNG JAVA THAY VÌ BẰNG SQL
+    // =========================================================================
+    private void checkAndRewardPoints(int orderId, String newPrepStatus, String newPayStatus) {
+        OrderModel order = orderService.getOrderById(orderId);
+        if (order == null) return;
+
+        // Ưu tiên trạng thái mới truyền vào (vì Database có thể chưa kịp load lại hoàn toàn)
+        String prep = newPrepStatus != null ? newPrepStatus : order.getPreparationStatus();
+        String pay = newPayStatus != null ? newPayStatus : order.getPaymentStatus();
+
+        if ("Đã hoàn thành".equals(prep) && "Đã thanh toán".equals(pay)) {
+            try {
+                // Fetch details đã có sẵn của OrderService
+                List<OrderDetailModel> details = orderService.getOrderDetailsByOrderId(orderId);
+                int pointsToAdd = 0;
+                
+                if (details != null) {
+                    for (OrderDetailModel d : details) {
+                        // Bỏ qua các món có giá = 0 (hàng tặng) hoặc tên món chứa chữ "quy đổi điểm"
+                        if (d.getTotalRowPrice() > 0 && !d.getDisplayName().contains("Hàng quy đổi điểm")) {
+                            pointsToAdd += d.getQuantity();
+                        }
+                    }
+                }
+                
+                // Cập nhật xuống CSDL nếu có điểm để cộng
+                if (pointsToAdd > 0) {
+                    customerService.addPointsToCustomerByOrderId(orderId, pointsToAdd);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
         }
     }

@@ -383,8 +383,27 @@ public class EmployeeSchedulePanel extends JPanel {
         centerTool = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0)); centerTool.setBackground(Color.WHITE);
         chkRepeat = new JCheckBox("Lặp lại trong"); chkRepeat.setFont(new Font("Segoe UI", Font.PLAIN, 14)); chkRepeat.setBackground(Color.WHITE);
         spnRepeatWeeks = new JSpinner(new SpinnerNumberModel(1, 1, 12, 1)); spnRepeatWeeks.setFont(new Font("Segoe UI", Font.PLAIN, 14)); spnRepeatWeeks.setEnabled(false); 
-        chkRepeat.addActionListener(e -> spnRepeatWeeks.setEnabled(chkRepeat.isSelected()));
-        btnSaveSchedule = new JButton("Lặp lịch tuần"); btnSaveSchedule.setBackground(new Color(46, 139, 87)); btnSaveSchedule.setForeground(Color.WHITE); btnSaveSchedule.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        
+        // [CẬP NHẬT Ở ĐÂY] - Thiết lập mặc định Nút Lặp Lịch
+        btnSaveSchedule = new JButton("Lặp lịch tuần"); 
+        btnSaveSchedule.setEnabled(false); // Mặc định disable
+        btnSaveSchedule.setBackground(Color.GRAY); // Mặc định xám
+        btnSaveSchedule.setForeground(Color.WHITE); 
+        btnSaveSchedule.setFont(new Font("Segoe UI", Font.BOLD, 13));
+
+        // [CẬP NHẬT Ở ĐÂY] - Bắt sự kiện Tích vào Checkbox
+        chkRepeat.addActionListener(e -> {
+            boolean isChecked = chkRepeat.isSelected();
+            spnRepeatWeeks.setEnabled(isChecked);
+            btnSaveSchedule.setEnabled(isChecked);
+            
+            if(isChecked) {
+                btnSaveSchedule.setBackground(new Color(46, 139, 87)); // Đổi xanh khi được tích
+            } else {
+                btnSaveSchedule.setBackground(Color.GRAY); // Đổi về xám khi bỏ tích
+            }
+        });
+
         centerTool.add(chkRepeat); centerTool.add(spnRepeatWeeks); centerTool.add(new JLabel("tuần")); centerTool.add(Box.createHorizontalStrut(10)); centerTool.add(btnSaveSchedule);
         gbc.gridx = 1; gbc.weightx = 0.4; gbc.anchor = GridBagConstraints.CENTER; commonToolbar.add(centerTool, gbc);
         

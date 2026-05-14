@@ -39,7 +39,6 @@ public class CustomerService {
         return null; // Lỗi CSDL
     }
     
-    // Thêm hàm này vào CustomerService.java
     public CustomerModel findCustomerByPhone(String phone) {
         if (phone == null || phone.trim().isEmpty()) {
             return null;
@@ -47,7 +46,6 @@ public class CustomerService {
         return customerDAO.findCustomerByPhone(phone);
     }
     
-    // Thêm hàm này vào CustomerService.java
     public CustomerModel registerNewCustomer(String phone, String name) throws SQLException, ClassNotFoundException {
         if (phone == null || phone.trim().isEmpty() || name == null || name.trim().isEmpty()) {
             return null;
@@ -62,5 +60,10 @@ public class CustomerService {
             return newCustomer;
         }
         return null;
+    }
+
+    // [SỬA LỖI ORA-00904] Nhận điểm đã tính toán từ Java Controller đẩy xuống
+    public void addPointsToCustomerByOrderId(int orderId, int pointsToAdd) {
+        customerDAO.addPointsToCustomerByOrderId(orderId, pointsToAdd);
     }
 }

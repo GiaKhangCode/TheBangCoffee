@@ -28,15 +28,15 @@ public class CustomerDAO {
 
     // 2. Thêm khách hàng mới và trả về Mã Khách Hàng (ID tự tăng)
     public int insertAndGetId(CustomerModel customer) throws SQLException, ClassNotFoundException {
-        // [SỬA]: Đổi tên bảng và tên cột khớp với CSDL Oracle của bạn
+        // Đổi tên bảng và tên cột khớp với CSDL Oracle
         String sql = "INSERT INTO KHACH_HANG (SoDienThoai, HoTen, DiemTichLuy) VALUES (?, ?, 0)";
         
         try (Connection conn = getMyConnection();
-             // [SỬA]: Chỉ định rõ cột MAKHACHHANG để lấy ID tự tăng trong Oracle
+             // Chỉ định rõ cột MAKHACHHANG để lấy ID tự tăng trong Oracle
              PreparedStatement ps = conn.prepareStatement(sql, new String[]{"MAKHACHHANG"})) {
             
             ps.setString(1, customer.getSoDienThoai());
-            ps.setString(2, customer.getTenKH()); // Thuộc tính TenKH trong Model map với cột HoTen trong CSDL
+            ps.setString(2, customer.getTenKH()); 
             
             int affectedRows = ps.executeUpdate();
             
@@ -52,5 +52,20 @@ public class CustomerDAO {
             throw e;
         }
         return -1; // Thất bại
+    }
+
+    // 3. [SỬA LỖI ORA-00904] Cập nhật lại câu lệnh SQL đơn giản và an toàn tuyệt đối
+    public void addPointsToCustomerByOrderId(int orderId, int pointsToAdd) {
+        String sql = "UPDATE KHACH_HANG SET DiemTichLuy = DiemTichLuy + ? " +
+                     "WHERE MaKhachHang = (SELECT MaKhachHang FROM DON_HANG WHERE MaDonHang = ? AND MaKhachHang IS NOT NULL)";
+
+        try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, pointsToAdd); // Truyền trực tiếp số điểm đã được tính toán từ Controller
+            ps.setInt(2, orderId);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

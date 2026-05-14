@@ -11,12 +11,6 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Giao diện chính cao cấp (Modern Management Dashboard) - The Bang Coffee.
- * Thiết kế theo phong cách Apple/Material, đồng bộ với LoginFrame.
- * 
- * @author Antigravity
- */
 public class MainFrame extends JFrame {
 
     private SidebarPanel sidebar;
@@ -31,8 +25,6 @@ public class MainFrame extends JFrame {
     private EmployeeSchedulePanel shiftPanel;
     private PosPanel posPanel; 
     private DashboardPanel dashboardPanel;
-    
-    // [MỚI] Thêm OrderPanel để quản lý hóa đơn
     private OrderPanel orderPanel; 
     
     public MainFrame() throws SQLException {
@@ -51,16 +43,13 @@ public class MainFrame extends JFrame {
         setSize(screenWidth, screenHeight);
         setLocationRelativeTo(null);
 
-        // Nền chính
         getContentPane().setBackground(AppColor.BG_LIGHT);
         setLayout(new BorderLayout(0, 0));
 
-        // 1. Sidebar Panel (Light Minimalist)
         sidebar = new SidebarPanel();
         int sidebarWidth = (int) (screenWidth * 0.18); 
         sidebar.setPreferredSize(new Dimension(sidebarWidth, screenHeight)); 
         
-        // Logo Section
         JLabel logoTitle = new JLabel("The Bang Coffee");
         int logoFontSize = Math.max(18, (int) (screenWidth * 0.014)); 
         logoTitle.setFont(new Font("Segoe UI", Font.BOLD, logoFontSize));
@@ -74,7 +63,6 @@ public class MainFrame extends JFrame {
         
         sidebar.add(logoTitle);
 
-        // Menu Nút điều hướng
         navButtons = new HashMap<>();
         addMenuButton("Tạo đơn", "POS", "Order");
         addMenuButton("Quản lý đơn hàng", "BILL", "OrderList");
@@ -86,12 +74,14 @@ public class MainFrame extends JFrame {
         addMenuButton("Cài đặt", "SETTINGS", "Settings");
         
         sidebar.add(Box.createVerticalGlue());
+        
+        // [MỚI] Khởi tạo nút Mở/Đóng ca. Mặc định là Mở ca. Controller sẽ đổi tên sau.
+        addMenuButton("Mở ca", "LOCK", "ShiftToggle"); 
         addMenuButton("Đăng xuất", "EXIT", "Logout");
         
         int bottomGap = (int) (screenHeight * 0.029); 
         sidebar.add(Box.createRigidArea(new Dimension(0, bottomGap)));
 
-        // 2. Main Container
         mainContainer = new JPanel(new BorderLayout());
         mainContainer.setOpaque(false);
         
@@ -100,20 +90,16 @@ public class MainFrame extends JFrame {
         int mainPaddingBottom = (int) (screenHeight * 0.035); 
         mainContainer.setBorder(new EmptyBorder(mainPaddingTop, mainPaddingSide, mainPaddingBottom, mainPaddingSide));
 
-
-        // Content Area
         cardLayout = new CardLayout(0, 0);
         contentArea = new JPanel(cardLayout);
         contentArea.setOpaque(false);
 
-        // Khởi tạo các Panel chức năng
         this.dashboardPanel = new DashboardPanel();
         contentArea.add(this.dashboardPanel, "Stats");
         
         this.posPanel = new PosPanel();
         contentArea.add(this.posPanel, "Order");
         
-        // [MỚI] Khởi tạo và gắn OrderPanel vào CardLayout
         this.orderPanel = new OrderPanel();
         contentArea.add(this.orderPanel, "OrderList");
         
@@ -133,11 +119,9 @@ public class MainFrame extends JFrame {
 
         mainContainer.add(contentArea, BorderLayout.CENTER);
 
-        // 3. Lắp ráp
         add(sidebar, BorderLayout.WEST);
         add(mainContainer, BorderLayout.CENTER);
         
-        // Mặc định chọn Dashboard (Stats)
         setPageActive("Stats");
     }
 
@@ -150,7 +134,7 @@ public class MainFrame extends JFrame {
         int gapSmall = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.006); 
         sidebar.add(Box.createRigidArea(new Dimension(0, gapSmall)));
         
-        if (!cardName.equals("Logout")) {
+        if (!cardName.equals("Logout") && !cardName.equals("ShiftToggle")) {
             btn.addActionListener(e -> {
                 try {
                     setPageActive(cardName);
@@ -161,11 +145,17 @@ public class MainFrame extends JFrame {
         }
     }
 
-    private void setPageActive(String cardName) throws SQLException {
+    public void setPageActive(String cardName) throws SQLException {
         if (!cardName.equals("Logout") && SessionManager.isLoggedIn() && !ValidationUtil.validateSession()) {
             SessionManager.clear();
             this.setVisible(false);
             new AccountController();
+            return;
+        }
+        
+        // [QUAN TRỌNG] KHÓA TAB POS KHI CHƯA MỞ CA
+        if (cardName.equals("Order") && !SessionManager.hasOpenShift()) {
+            JOptionPane.showMessageDialog(this, "Bạn chưa mở ca! Vui lòng Mở ca làm việc trước khi vào chức năng Bán hàng.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
         
@@ -185,46 +175,38 @@ public class MainFrame extends JFrame {
             navButtons.get("Logout").addActionListener(listener);
         }
     }
+    
+    // [MỚI] Hàm cập nhật chữ của nút (Mở ca / Đóng ca)
+    public void setShiftButtonState(boolean hasOpenShift) {
+        if (navButtons != null && navButtons.containsKey("ShiftToggle")) {
+            navButtons.get("ShiftToggle").setText(hasOpenShift ? "Đóng ca" : "Mở ca");
+        }
+    }
+
+    // [MỚI] Lắng nghe sự kiện của nút Mở/Đóng ca
+    public void addShiftToggleListener(ActionListener listener) {
+        if (navButtons != null && navButtons.containsKey("ShiftToggle")) {
+            navButtons.get("ShiftToggle").addActionListener(listener);
+        }
+    }
 
     public static void main(String[] args) {}
     
-    public StockPanel getStockPanel(){
-        return stockPanel;
-    }
-    
-    public MenuPanel getMenuPanel(){
-        return menuPanel;
-    }
-    
-    public RolePanel getRolePanel(){
-        return rolePanel;
-    }
-    
-    public PosPanel getPosPanel(){
-        return posPanel;
-    }
-    
-    public EmployeeSchedulePanel getShiftPanel(){
-        return shiftPanel;
-    }
-    
-    // [MỚI] Getter để Controller có thể truy cập OrderPanel
-    public OrderPanel getOrderPanel() {
-        return orderPanel;
-    }
+    public StockPanel getStockPanel(){ return stockPanel; }
+    public MenuPanel getMenuPanel(){ return menuPanel; }
+    public RolePanel getRolePanel(){ return rolePanel; }
+    public PosPanel getPosPanel(){ return posPanel; }
+    public EmployeeSchedulePanel getShiftPanel(){ return shiftPanel; }
+    public OrderPanel getOrderPanel() { return orderPanel; }
     
     public void setRoleMenuVisible(boolean isVisible) {
         if (navButtons != null && navButtons.containsKey("Role")) {
             NavButton roleBtn = navButtons.get("Role");
             roleBtn.setVisible(isVisible);
-            
             sidebar.revalidate();
             sidebar.repaint();
         }
     }
         
-    public DashboardPanel getDashboardPanel(){
-        return dashboardPanel;
-    }
-
+    public DashboardPanel getDashboardPanel(){ return dashboardPanel; }
 }
