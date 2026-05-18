@@ -20,6 +20,8 @@ public class LoyaltyManagementPanel extends JPanel {
     private JButton btnAddTier;
     private JButton btnSyncTiers;
     private ActionButtonListener actionListener;
+    private boolean hasEditPermission = true;
+    private boolean hasDeletePermission = true;
 
     private JTextField txtTienTichMotDiem;
     private JTextField txtGiaTriMotDiem;
@@ -162,6 +164,21 @@ public class LoyaltyManagementPanel extends JPanel {
         this.actionListener = listener;
     }
 
+    public void setActionPermissions(boolean canEdit, boolean canDelete) {
+        this.hasEditPermission = canEdit;
+        this.hasDeletePermission = canDelete;
+        
+        // Khóa các ô nhập tỷ lệ quy đổi nếu không có quyền sửa
+        txtTienTichMotDiem.setEditable(canEdit);
+        txtGiaTriMotDiem.setEditable(canEdit);
+        txtDiemDoiMotLy.setEditable(canEdit);
+        
+        // Vẽ lại bảng để cập nhật trạng thái các nút hành động (Sửa/Xóa)
+        if (tierTable != null) {
+            tierTable.repaint();
+        }
+    }
+
     class ActionPanel extends JPanel {
         JButton btnEdit = new JButton("Sửa");
         JButton btnDelete = new JButton("Xóa");
@@ -190,8 +207,8 @@ public class LoyaltyManagementPanel extends JPanel {
                 panel.btnDelete.setEnabled(false);
             } else {
                 panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
-                panel.btnEdit.setEnabled(true);
-                panel.btnDelete.setEnabled(true);
+                panel.btnEdit.setEnabled(hasEditPermission);
+                panel.btnDelete.setEnabled(hasDeletePermission);
             }
             return panel;
         }
@@ -214,8 +231,8 @@ public class LoyaltyManagementPanel extends JPanel {
                 panel.btnDelete.setEnabled(false);
             } else {
                 panel.setBackground(table.getSelectionBackground()); 
-                panel.btnEdit.setEnabled(true);
-                panel.btnDelete.setEnabled(true);
+                panel.btnEdit.setEnabled(hasEditPermission);
+                panel.btnDelete.setEnabled(hasDeletePermission);
             }
             return panel;
         }

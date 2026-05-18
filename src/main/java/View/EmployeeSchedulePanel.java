@@ -151,7 +151,7 @@ public class EmployeeSchedulePanel extends JPanel {
     public void clearShiftForm() {
         currentMaCa = 0;
         txtTenCa.setText(""); 
-        txtTenCa.setEditable(true); 
+        txtTenCa.setEditable(hasEditPermission); 
         
         // [CẬP NHẬT] Đưa JSpinner về mốc 00:00 mặc định
         try {
@@ -160,9 +160,9 @@ public class EmployeeSchedulePanel extends JPanel {
             spnGioKetThuc.setValue(defaultTime);
         } catch (Exception e) {}
         
-        spnGioBatDau.setEnabled(true); 
-        spnGioKetThuc.setEnabled(true);
-        btnSaveShift.setVisible(true); 
+        spnGioBatDau.setEnabled(hasEditPermission); 
+        spnGioKetThuc.setEnabled(hasEditPermission);
+        btnSaveShift.setVisible(hasEditPermission); 
         btnDeleteShift.setVisible(false); 
         
         if (selectedCard != null) { selectedCard.setHighlight(false); selectedCard = null; }
@@ -335,11 +335,12 @@ public class EmployeeSchedulePanel extends JPanel {
                         spnGioKetThuc.setValue(sdf.parse(shift.getGioKetThuc()));
                     } catch (Exception ex) {}
 
-                    txtTenCa.setEditable(isActive); 
-                    spnGioBatDau.setEnabled(isActive); 
-                    spnGioKetThuc.setEnabled(isActive);
+                    txtTenCa.setEditable(isActive && hasEditPermission); 
+                    spnGioBatDau.setEnabled(isActive && hasEditPermission); 
+                    spnGioKetThuc.setEnabled(isActive && hasEditPermission);
                     
-                    btnSaveShift.setVisible(isActive); btnDeleteShift.setVisible(isActive);
+                    btnSaveShift.setVisible(isActive && hasEditPermission); 
+                    btnDeleteShift.setVisible(isActive && hasDeletePermission);
                     if(!isActive) JOptionPane.showMessageDialog(EmployeeSchedulePanel.this, "Ca làm việc này đã ngưng sử dụng nên không thể chỉnh sửa.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                 }
                 public void mouseEntered(MouseEvent e) {
@@ -436,6 +437,11 @@ public class EmployeeSchedulePanel extends JPanel {
                 if (e.getClickCount() == 2) { 
                     int r = scheduleTable.rowAtPoint(e.getPoint()), c = scheduleTable.columnAtPoint(e.getPoint());
                     if (c > 0) { 
+                        // Kiểm tra quyền chỉnh sửa
+                        if (!hasEditPermission) {
+                            JOptionPane.showMessageDialog(EmployeeSchedulePanel.this, "Bạn không có quyền chỉnh sửa lịch làm việc!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                            return;
+                        }
                         if (currentPointer.plusDays(c - 1).isBefore(LocalDate.now())) {
                             JOptionPane.showMessageDialog(EmployeeSchedulePanel.this, "Không thể thay đổi lịch làm việc của ngày trong quá khứ!", "Cảnh báo", JOptionPane.WARNING_MESSAGE); return; 
                         }
@@ -709,6 +715,35 @@ public class EmployeeSchedulePanel extends JPanel {
     public void addSaveScheduleListener(ActionListener l) { btnSaveSchedule.addActionListener(l); }
     public void addSaveShiftListener(ActionListener l) { btnSaveShift.addActionListener(l); }
     public void addDeleteShiftListener(ActionListener l) { btnDeleteShift.addActionListener(l); }
+
+    public JButton getBtnSaveShift() { return btnSaveShift; }
+    public JButton getBtnDeleteShift() { return btnDeleteShift; }
+    public JButton getBtnSaveSchedule() { return btnSaveSchedule; }
+    public JButton getBtnConfirm() { return btnConfirm; }
+    
+    // --- PHÂN QUYỀN ---
+    private boolean hasEditPermission = true;
+    private boolean hasDeletePermission = true;
+    
+    public void setActionPermissions(boolean canEdit, boolean canDelete) {
+        this.hasEditPermission = canEdit;
+        this.hasDeletePermission = canDelete;
+        
+        // Cập nhật hiển thị của các nút
+        btnSaveShift.setVisible(canEdit);
+        btnDeleteShift.setVisible(canDelete);
+        btnSaveSchedule.setVisible(canEdit);
+        
+        // Vô hiệu hóa checkbox lặp lịch tuần khi không có quyền chỉnh sửa
+        chkRepeat.setEnabled(canEdit);
+        spnRepeatWeeks.setEnabled(false);
+        if (!canEdit) {
+            chkRepeat.setSelected(false);
+        }
+        
+        // Đồng bộ trạng thái các trường nhập liệu ca làm việc ở Tab 1
+        clearShiftForm();
+    }
 
     public class IOSSwitch extends JComponent {
         private boolean selected = false; private float animation = 0f; private Timer timer;

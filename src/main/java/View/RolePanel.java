@@ -76,6 +76,13 @@ public class RolePanel extends JPanel {
     private RoleActionListener roleGroupTableListener; 
     // --------------------------------------------------------
    
+    // --- THÊM CÁC BIẾN NÀY CHO TAB 6 (QUẢN LÝ TÀI KHOẢN) ---
+    private DefaultTableModel accountManagementTableModel;
+    private JTable accountManagementTable;
+    private JButton btnAddEmployeeAccount;
+    private AccountManagementActionListener accountManagementListener;
+    // --------------------------------------------------------
+   
     private boolean hasEditPermission = true;
     private boolean hasDeletePermission = true;
 
@@ -119,6 +126,7 @@ public class RolePanel extends JPanel {
         tabbedPane.addTab("Cấu hình nhóm quyền - tài khoản", createAccountRoleTab());
         tabbedPane.addTab("Cấu hình tài Khoản - phạm vi quyền riêng", createAccountScopeTab());
         tabbedPane.addTab("Quản lý nhóm quyền", createRoleGroupManagerTab());
+        tabbedPane.addTab("Quản lý tài khoản", createAccountManagementTab());
         add(tabbedPane, BorderLayout.CENTER);
         
     }
@@ -563,6 +571,318 @@ public class RolePanel extends JPanel {
         return panel;
     }
     
+    // ==========================================================
+    // TAB 6: QUẢN LÝ TÀI KHOẢN
+    // ==========================================================
+    private JPanel createAccountManagementTab() {
+        JPanel panel = new JPanel(new BorderLayout(15, 15));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(new EmptyBorder(15, 15, 15, 15));
+
+        JPanel centerPanel = new JPanel(new BorderLayout(0, 15));
+        centerPanel.setOpaque(false);
+
+        JLabel lblTitle = new JLabel("Danh sách tài khoản nhân viên");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, labelFont));
+        lblTitle.setForeground(PRIMARY_COLOR);
+
+        // Các cột bảng
+        String[] columns = {"STT", "Họ tên", "Email", "Số điện thoại", "Tên đăng nhập", "Trạng thái", "Đăng nhập lần đầu", "Hành động"};
+        this.accountManagementTableModel = new DefaultTableModel(null, columns) {
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return c == 7; // Chỉ cột "Hành động" mới editable
+            }
+        };
+
+        this.accountManagementTable = new JTable(this.accountManagementTableModel);
+        ComponentUI.styleTable(this.accountManagementTable, TEXT_DARK, TEXT_DARK, PRIMARY_COLOR);
+        this.accountManagementTable.setRowHeight((int)(screenH * 0.048));
+
+        // Thiết lập độ rộng cột
+        this.accountManagementTable.getColumnModel().getColumn(0).setPreferredWidth(40);  // STT
+        this.accountManagementTable.getColumnModel().getColumn(1).setPreferredWidth(180); // Họ tên
+        this.accountManagementTable.getColumnModel().getColumn(2).setPreferredWidth(200); // Email
+        this.accountManagementTable.getColumnModel().getColumn(3).setPreferredWidth(130); // SĐT
+        this.accountManagementTable.getColumnModel().getColumn(4).setPreferredWidth(130); // TĐN
+        this.accountManagementTable.getColumnModel().getColumn(5).setPreferredWidth(140); // Trạng thái
+        this.accountManagementTable.getColumnModel().getColumn(6).setPreferredWidth(150); // Đăng nhập lần đầu
+        this.accountManagementTable.getColumnModel().getColumn(7).setPreferredWidth(130); // Hành động
+
+        // Gắn renderer/editor cho cột Hành động
+        TableColumn actionCol = this.accountManagementTable.getColumnModel().getColumn(7);
+        actionCol.setCellRenderer(new AccountActionButtonRenderer(new AccountActionPanel()));
+        actionCol.setCellEditor(new AccountActionButtonEditor(row -> {
+            if (accountManagementListener != null) accountManagementListener.onToggleStatus(row);
+        }, new AccountActionPanel()));
+
+        centerPanel.add(lblTitle, BorderLayout.NORTH);
+        centerPanel.add(new JScrollPane(this.accountManagementTable), BorderLayout.CENTER);
+
+        // Nút thêm tài khoản
+        this.btnAddEmployeeAccount = ComponentUI.createModernButton("+ Thêm tài khoản nhân viên", PRIMARY_COLOR, Color.WHITE);
+        this.btnAddEmployeeAccount.setPreferredSize(new Dimension((int)(screenW * 0.16), (int)(screenH * 0.046)));
+
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        footer.setOpaque(false);
+        footer.add(btnAddEmployeeAccount);
+        centerPanel.add(footer, BorderLayout.SOUTH);
+
+        panel.add(centerPanel, BorderLayout.CENTER);
+        return panel;
+    }
+
+    /**
+     * Đổ danh sách tài khoản vào bảng Tab 6.
+     */
+    public void loadAccountsToManagementTable(java.util.List<Model.AccountModel> accounts) {
+        accountManagementTableModel.setRowCount(0);
+        if (accounts == null) return;
+        int stt = 1;
+        for (Model.AccountModel acc : accounts) {
+            String trangThai = acc.getStatus() != null ? acc.getStatus() : "Đang hoạt động";
+            String firstLogin = acc.getFirstLogin() == 1 ? "Đã đổi mật khẩu" : "Chưa đổi mật khẩu";
+            accountManagementTableModel.addRow(new Object[]{
+                stt++,
+                acc.getFullName(),
+                acc.getEmail(),
+                acc.getPhoneNumber(),
+                acc.getUsername(),
+                trangThai,
+                firstLogin,
+                "" // Cột hành động
+            });
+        }
+    }
+
+    /**
+     * Dialog tùy biến tạo tài khoản nhân viên mới, được thiết kế y hệt RegisterFrame.
+     */
+    public class AddEmployeeAccountDialog extends JDialog {
+        private JTextField txtFullName;
+        private JTextField txtEmail;
+        private JTextField txtPhone;
+        private JTextField txtUsername;
+        private JButton btnConfirm;
+        private JButton btnCancel;
+        private boolean confirmed = false;
+
+        public AddEmployeeAccountDialog(Frame parent) {
+            super(parent, "Tạo Tài Khoản Nhân Viên", true);
+            setUndecorated(true); // Ẩn viền cửa sổ mặc định để tự vẽ cho hiện đại
+            initUI();
+        }
+
+        private void initUI() {
+            JPanel containerPanel = new JPanel() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    // Vẽ nền bo góc nhẹ
+                    g2.setColor(new Color(245, 248, 245));
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                    // Vẽ viền ngoài mượt mà màu xanh lá cây nhạt
+                    g2.setColor(PRIMARY_COLOR);
+                    g2.setStroke(new BasicStroke(1.5f));
+                    g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 20, 20);
+                    g2.dispose();
+                }
+            };
+            containerPanel.setOpaque(false);
+            containerPanel.setLayout(new BorderLayout(0, 0));
+            containerPanel.setBorder(new EmptyBorder(20, 25, 20, 25));
+
+            // --- HEADER ---
+            JPanel headerPanel = new JPanel(new GridLayout(2, 1, 0, 4));
+            headerPanel.setOpaque(false);
+
+            JLabel titleLabel = new JLabel("TẠO TÀI KHOẢN MỚI", JLabel.CENTER);
+            titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+            titleLabel.setForeground(PRIMARY_COLOR);
+
+            JLabel subLabel = new JLabel("Vui lòng nhập đầy đủ thông tin nhân viên bên dưới", JLabel.CENTER);
+            subLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            subLabel.setForeground(new Color(120, 120, 120));
+
+            headerPanel.add(titleLabel);
+            headerPanel.add(subLabel);
+
+            // --- FORM PANEL (Thiết kế TitledBorder như RegisterFrame) ---
+            JPanel formPanel = new JPanel();
+            formPanel.setOpaque(false);
+            formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
+            formPanel.setBorder(new EmptyBorder(15, 0, 15, 0));
+
+            Font fieldFont = new Font("Segoe UI", Font.PLAIN, 14);
+            Font borderFont = new Font("Segoe UI", Font.PLAIN, 13);
+            int fieldHeight = 50;
+
+            // 1. Họ và tên
+            txtFullName = new JTextField();
+            txtFullName.setFont(fieldFont);
+            txtFullName.setPreferredSize(new Dimension(380, fieldHeight));
+            txtFullName.setMaximumSize(new Dimension(380, fieldHeight));
+            javax.swing.border.TitledBorder borderName = BorderFactory.createTitledBorder("Họ Tên");
+            borderName.setTitleFont(borderFont);
+            txtFullName.setBorder(borderName);
+
+            // 2. Email
+            txtEmail = new JTextField();
+            txtEmail.setFont(fieldFont);
+            txtEmail.setPreferredSize(new Dimension(380, fieldHeight));
+            txtEmail.setMaximumSize(new Dimension(380, fieldHeight));
+            javax.swing.border.TitledBorder borderEmail = BorderFactory.createTitledBorder("Email");
+            borderEmail.setTitleFont(borderFont);
+            txtEmail.setBorder(borderEmail);
+
+            // 3. Số điện thoại
+            txtPhone = new JTextField();
+            txtPhone.setFont(fieldFont);
+            txtPhone.setPreferredSize(new Dimension(380, fieldHeight));
+            txtPhone.setMaximumSize(new Dimension(380, fieldHeight));
+            javax.swing.border.TitledBorder borderPhone = BorderFactory.createTitledBorder("Số điện thoại");
+            borderPhone.setTitleFont(borderFont);
+            txtPhone.setBorder(borderPhone);
+
+            // 4. Tên đăng nhập
+            txtUsername = new JTextField();
+            txtUsername.setFont(fieldFont);
+            txtUsername.setPreferredSize(new Dimension(380, fieldHeight));
+            txtUsername.setMaximumSize(new Dimension(380, fieldHeight));
+            javax.swing.border.TitledBorder borderUser = BorderFactory.createTitledBorder("Tên Đăng Nhập");
+            borderUser.setTitleFont(borderFont);
+            txtUsername.setBorder(borderUser);
+
+            formPanel.add(txtFullName);
+            formPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+            formPanel.add(txtEmail);
+            formPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+            formPanel.add(txtPhone);
+            formPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+            formPanel.add(txtUsername);
+
+            // --- INFO LABEL ---
+            JLabel lblInfo = new JLabel("<html><i>* Mật khẩu mặc định: <b>123456</b> (nhân viên bắt buộc đổi khi đăng nhập lần đầu)</i></html>", JLabel.CENTER);
+            lblInfo.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+            lblInfo.setForeground(new Color(130, 130, 130));
+            lblInfo.setAlignmentX(Component.CENTER_ALIGNMENT);
+            formPanel.add(Box.createRigidArea(new Dimension(0, 12)));
+            formPanel.add(lblInfo);
+
+            // --- BUTTONS ---
+            JPanel btnPanel = new JPanel(new GridLayout(1, 2, 15, 0));
+            btnPanel.setOpaque(false);
+            btnPanel.setBorder(new EmptyBorder(10, 0, 5, 0));
+
+            btnConfirm = new JButton("ĐĂNG KÝ MỚI") {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(getBackground());
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                    g2.dispose();
+                    super.paintComponent(g);
+                }
+            };
+            btnConfirm.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            btnConfirm.setBackground(PRIMARY_COLOR);
+            btnConfirm.setForeground(Color.WHITE);
+            btnConfirm.setContentAreaFilled(false);
+            btnConfirm.setFocusPainted(false);
+            btnConfirm.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btnConfirm.setPreferredSize(new Dimension(180, 42));
+
+            btnCancel = new JButton("QUAY LẠI") {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(getBackground());
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                    g2.dispose();
+                    super.paintComponent(g);
+                }
+            };
+            btnCancel.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            btnCancel.setBackground(new Color(220, 220, 220));
+            btnCancel.setForeground(Color.BLACK);
+            btnCancel.setContentAreaFilled(false);
+            btnCancel.setFocusPainted(false);
+            btnCancel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btnCancel.setPreferredSize(new Dimension(180, 42));
+
+            btnConfirm.addActionListener(e -> {
+                String fullName = txtFullName.getText().trim();
+                String email = txtEmail.getText().trim();
+                String phone = txtPhone.getText().trim();
+                String username = txtUsername.getText().trim();
+
+                if (fullName.isEmpty() || email.isEmpty() || phone.isEmpty() || username.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Vui lòng điền đầy đủ tất cả các trường!", "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                confirmed = true;
+                dispose();
+            });
+
+            btnCancel.addActionListener(e -> {
+                confirmed = false;
+                dispose();
+            });
+
+            btnPanel.add(btnConfirm);
+            btnPanel.add(btnCancel);
+
+            containerPanel.add(headerPanel, BorderLayout.NORTH);
+            containerPanel.add(formPanel, BorderLayout.CENTER);
+            containerPanel.add(btnPanel, BorderLayout.SOUTH);
+
+            setContentPane(containerPanel);
+            setPreferredSize(new Dimension(430, 470));
+            pack();
+            setLocationRelativeTo(getOwner());
+        }
+
+        public String[] getResultData() {
+            if (confirmed) {
+                return new String[]{
+                    txtFullName.getText().trim(),
+                    txtEmail.getText().trim(),
+                    txtPhone.getText().trim(),
+                    txtUsername.getText().trim()
+                };
+            }
+            return null;
+        }
+    }
+
+    public String[] showAddEmployeeAccountDialog() {
+        // Tìm cửa sổ cha chứa RolePanel để căn lề JDialog đẹp nhất
+        java.awt.Window parentWindow = javax.swing.SwingUtilities.getWindowAncestor(this);
+        Frame parentFrame = null;
+        if (parentWindow instanceof Frame) {
+            parentFrame = (Frame) parentWindow;
+        }
+        
+        AddEmployeeAccountDialog dialog = new AddEmployeeAccountDialog(parentFrame);
+        dialog.setVisible(true);
+        return dialog.getResultData();
+    }
+
+    // --- Getters cho Tab 6 ---
+    public JButton getBtnAddEmployeeAccount() { return btnAddEmployeeAccount; }
+
+    public void addCreateEmployeeAccountListener(java.awt.event.ActionListener listener) {
+        btnAddEmployeeAccount.addActionListener(listener);
+    }
+
+    public void setAccountManagementActionListener(AccountManagementActionListener listener) {
+        this.accountManagementListener = listener;
+    }
+
     // ==========================================================
     // TAB 5: QUẢN LÝ NHÓM QUYỀN
     // ==========================================================
@@ -1262,4 +1582,85 @@ public class RolePanel extends JPanel {
         }
         @Override public Object getCellEditorValue() { return ""; }
     }
-}
+    
+    // ==========================================================
+    // CLASS HỖ TRỢ TẠO NÚT HÀNH ĐỘNG CHO TAB 6 (QUẢN LÝ TÀI KHOẢN)
+    // ==========================================================
+    public interface AccountManagementActionListener {
+        void onToggleStatus(int row);
+    }
+
+    class AccountActionPanel extends JPanel {
+        protected JButton btnToggle = new JButton("Vô hiệu hoá");
+
+        public AccountActionPanel() {
+            setLayout(new FlowLayout(FlowLayout.CENTER, 0, 4));
+            setOpaque(true);
+            btnToggle.setFont(new Font("Segoe UI", Font.BOLD, 11));
+            btnToggle.setForeground(new Color(255, 140, 0));
+            btnToggle.setBackground(Color.WHITE);
+            btnToggle.setBorder(BorderFactory.createLineBorder(new Color(255, 140, 0), 1));
+            btnToggle.setFocusPainted(false);
+            btnToggle.setPreferredSize(new Dimension(110, 22));
+            btnToggle.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            add(btnToggle);
+        }
+
+        /** Cập nhật nhãn nút dựa vào trạng thái hiện tại của dòng */
+        public void updateLabel(String currentStatus) {
+            if ("Đang hoạt động".equals(currentStatus)) {
+                btnToggle.setText("Vô hiệu hoá");
+                btnToggle.setForeground(new Color(255, 59, 48));
+                btnToggle.setBorder(BorderFactory.createLineBorder(new Color(255, 59, 48), 1));
+            } else {
+                btnToggle.setText("Kích hoạt lại");
+                btnToggle.setForeground(new Color(52, 199, 89));
+                btnToggle.setBorder(BorderFactory.createLineBorder(new Color(52, 199, 89), 1));
+            }
+        }
+    }
+
+    class AccountActionButtonRenderer implements TableCellRenderer {
+        protected AccountActionPanel panel;
+
+        public AccountActionButtonRenderer(AccountActionPanel panel) {
+            this.panel = panel;
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
+            // Lấy trạng thái từ cột 5 (Trạng thái)
+            Object status = table.getValueAt(row, 5);
+            if (status != null) panel.updateLabel(status.toString());
+            return panel;
+        }
+    }
+
+    class AccountActionButtonEditor extends DefaultCellEditor {
+        protected AccountActionPanel panel;
+        protected AccountManagementActionListener listener;
+        protected int currentRow;
+
+        public AccountActionButtonEditor(AccountManagementActionListener listener, AccountActionPanel panel) {
+            super(new JCheckBox());
+            this.listener = listener;
+            this.panel = panel;
+            this.panel.btnToggle.addActionListener(e -> {
+                stopCellEditing();
+                listener.onToggleStatus(currentRow);
+            });
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            currentRow = row;
+            panel.setBackground(table.getSelectionBackground());
+            Object status = table.getValueAt(row, 5);
+            if (status != null) panel.updateLabel(status.toString());
+            return panel;
+        }
+
+        @Override public Object getCellEditorValue() { return ""; }
+    }
+}

@@ -1,8 +1,11 @@
 package Controller;
 
 import Service.CustomerService;
+import Service.RoleService;
+import Model.SessionManager;
 import View.CustomerManagementPanel;
 import View.LoyaltyManagementPanel;
+import View.MainFrame;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
@@ -16,15 +19,30 @@ public class CustomerController {
     private CustomerManagementPanel customerView;
     private LoyaltyManagementPanel loyaltyView;
     private CustomerService customerService;
+    private MainFrame mainFrame;
+    private RoleService roleService;
     
     private static CustomerController instance;
 
-    public CustomerController(CustomerManagementPanel customerView, LoyaltyManagementPanel loyaltyView) {
-        this.customerView = customerView;
-        this.loyaltyView = loyaltyView;
+    public CustomerController(MainFrame mainFrame) {
+        this.mainFrame = mainFrame;
+        this.customerView = mainFrame.getCustomerPanel();
+        this.loyaltyView = mainFrame.getLoyaltyPanel();
         this.customerService = new CustomerService();
+        this.roleService = new RoleService();
         
         instance = this; 
+        
+        try {
+            hiddenButton();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        if (mainFrame != null) {
+            mainFrame.registerPermissionReloader(() -> {
+                try { hiddenButton(); } catch (Exception ex) { ex.printStackTrace(); }
+            });
+        }
         
         initViews();
         initLoyaltyListeners();
@@ -268,5 +286,34 @@ public class CustomerController {
                 JOptionPane.showMessageDialog(loyaltyView, "Lỗi: " + ex.getMessage(), "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+    
+    public void hiddenButton() throws Exception {
+        int currentAccountId = SessionManager.getAccountId();
+        
+        // Khách hàng
+        int functionIdCus = roleService.getFunctionIdByName("Khách hàng");
+        if(functionIdCus == -1) functionIdCus = 1;
+        boolean hasViewCus = roleService.isPermissed("Xem", currentAccountId, functionIdCus);
+        boolean hasAddCus = roleService.isPermissed("Them", currentAccountId, functionIdCus);
+        
+        if (mainFrame != null) mainFrame.setMenuVisible("Customer", hasViewCus);
+        if (customerView.getBtnAddCustomer() != null) customerView.getBtnAddCustomer().setVisible(hasAddCus);
+
+        // Cấu hình tích điểm
+        int functionIdLoy = roleService.getFunctionIdByName("Cấu hình tích điểm");
+        if(functionIdLoy == -1) functionIdLoy = 1;
+        boolean hasViewLoy = roleService.isPermissed("Xem", currentAccountId, functionIdLoy);
+        boolean hasAddLoy = roleService.isPermissed("Them", currentAccountId, functionIdLoy);
+        boolean hasEditLoy = roleService.isPermissed("Sua", currentAccountId, functionIdLoy);
+        boolean hasDeleteLoy = roleService.isPermissed("Xoa", currentAccountId, functionIdLoy);
+        
+        if (mainFrame != null) mainFrame.setMenuVisible("Loyalty", hasViewLoy);
+        
+        if (loyaltyView.getBtnAddTier() != null) loyaltyView.getBtnAddTier().setVisible(hasAddLoy);
+        if (loyaltyView.getBtnSyncTiers() != null) loyaltyView.getBtnSyncTiers().setVisible(hasEditLoy);
+        if (loyaltyView.getBtnSaveRule() != null) loyaltyView.getBtnSaveRule().setVisible(hasEditLoy);
+        
+        loyaltyView.setActionPermissions(hasEditLoy, hasDeleteLoy);
     }
 }

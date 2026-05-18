@@ -19,7 +19,6 @@ public class LoginFrame extends JFrame {
     private JButton loginBtn;
     private JTextField userField;
     private JPasswordField passField;
-    private JLabel signUpLabel;
     private JLabel forgotPassLabel;
     private final Color PRIMARY_COLOR = new Color(67, 142, 104);
     public LoginFrame() {
@@ -119,17 +118,13 @@ public class LoginFrame extends JFrame {
         loginBtn.setFocusPainted(false);
         loginBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Links (Quên mật khẩu / Đăng ký)
+        // Links (chỉ để lại Quên mật khẩu, đã xóa chức năng tự đăng ký)
         JPanel linksPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, gapSmall, 0));
         linksPanel.setOpaque(false);
         forgotPassLabel = new JLabel("<html><u>Quên mật khẩu?</u></html>");
         forgotPassLabel.setFont(linkFont);
-        signUpLabel = new JLabel("<html><u>Đăng ký</u></html>");
-        signUpLabel.setFont(linkFont);
         forgotPassLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        signUpLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         linksPanel.add(forgotPassLabel);
-        linksPanel.add(signUpLabel);
 
         // Lắp ráp các thành phần vào Glass Panel
         // 1. Thêm khoảng trống co giãn ở trên cùng để đẩy nội dung xuống giữa
@@ -201,9 +196,6 @@ public class LoginFrame extends JFrame {
     }
     public void addLoginListener(ActionListener listener) {
         loginBtn.addActionListener(listener);
-    }
-    public void addSignUpListener(java.awt.event.MouseListener listener) {
-        signUpLabel.addMouseListener(listener);
     }
     public void addForgotPasswordListener(java.awt.event.MouseListener listener) {
         forgotPassLabel.addMouseListener(listener);

@@ -51,6 +51,7 @@ public class StockPanel extends JPanel {
     
     private JButton btnManageCategory; 
     private JButton btnAddNewIngredient;
+    private JButton btnImport;
     
     // Listeners
     private ActionButtonListener inventoryActionListener;
@@ -128,7 +129,7 @@ public class StockPanel extends JPanel {
         cbCategory = new AutoCompleteComboBox<>(); 
         
         btnAddNewIngredient = ComponentUI.createModernButton("Thêm Nguyên Liệu", new Color(0, 122, 255), Color.WHITE);
-        JButton btnImport = ComponentUI.createModernButton("Nhập Hàng", PRIMARY_COLOR, Color.WHITE);
+        btnImport = ComponentUI.createModernButton("Nhập Hàng", PRIMARY_COLOR, Color.WHITE);
         
         btnHistory.addActionListener(e -> cardLayout.show(mainContainer, "HistoryList"));
         btnManageCategory.addActionListener(e -> cardLayout.show(mainContainer, "CategoryList")); 
@@ -631,7 +632,10 @@ public class StockPanel extends JPanel {
         protected ActionPanel panel;
         public ActionButtonRenderer(boolean showDetail, boolean showEdit, boolean showDelete) { this.panel = new ActionPanel(showDetail, showEdit, showDelete); }
         @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE); return panel;
+            panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE); 
+            if (panel.btnEdit != null) panel.btnEdit.setVisible(hasEditPermission);
+            if (panel.btnDelete != null) panel.btnDelete.setVisible(hasDeletePermission);
+            return panel;
         }
     }
 
@@ -644,7 +648,10 @@ public class StockPanel extends JPanel {
             if (showDelete) this.panel.btnDelete.addActionListener(e -> { stopCellEditing(); listener.onDelete(currentRow); });
         }
         @Override public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            currentRow = row; panel.setBackground(table.getSelectionBackground()); return panel;
+            currentRow = row; panel.setBackground(table.getSelectionBackground()); 
+            if (panel.btnEdit != null) panel.btnEdit.setVisible(hasEditPermission);
+            if (panel.btnDelete != null) panel.btnDelete.setVisible(hasDeletePermission);
+            return panel;
         }
         @Override public Object getCellEditorValue() { return ""; }
     }
@@ -701,6 +708,19 @@ public class StockPanel extends JPanel {
         if (cardTotalIngredients != null) cardTotalIngredients.setValue(String.valueOf(totalTypes));
         if (cardWarning != null) cardWarning.setValue(String.valueOf(warningCount));
     }
+
+    // --- PHÂN QUYỀN ---
+    private boolean hasEditPermission = true;
+    private boolean hasDeletePermission = true;
+    
+    public void setActionPermissions(boolean canEdit, boolean canDelete) {
+        this.hasEditPermission = canEdit;
+        this.hasDeletePermission = canDelete;
+        this.repaint();
+    }
+    
+    public JButton getBtnAddNewIngredient() { return btnAddNewIngredient; }
+    public JButton getBtnImport() { return btnImport; }
     
     public String showAddCategoryDialog() {
         return JOptionPane.showInputDialog(this, "Nhập tên loại nguyên liệu mới:", "Thêm Loại Nguyên Liệu", JOptionPane.QUESTION_MESSAGE);

@@ -1,7 +1,6 @@
 package Controller;
 
 import Common.EmailUtil;
-import Common.ValidationUtil;
 import DatabaseAccessObject.ShiftSessionDAO;
 import DatabaseAccessObject.ShiftDAO;
 import Service.OtpService;
@@ -14,8 +13,7 @@ import Service.SessionService;
 import View.ForgotPasswordFrame;
 import View.LoginFrame;
 import View.MainFrame;
-import View.OtpDialog;
-import View.RegisterFrame;
+import View.FirstLoginDialog;
 import View.ShiftSessionOpenDialog;
 import View.ShiftSessionCloseDialog;
 import java.sql.SQLException;
@@ -27,11 +25,9 @@ import javax.swing.JOptionPane;
 public class AccountController {
     private AccountModel accountModel;
     private LoginFrame loginFrame;
-    private RegisterFrame registerFrame;
     private ForgotPasswordFrame forgotPasswordFrame;
     private MainFrame mainFrame;
     private AccountService accountService;
-    private OtpDialog otpDialog;
     private SessionService sessionService;
     private RoleController roleController;
     private ShiftController shiftController; 
@@ -50,9 +46,7 @@ public class AccountController {
         sessionService = new SessionService();
         
         loginFrame = new LoginFrame();
-        registerFrame = new RegisterFrame();
         forgotPasswordFrame = new ForgotPasswordFrame();
-        otpDialog = new OtpDialog(registerFrame);
         
         initListeners();
         usingUnrevokedToken();
@@ -65,6 +59,20 @@ public class AccountController {
             accountModel = accountService.login(username, password);
             
             if(accountModel != null) {
+                // Kiểm tra tài khoản có bị vô hiệu hoá không
+                if ("Chưa hoạt động".equals(accountModel.getStatus())) {
+                    JOptionPane.showMessageDialog(loginFrame,
+                        "Tài khoản của bạn đã bị vô hiệu hoá. Vui lòng liên hệ quản lý!",
+                        "Tài khoản bị khóa", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                // Kiểm tra đăng nhập lần đầu
+                if (accountModel.getFirstLogin() == 0) {
+                    showFirstLoginPasswordChange(accountModel);
+                    return; // Sau khi xử lý xong sẽ yêu cầu đăng nhập lại
+                }
+                
                 String token = sessionService.loginAndCreateToken(accountModel);
                 SessionManager.setSession(token, accountModel);
                 loginFrame.setVisible(false);
@@ -78,63 +86,6 @@ public class AccountController {
                 JDialog dialog = optionPane.createDialog("Thất Bại");
                 dialog.setAlwaysOnTop(true);
                 dialog.setVisible(true);
-            }
-        });
-        
-        loginFrame.addSignUpListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                loginFrame.setVisible(false);
-                registerFrame.setVisible(true);
-                registerFrame.addBackListener(ev -> {
-                    registerFrame.setVisible(false);
-                    loginFrame.setVisible(true);
-                });
-            }
-        });
-        
-        this.registerFrame.addSignUpListener(ev -> {
-            String fullName = registerFrame.getFullName();
-            String email = registerFrame.getEmail();
-            String phoneNumber = registerFrame.getPhone();
-            String username = registerFrame.getUsername();
-            String password = registerFrame.getPassword();
-            String isValidateLogin = ValidationUtil.checkValidateLogin(fullName, username, password, phoneNumber, email);
-            
-            if(!isValidateLogin.equalsIgnoreCase("Đăng nhập hợp lệ")){
-                JOptionPane optionPane = new JOptionPane( isValidateLogin, JOptionPane.ERROR_MESSAGE);
-                JDialog dialog = optionPane.createDialog("Thất Bại");
-                dialog.setAlwaysOnTop(true);
-                dialog.setVisible(true);
-                return;
-            }
-
-            try {
-                String otp = OtpService.generateOTP(email, OtpService.OtpType.REGISTER);
-                EmailUtil.sendOTP(email, otp, "đăng ký tài khoản");
-            } catch (Exception ex){
-                JOptionPane.showMessageDialog(null, ex.getMessage());
-                return;
-            }
-            
-            otpDialog.setVisible(true);
-            
-            if(!OtpService.verifyOTP(email, otpDialog.getOtp(), OtpService.OtpType.REGISTER)){
-                JOptionPane.showMessageDialog(null, "OTP không đúng hoặc đã hết hạn!");
-                return;
-            }
-            
-            String result = accountService.signUp(fullName, username, password, phoneNumber, email);
-            JOptionPane optionPane = new JOptionPane(result, JOptionPane.INFORMATION_MESSAGE);
-            JDialog dialog = optionPane.createDialog("Đăng ký");
-            dialog.setAlwaysOnTop(true);
-            dialog.setVisible(true);
-            
-            if(result.equals("Thành công")){
-                registerFrame.setVisible(false);
-                loginFrame.setVisible(true);
-                if (this.roleController != null) this.roleController.refreshAccountList();
-                if (this.shiftController != null) this.shiftController.refreshEmployeeList();
             }
         });
         
@@ -201,6 +152,80 @@ public class AccountController {
             forgotPasswordFrame.setVisible(false);
             loginFrame.setVisible(true);
         });
+    }
+
+    /**
+     * Xuử lý luồng đổi mật khẩu bắt buộc khi đăng nhập lần đầu.
+     * Hiển thị FirstLoginDialog, gửi OTP về email, xác nhận và cập nhật flag.
+     */
+    private void showFirstLoginPasswordChange(AccountModel account) {
+        FirstLoginDialog dialog = new FirstLoginDialog(loginFrame);
+        
+        // Sự kiện nút "Gửi OTP về email"
+        dialog.addSendOtpListener(e -> {
+            String newPass = dialog.getNewPassword();
+            String confirmPass = dialog.getConfirmPassword();
+            
+            // Kiểm tra nhập khớp
+            if (newPass.isEmpty() || confirmPass.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Vui lòng nhập mật khẩu mới!", "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (!newPass.equals(confirmPass)) {
+                JOptionPane.showMessageDialog(dialog, "Mật khẩu xác nhận không khớp!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if (newPass.length() < 6) {
+                JOptionPane.showMessageDialog(dialog, "Mật khẩu phải có ít nhất 6 ký tự!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            // Gửi OTP
+            try {
+                String otp = OtpService.generateOTP(account.getEmail(), OtpService.OtpType.RESET_PASSWORD);
+                Common.EmailUtil.sendOTP(account.getEmail(), otp, "thực hiện đổi mật khẩu lần đầu");
+                dialog.onOtpSent();
+                JOptionPane.showMessageDialog(dialog, "OTP đã được gửi về email: " + account.getEmail(), "Gửi OTP thành công", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog, "Không thể gửi OTP: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
+        // Sự kiện nút "Xác nhận đổi mật khẩu"
+        dialog.addConfirmListener(e -> {
+            String otp = dialog.getOtp();
+            String newPass = dialog.getNewPassword();
+            
+            // Kiểm tra OTP
+            if (!OtpService.verifyOTP(account.getEmail(), otp, OtpService.OtpType.RESET_PASSWORD)) {
+                JOptionPane.showMessageDialog(dialog, "OTP không đúng hoặc đã hết hạn!", "OTP không hợp lệ", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            // Đổi mật khẩu
+            boolean pwChanged = accountService.resetPassword(account.getEmail(), newPass);
+            if (!pwChanged) {
+                JOptionPane.showMessageDialog(dialog, "Lỗi cập nhật mật khẩu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            // Cập nhật cờ đăng nhập lần đầu = 1
+            accountService.updateFirstLoginFlag(account.getAccountID());
+            
+            // Thu hồi token hiện tại (nếu có)
+            accountService.revokeAllTokens(account.getEmail());
+            
+            // Đóng dialog
+            dialog.onSuccess();
+            
+            // Thông báo và yêu cầu đăng nhập lại
+            JOptionPane.showMessageDialog(loginFrame,
+                "Đổi mật khẩu thành công! Vui lòng đăng nhập lại bằng mật khẩu mới.",
+                "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            loginFrame.setVisible(true);
+        });
+        
+        dialog.setVisible(true);
     }
 
     private void openMainFrame() throws SQLException {

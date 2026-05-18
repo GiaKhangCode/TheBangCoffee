@@ -2,6 +2,8 @@ package Controller;
 
 import Model.CategoryModel;
 import Service.CategoryService;
+import Service.RoleService;
+import Model.SessionManager;
 import View.CategoryManagementPanel;
 import View.MainFrame;
 
@@ -17,11 +19,19 @@ public class CategoryController {
     private CategoryService service;
     private List<CategoryModel> currentList;
     private MainFrame mainFrame; 
+    private RoleService roleService;
 
     public CategoryController(CategoryManagementPanel view, MainFrame mainFrame) {
         this.view = view;
         this.service = new CategoryService();
         this.mainFrame = mainFrame; 
+        this.roleService = new RoleService();
+
+        try {
+            hiddenButton();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
 
         initListeners();
         loadData();
@@ -114,5 +124,24 @@ public class CategoryController {
         if (mainFrame != null && mainFrame.getPosController() != null) {
             mainFrame.getPosController().reloadPosData();
         }
+    }
+    
+    public void hiddenButton() throws Exception {
+        int currentAccountId = SessionManager.getAccountId();
+        int currentFunctionId = roleService.getFunctionIdByName("Menu đồ uống");
+        if (currentFunctionId == -1) currentFunctionId = 2; // Fallback
+        
+        boolean hasViewPermission = roleService.isPermissed("Xem", currentAccountId, currentFunctionId);
+        boolean hasAddPermission = roleService.isPermissed("Them", currentAccountId, currentFunctionId);
+        boolean hasEditPermission = roleService.isPermissed("Sua", currentAccountId, currentFunctionId);
+        boolean hasDeletePermission = roleService.isPermissed("Xoa", currentAccountId, currentFunctionId);
+        
+        if (!hasViewPermission) {
+            return;
+        }
+        
+        if (view.getBtnAddCategory() != null) view.getBtnAddCategory().setVisible(hasAddPermission);
+        
+        view.setActionPermissions(hasEditPermission, hasDeletePermission);
     }
 }

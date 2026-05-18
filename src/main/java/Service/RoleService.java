@@ -80,6 +80,16 @@ public class RoleService {
         return roleDAO.isPermissed(operationName, accountId, functionId) > 0;
     }
     
+    public int getFunctionIdByName(String functionName) throws SQLException {
+        List<FunctionModel> list = getFunctionList();
+        for(FunctionModel f : list) {
+            if(f.getFunctionName().trim().equalsIgnoreCase(functionName.trim())) {
+                return f.getFunctionId();
+            }
+        }
+        return -1; // Trả về -1 nếu không tìm thấy
+    }
+    
     
     
     

@@ -15,6 +15,8 @@ import Service.OrderService;
 import Service.ProductService;
 import Service.ToppingService;
 import Service.VariantService;
+import Service.RoleService;
+import Model.SessionManager;
 import View.MainFrame;
 import View.OrderOptionDialog;
 import View.OrderPanel;
@@ -55,6 +57,7 @@ public class PosController {
     
     private int globalPointsUsed = 0;
     private long globalDiscountAmount = 0;
+    private RoleService roleService;
 
     public PosController(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
@@ -69,6 +72,18 @@ public class PosController {
         this.toppingService = new ToppingService();
         this.customerService = new CustomerService();
         this.invoiceService = new InvoiceService();
+        this.roleService = new RoleService();
+        
+        try {
+            hiddenButton();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        if (mainFrame != null) {
+            mainFrame.registerPermissionReloader(() -> {
+                try { hiddenButton(); } catch (Exception ex) { ex.printStackTrace(); }
+            });
+        }
         
         this.mainFrame.setPosController(this);
         
@@ -729,5 +744,34 @@ public class PosController {
                 ex.printStackTrace();
             }
         }
+    }
+    
+    public void hiddenButton() throws Exception {
+        int currentAccountId = SessionManager.getAccountId();
+        
+        // 1. Phân quyền Bán hàng (POS)
+        int functionIdPos = roleService.getFunctionIdByName("Bán hàng");
+        if(functionIdPos == -1) functionIdPos = 6;
+        boolean hasViewPos = roleService.isPermissed("Xem", currentAccountId, functionIdPos);
+        boolean hasAddPos = roleService.isPermissed("Them", currentAccountId, functionIdPos);
+        
+        if (mainFrame != null) mainFrame.setMenuVisible("Order", hasViewPos);
+        if (posPanel.getBtnCreateOrder() != null) posPanel.getBtnCreateOrder().setVisible(hasAddPos);
+        if (posPanel.getBtnClearCart() != null) posPanel.getBtnClearCart().setVisible(hasAddPos);
+        if (posPanel.getBtnCheckCustomer() != null) posPanel.getBtnCheckCustomer().setVisible(hasAddPos);
+        if (posPanel.getBtnRegisterCustomer() != null) posPanel.getBtnRegisterCustomer().setVisible(hasAddPos);
+        if (posPanel.getBtnUsePoints() != null) posPanel.getBtnUsePoints().setVisible(hasAddPos);
+        
+        posPanel.setActionPermissions(hasAddPos, hasAddPos); // Edit/Delete trong cart cần quyền Add đơn
+
+        // 2. Phân quyền Quản lý đơn hàng (Order)
+        int functionIdOrder = roleService.getFunctionIdByName("Quản lý đơn hàng");
+        if(functionIdOrder == -1) functionIdOrder = 7;
+        boolean hasViewOrder = roleService.isPermissed("Xem", currentAccountId, functionIdOrder);
+        boolean hasEditOrder = roleService.isPermissed("Sua", currentAccountId, functionIdOrder);
+        boolean hasDeleteOrder = roleService.isPermissed("Xoa", currentAccountId, functionIdOrder);
+        
+        if (mainFrame != null) mainFrame.setMenuVisible("OrderList", hasViewOrder);
+        orderPanel.setActionPermissions(hasEditOrder, hasDeleteOrder);
     }
 }

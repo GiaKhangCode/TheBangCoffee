@@ -33,6 +33,8 @@ public class RoleController {
     private List<AccountModel> currentAccountList;
     private List<RoleModel> currentRolesList;
     private List<RoleGroupModel> currentRoleGroupsList;
+    // Danh sách tài khoản cho Tab 6 Quản lý tài khoản
+    private List<AccountModel> currentAccountManagementList;
     
     public RoleController(MainFrame sharedMainFrame) throws SQLException {
         this.mainFrame = sharedMainFrame;
@@ -41,6 +43,11 @@ public class RoleController {
         this.accountService = new AccountService();
 
         initRoleListeners();
+        if (mainFrame != null) {
+            mainFrame.registerPermissionReloader(() -> {
+                try { hiddenButton(); } catch (Exception ex) { ex.printStackTrace(); }
+            });
+        }
     }
     
     private void initRoleListeners() throws SQLException {
@@ -63,6 +70,9 @@ public class RoleController {
             reloadAccountComboBoxTab4();
             reloadRolesComboBoxTab4();
             reloadRolesTableTab4();
+            
+            // -- Tab 6 Quản lý tài khoản --
+            reloadAccountManagementTable();
             
             initEvents();
         }
@@ -89,7 +99,7 @@ public class RoleController {
                             reloadRolesComboBoxTab2();
                             reloadRolesComboBoxTab4();
                             
-                            hiddenButton();
+                            mainFrame.reloadPermissions();
                             JOptionPane.showMessageDialog(rolePanelView, "Đã thêm phạm vi quyền thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                         }
                         else {
@@ -137,7 +147,7 @@ public class RoleController {
                         reloadRolesTableTab4();
                         reloadRolesComboBoxTab4();
                         
-                        hiddenButton();
+                        mainFrame.reloadPermissions();
                     } catch (SQLException ex) {
                         System.getLogger(RoleController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
                     }
@@ -163,7 +173,7 @@ public class RoleController {
                         reloadRolesTableTab2();
                         reloadRolesComboBoxTab2();
                         
-                        hiddenButton();
+                        mainFrame.reloadPermissions();
                     } catch (SQLException ex) {
                         System.getLogger(RoleController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
                     }
@@ -194,7 +204,7 @@ public class RoleController {
                         reloadRoleGroupsTableTab3();
                         reloadRoleGroupsComboBoxTab3();
                         
-                        hiddenButton();
+                        mainFrame.reloadPermissions();
                         
                     } catch (SQLException ex) {
                         System.getLogger(RoleController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
@@ -235,7 +245,7 @@ public class RoleController {
                         reloadRolesTableTab4();
                         reloadRolesComboBoxTab4();
                         
-                        hiddenButton();
+                        mainFrame.reloadPermissions();
                         JOptionPane.showMessageDialog(null, "Cấp vai trò cho tài khoản thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     } else {
                         JOptionPane.showMessageDialog(null, "Cấp vai trò thất bại! Có thể tài khoản này đã giữ vai trò này rồi.", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -274,7 +284,7 @@ public class RoleController {
                         
                         reloadRolesComboBoxTab4();
                         
-                        hiddenButton();
+                        mainFrame.reloadPermissions();
                         
                     } catch (SQLException ex) {
                         System.getLogger(RoleController.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
@@ -315,7 +325,7 @@ public class RoleController {
                         rolePanelView.loadAssignedRolesToTab4Table(accountName, assignedRoles);
                         
                         reloadRolesComboBoxTab4();
-                        hiddenButton();
+                        mainFrame.reloadPermissions();
                         
                         JOptionPane.showMessageDialog(null, "Cấp quyền riêng cho tài khoản thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     } else {
@@ -358,7 +368,7 @@ public class RoleController {
                             reloadRolesTableTab1();
                             reloadRolesComboBoxTab2();
                             reloadRolesComboBoxTab4();
-                            hiddenButton();
+                            mainFrame.reloadPermissions();
 
                             JOptionPane.showMessageDialog(null, "Cập nhật phạm vi quyền thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                         } else {
@@ -388,7 +398,7 @@ public class RoleController {
                             reloadRolesComboBoxTab2();
                             reloadRolesComboBoxTab4();
                             
-                            hiddenButton();
+                            mainFrame.reloadPermissions();
                             JOptionPane.showMessageDialog(null, "Đã xóa thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                         } else {
                             JOptionPane.showMessageDialog(null, 
@@ -439,7 +449,7 @@ public class RoleController {
                         reloadRolesComboBoxTab2();
                         reloadRolesTableTab2();
                         
-                        hiddenButton();
+                        mainFrame.reloadPermissions();
                         JOptionPane.showMessageDialog(null, "Thu hồi quyền thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     } else {
                         JOptionPane.showMessageDialog(null, "Thu hồi thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -480,7 +490,7 @@ public class RoleController {
                         reloadRolesComboBoxTab4();
                         reloadRolesTableTab4();
                         
-                        hiddenButton();
+                        mainFrame.reloadPermissions();
                         JOptionPane.showMessageDialog(null, "Thu hồi phạm vi quyền thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     } else {
                         JOptionPane.showMessageDialog(null, "Thu hồi phạm vi quyền thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -519,7 +529,7 @@ public class RoleController {
                         
                         reloadRolesComboBoxTab4();
                         
-                        hiddenButton();
+                        mainFrame.reloadPermissions();
                         JOptionPane.showMessageDialog(null, "Thu hồi quyền riêng thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     } else {
                         JOptionPane.showMessageDialog(null, "Vai trò này có được do phân quyền nhóm, không thể xoá riêng!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -614,6 +624,64 @@ public class RoleController {
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
+                }
+            }
+        });
+        
+        // ==========================================================
+        // SỰ KIỆN DÀNH CHO TAB 6 (QUẢN LÝ TÀI KHOẢN)
+        // ==========================================================
+        
+        // 1. Nút "Thêm tài khoản nhân viên"
+        this.rolePanelView.addCreateEmployeeAccountListener(e -> {
+            String[] inputData = rolePanelView.showAddEmployeeAccountDialog();
+            if (inputData != null) {
+                String fullName = inputData[0];
+                String email    = inputData[1];
+                String phone    = inputData[2];
+                String username = inputData[3];
+                
+                String result = accountService.createAccountByManager(fullName, email, phone, username);
+                
+                if ("Thành công".equals(result)) {
+                    reloadAccountManagementTable();
+                    // Cập nhật các ComboBox tài khoản ở Tab 3 và Tab 4
+                    refreshAccountList();
+                    JOptionPane.showMessageDialog(rolePanelView,
+                        "Tạo tài khoản nhân viên thành công!\n" +
+                        "Tên đăng nhập: " + username + "\n" +
+                        "Mật khẩu mặc định: 123456",
+                        "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(rolePanelView,
+                        "Tạo tài khoản thất bại!\n" + result,
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+        
+        // 2. Nút "Vô hiệu hoá / Kích hoạt lại" trong bảng Tab 6
+        this.rolePanelView.setAccountManagementActionListener(row -> {
+            if (currentAccountManagementList == null || row >= currentAccountManagementList.size()) return;
+            
+            AccountModel target = currentAccountManagementList.get(row);
+            String currentStatus = target.getStatus();
+            String newStatus = "Đang hoạt động".equals(currentStatus) ? "Chưa hoạt động" : "Đang hoạt động";
+            String action = "Đang hoạt động".equals(currentStatus) ? "vô hiệu hoá" : "kích hoạt lại";
+            
+            int confirm = JOptionPane.showConfirmDialog(null,
+                "Bạn có chắc muốn " + action + " tài khoản [" + target.getUsername() + "]?",
+                "Xác nhận", JOptionPane.YES_NO_OPTION);
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                boolean success = accountService.updateAccountStatus(target.getAccountID(), newStatus);
+                if (success) {
+                    reloadAccountManagementTable();
+                    JOptionPane.showMessageDialog(null, 
+                        "" + ("vô hiệu hoá".equals(action) ? "Vô hiệu hoá" : "Kích hoạt lại") + " tài khoản thành công!",
+                        "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(null, "Thao tác thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
@@ -722,6 +790,13 @@ public class RoleController {
     public void refreshAccountList() {
         reloadAccountComboBoxTab3();
         reloadAccountComboBoxTab4();
+        reloadAccountManagementTable();
+    }
+    
+    /** Reload bảng quản lý tài khoản ở Tab 6 */
+    private void reloadAccountManagementTable() {
+        this.currentAccountManagementList = accountService.getAllAccountsForManagement();
+        rolePanelView.loadAccountsToManagementTable(currentAccountManagementList);
     }
     
     public void hiddenButton() throws SQLException {
@@ -737,7 +812,7 @@ public class RoleController {
         // --- XỬ LÝ QUYỀN XEM (ẨN/HIỆN ENTIRE MENU) ---
         // Gọi hàm bên MainFrame để ẩn/hiện cục menu Phân Quyền trên Sidebar
         if (mainFrame != null) {
-            mainFrame.setRoleMenuVisible(hasViewPermission);
+            mainFrame.setMenuVisible("Role", hasViewPermission);
         }
         
         // Nếu không có quyền xem thì không cần tốn thời gian chạy mấy dòng dưới nữa, return luôn!

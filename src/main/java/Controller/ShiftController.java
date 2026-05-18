@@ -4,6 +4,8 @@ import Model.ShiftModel;
 import Model.AccountModel;
 import Service.AccountService;
 import Service.ShiftService;
+import Service.RoleService;
+import Model.SessionManager;
 import View.EmployeeSchedulePanel;
 import View.MainFrame;
 import javax.swing.JOptionPane;
@@ -20,12 +22,25 @@ public class ShiftController {
     private EmployeeSchedulePanel view;
     private ShiftService shiftService;
     private AccountService accountService;
+    private RoleService roleService;
 
     public ShiftController(MainFrame sharedMainFrame) {
         this.mainFrame = sharedMainFrame;
         this.view = mainFrame.getShiftPanel(); 
         this.shiftService = new ShiftService();
         this.accountService = new AccountService();
+        this.roleService = new RoleService();
+        
+        try {
+            hiddenButton();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        if (mainFrame != null) {
+            mainFrame.registerPermissionReloader(() -> {
+                try { hiddenButton(); } catch (Exception ex) { ex.printStackTrace(); }
+            });
+        }
         
         if (this.view != null) {
             initEvents();
@@ -255,5 +270,30 @@ public class ShiftController {
                 ex.printStackTrace();
             }
         });
+    }
+
+    public void hiddenButton() throws SQLException {
+        int currentAccountId = SessionManager.getAccountId();
+        int currentFunctionId = roleService.getFunctionIdByName("Quản lý ca làm việc");
+        if (currentFunctionId == -1) currentFunctionId = 4; // Fallback
+        
+        boolean hasViewPermission = roleService.isPermissed("Xem", currentAccountId, currentFunctionId);
+        boolean hasAddPermission = roleService.isPermissed("Them", currentAccountId, currentFunctionId);
+        boolean hasEditPermission = roleService.isPermissed("Sua", currentAccountId, currentFunctionId);
+        boolean hasDeletePermission = roleService.isPermissed("Xoa", currentAccountId, currentFunctionId);
+        
+        if (mainFrame != null) {
+            mainFrame.setMenuVisible("Staff", hasViewPermission);
+        }
+        
+        if (!hasViewPermission) {
+            return;
+        }
+        
+        if (view.getBtnSaveShift() != null) view.getBtnSaveShift().setVisible(hasAddPermission || hasEditPermission);
+        if (view.getBtnDeleteShift() != null) view.getBtnDeleteShift().setVisible(hasDeletePermission);
+        if (view.getBtnSaveSchedule() != null) view.getBtnSaveSchedule().setVisible(hasAddPermission || hasEditPermission);
+        
+        view.setActionPermissions(hasEditPermission, hasDeletePermission);
     }
 }

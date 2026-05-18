@@ -251,6 +251,9 @@ public class CategoryManagementPanel extends JPanel {
                 styleBtn(btnToggle, HIDE_COLOR);
                 setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
             }
+            
+            btnEdit.setVisible(hasEditPermission);
+            btnToggle.setVisible(hasDeletePermission);
         }
     }
 
@@ -301,4 +304,16 @@ public class CategoryManagementPanel extends JPanel {
             return "";
         }
     }
+    
+    // --- PHÂN QUYỀN ---
+    private boolean hasEditPermission = true;
+    private boolean hasDeletePermission = true;
+    
+    public void setActionPermissions(boolean canEdit, boolean canDelete) {
+        this.hasEditPermission = canEdit;
+        this.hasDeletePermission = canDelete;
+        this.repaint();
+    }
+    
+    public JButton getBtnAddCategory() { return btnAddCategory; }
 }

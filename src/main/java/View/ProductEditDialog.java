@@ -597,7 +597,37 @@ public class ProductEditDialog extends JDialog {
     public void setActionPermissions(boolean canEdit, boolean canDelete) {
         this.hasEditPermission = canEdit;
         this.hasDeletePermission = canDelete;
-        this.repaint(); 
+        
+        // Khóa/Mở khóa thông tin cơ bản
+        txtProductName.setEditable(canEdit);
+        txtDineInPrice.setEditable(canEdit);
+        txtTakeawayPrice.setEditable(canEdit);
+        txtHolidayPrice.setEditable(canEdit);
+        txtVat.setEditable(canEdit);
+        txtDescription.setEditable(canEdit);
+        
+        cbCategory.setEnabled(canEdit);
+        rbOnSale.setEnabled(canEdit);
+        rbOutOfStock.setEnabled(canEdit);
+        rbStopSelling.setEnabled(canEdit);
+        
+        btnUpload.setVisible(canEdit);
+        btnAddVariant.setVisible(canEdit);
+        
+        // Ẩn/Hiện nút Xóa sản phẩm và Cập nhật sản phẩm
+        btnDelete.setVisible(canDelete && !isCreateMode);
+        btnUpdate.setVisible(canEdit);
+        
+        // Khóa/Mở khóa các ô cấu hình công thức (Tab 2)
+        cbVariantRecipe.setEnabled(canEdit);
+        cbIngredient.setEnabled(canEdit);
+        txtQuantitative.setEditable(canEdit);
+        btnAddRecipeToTable.setVisible(canEdit);
+        btnSaveRecipe.setVisible(canEdit);
+        
+        // Vẽ lại bảng biến thể và bảng công thức để renderer cập nhật trạng thái các nút hành động dòng
+        if (variantTable != null) variantTable.repaint();
+        if (recipeTable != null) recipeTable.repaint();
     }
     
     public int getRecipeIngredientIdAt(int row) { return (int) recipeModel.getValueAt(row, 1); }
@@ -695,10 +725,13 @@ public class ProductEditDialog extends JDialog {
     }
 
     class ProductActionButtonRenderer implements TableCellRenderer {
-        protected JPanel panel;
-        public ProductActionButtonRenderer(JPanel panel) { this.panel = panel; }
+        protected ProductActionPanel panel;
+        public ProductActionButtonRenderer(ProductActionPanel panel) { this.panel = panel; }
         @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE); return panel;
+            panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
+            panel.btnEdit.setEnabled(hasEditPermission);
+            panel.btnDelete.setEnabled(hasEditPermission);
+            return panel;
         }
     }
 
@@ -710,7 +743,10 @@ public class ProductEditDialog extends JDialog {
             this.panel.btnDelete.addActionListener(e -> { stopCellEditing(); listener.onDelete(currentRow); });
         }
         @Override public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            currentRow = row; panel.setBackground(table.getSelectionBackground()); return panel;
+            currentRow = row; panel.setBackground(table.getSelectionBackground());
+            panel.btnEdit.setEnabled(hasEditPermission);
+            panel.btnDelete.setEnabled(hasEditPermission);
+            return panel;
         }
         @Override public Object getCellEditorValue() { return ""; }
     }

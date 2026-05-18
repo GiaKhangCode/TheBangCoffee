@@ -268,6 +268,7 @@ public class MenuPanel extends JPanel {
     public ToppingManagementPanel getToppingPanel() { return toppingPanel; }
     public CustomerManagementPanel getCustomerPanel() { return customerPanel; }
     public LoyaltyManagementPanel getLoyaltyPanel() { return loyaltyPanel; }
+    public JButton getBtnAddProduct() { return btnAddProduct; }
 
     public interface ProductClickListener {
         void onClick(ProductModel product);

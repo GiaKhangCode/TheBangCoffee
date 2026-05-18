@@ -1,8 +1,11 @@
 package Controller;
 
 import Service.ReportService;
+import Service.RoleService;
+import Model.SessionManager;
 import View.DashboardPanel;
 import View.MainFrame;
+import java.sql.SQLException;
 import java.util.List;
 
 public class DashboardController {
@@ -10,11 +13,24 @@ public class DashboardController {
     private MainFrame mainFrame;
     private DashboardPanel dashboardPanel;
     private ReportService reportService;
+    private RoleService roleService;
 
     public DashboardController(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
         this.dashboardPanel = mainFrame.getDashboardPanel();
         this.reportService = new ReportService();
+        this.roleService = new RoleService();
+        
+        try {
+            hiddenButton();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        if (mainFrame != null) {
+            mainFrame.registerPermissionReloader(() -> {
+                try { hiddenButton(); } catch (Exception ex) { ex.printStackTrace(); }
+            });
+        }
         
         // --- SỰ KIỆN LỌC DOANH THU ---
         this.dashboardPanel.addRevenueFilterListener(e -> {
@@ -229,5 +245,23 @@ public class DashboardController {
 
         List<Object[]> lineData = reportService.getCustomWorkingHoursChartData(startDate, endDate);
         dashboardPanel.updateWorkingHoursChart(lineData, "Xu Hướng Giờ Làm Việc " + dateSuffix);
+    }
+
+    public void hiddenButton() throws SQLException {
+        int currentAccountId = SessionManager.getAccountId();
+        int currentFunctionId = roleService.getFunctionIdByName("Báo cáo và thống kê");
+        if (currentFunctionId == -1) currentFunctionId = 6; // Fallback
+        
+        boolean hasViewPermission = roleService.isPermissed("Xem", currentAccountId, currentFunctionId);
+        
+        if (mainFrame != null) {
+            mainFrame.setMenuVisible("Stats", hasViewPermission);
+        }
+        
+        if (!hasViewPermission) {
+            return;
+        }
+        
+        // Tab thống kê thường không có Thêm/Sửa/Xóa
     }
 }

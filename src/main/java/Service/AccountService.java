@@ -96,4 +96,34 @@ public class AccountService {
         return dao.getUnrevokedToken();
     }
     
+    /**
+     * Quản lý tạo tài khoản nhân viên mới với mật khẩu mặc định "123456".
+     */
+    public String createAccountByManager(String fullName, String email, String phoneNumber, String username) {
+        // Mật khẩu mặc định "123456" được hash trước khi lưu
+        String hashedDefaultPassword = HashUtil.hashPassword("123456");
+        return dao.createAccountByManager(fullName, email, phoneNumber, username, hashedDefaultPassword);
+    }
+    
+    /**
+     * Cập nhật cờ đăng nhập lần đầu = 1 sau khi nhân viên đổi mật khẩu.
+     */
+    public boolean updateFirstLoginFlag(int accountId) {
+        return dao.updateFirstLoginFlag(accountId);
+    }
+    
+    /**
+     * Vô hiệu hoá hoặc kích hoạt lại tài khoản.
+     */
+    public boolean updateAccountStatus(int accountId, String status) {
+        return dao.updateAccountStatus(accountId, status);
+    }
+    
+    /**
+     * Lấy danh sách tài khoản đầy đủ thông tin cho tab Quản lý tài khoản.
+     */
+    public List<AccountModel> getAllAccountsForManagement() {
+        return dao.getAllAccountsForManagement();
+    }
+    
 }

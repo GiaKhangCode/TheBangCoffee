@@ -416,4 +416,23 @@ public class OrderPanel extends JPanel {
         btnCancel.setEnabled(enabled);
         btnPrintInvoice.setEnabled(enabled); // [CẬP NHẬT] Đóng băng cả nút In khi chưa chọn đơn nào
     }
+    
+    // --- PHÂN QUYỀN ---
+    private boolean hasEditPermission = true;
+    private boolean hasDeletePermission = true;
+    
+    public void setActionPermissions(boolean canEdit, boolean canDelete) {
+        this.hasEditPermission = canEdit;
+        this.hasDeletePermission = canDelete;
+        
+        btnAccept.setVisible(canEdit);
+        btnComplete.setVisible(canEdit);
+        btnPay.setVisible(canEdit);
+        btnCancel.setVisible(canDelete);
+    }
+    
+    public JButton getBtnAccept() { return btnAccept; }
+    public JButton getBtnComplete() { return btnComplete; }
+    public JButton getBtnPay() { return btnPay; }
+    public JButton getBtnCancel() { return btnCancel; }
 }

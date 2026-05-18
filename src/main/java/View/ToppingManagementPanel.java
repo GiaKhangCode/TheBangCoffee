@@ -135,7 +135,10 @@ public class ToppingManagementPanel extends JPanel {
         ActionPanel panel = new ActionPanel();
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE); return panel;
+            panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE); 
+            panel.btnEdit.setVisible(hasEditPermission);
+            panel.btnDelete.setVisible(hasDeletePermission);
+            return panel;
         }
     }
 
@@ -148,8 +151,23 @@ public class ToppingManagementPanel extends JPanel {
         }
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            currentRow = row; panel.setBackground(table.getSelectionBackground()); return panel;
+            currentRow = row; panel.setBackground(table.getSelectionBackground()); 
+            panel.btnEdit.setVisible(hasEditPermission);
+            panel.btnDelete.setVisible(hasDeletePermission);
+            return panel;
         }
         @Override public Object getCellEditorValue() { return ""; }
     }
+    
+    // --- PHÂN QUYỀN ---
+    private boolean hasEditPermission = true;
+    private boolean hasDeletePermission = true;
+    
+    public void setActionPermissions(boolean canEdit, boolean canDelete) {
+        this.hasEditPermission = canEdit;
+        this.hasDeletePermission = canDelete;
+        this.repaint();
+    }
+    
+    public JButton getBtnAdd() { return btnAdd; }
 }

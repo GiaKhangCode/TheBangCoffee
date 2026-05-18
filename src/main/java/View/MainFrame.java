@@ -9,6 +9,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.net.URL;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,22 +76,35 @@ public class MainFrame extends JFrame {
         
         sidebar.add(logoTitle);
 
+        URL cartIcon = getClass().getResource("/images/cart_icon.png");
+        URL invoiceIcon = getClass().getResource("/images/invoice_icon.png");
+        URL glassIcon = getClass().getResource("/images/glass_icon.png");
+        URL warehouseIcon = getClass().getResource("/images/warehouse_icon.png");
+        URL staffIcon = getClass().getResource("/images/staff_icon.png");
+        URL settingIcon = getClass().getResource("/images/setting_icon.png");
+        URL statisticIcon = getClass().getResource("/images/statistic_icon.png");
+        URL customerIcon = getClass().getResource("/images/customer_icon.png");
+        URL promotionIcon = getClass().getResource("/images/promotion_icon.png");
+        URL finishIcon = getClass().getResource("/images/finish_icon.png");
+        URL logoutIcon = getClass().getResource("/images/logout_icon.png");
+        
         navButtons = new HashMap<>();
         
         // --- DANH SÁCH MENU SIDEBAR ---
-        addMenuButton("Tạo đơn", "POS", "Order");
-        addMenuButton("Quản lý đơn hàng", "BILL", "OrderList");
-        addMenuButton("Menu đồ uống", "MENU", "Menu");
+        addMenuButton("<html><img src='" + cartIcon + "' width='25' height='25'>    Tạo đơn</html>", "POS", "Order");
+        addMenuButton("<html><img src='" + invoiceIcon + "' width='25' height='25'>    Quản lý đơn hàng</html>", "BILL", "OrderList");
+        addMenuButton("<html><img src='" + glassIcon + "' width='25' height='25'>    Menu đồ uống</html>", "MENU", "Menu");
         
         // [MỚI] Thêm 2 nút vào Sidebar (Không gộp chung)
-        addMenuButton("Khách hàng", "USER", "Customer");
-        addMenuButton("Cấu hình Tích điểm", "GIFT", "Loyalty");
         
-        addMenuButton("Nhập kho", "STOCK", "Stock");
-        addMenuButton("Quản lý ca làm việc", "STAFF", "Staff");
-        addMenuButton("Tài khoản & Phân quyền", "ROLE", "Role");
-        addMenuButton("Báo cáo & Thống kê", "CHART", "Stats");
-        addMenuButton("Cài đặt", "SETTINGS", "Settings");
+        addMenuButton("<html><img src='" + customerIcon + "' width='25' height='25'>    Khách hàng</html>", "USER", "Customer");
+        addMenuButton("<html><img src='" + promotionIcon + "' width='25' height='25'>    Cấu hình Tích điểm</html>", "GIFT", "Loyalty");
+        
+        
+        addMenuButton("<html><img src='" + warehouseIcon + "' width='25' height='25'>    Nhập kho</html>", "STOCK", "Stock");
+        addMenuButton("<html><img src='" + staffIcon + "' width='25' height='25'>    Quản lý ca làm việc</html>", "STAFF", "Staff");
+        addMenuButton("<html><img src='" + settingIcon + "' width='25' height='25'>    Tài khoản và phân quyền</html>", "ROLE", "Role");
+        addMenuButton("<html><img src='" + statisticIcon + "' width='25' height='25'>    Báo cáo & Thống kê</html>", "CHART", "Stats");
         
         sidebar.add(Box.createVerticalGlue());
         
@@ -134,7 +148,7 @@ public class MainFrame extends JFrame {
         this.loyaltyPanel = new LoyaltyManagementPanel();
         contentArea.add(this.loyaltyPanel, "Loyalty");
         
-        new CustomerController(this.customerPanel, this.loyaltyPanel);
+        new CustomerController(this);
         
         this.stockPanel = new StockPanel(); 
         contentArea.add(this.stockPanel, "Stock"); 
@@ -209,7 +223,8 @@ public class MainFrame extends JFrame {
     // Hàm cập nhật chữ của nút (Mở ca / Đóng ca)
     public void setShiftButtonState(boolean hasOpenShift) {
         if (navButtons != null && navButtons.containsKey("ShiftToggle")) {
-            navButtons.get("ShiftToggle").setText(hasOpenShift ? "Đóng ca" : "Mở ca");
+            URL finishIcon = getClass().getResource("/images/finish_icon.png");
+            navButtons.get("ShiftToggle").setText(hasOpenShift ? "<html><img src='" + finishIcon + "' width='25' height='25'>    Đóng ca</html>" : "<html><img src='" + finishIcon + "' width='25' height='25'>    Mở ca</html>");
         }
     }
 
@@ -239,12 +254,29 @@ public class MainFrame extends JFrame {
     public PosController getPosController() { return posController; }
     public void setPosController(PosController posController) { this.posController = posController; }
 
-    public void setRoleMenuVisible(boolean isVisible) {
-        if (navButtons != null && navButtons.containsKey("Role")) {
-            NavButton roleBtn = navButtons.get("Role");
-            roleBtn.setVisible(isVisible);
+    public void setMenuVisible(String menuKey, boolean isVisible) {
+        if (navButtons != null && navButtons.containsKey(menuKey)) {
+            NavButton btn = navButtons.get(menuKey);
+            btn.setVisible(isVisible);
             sidebar.revalidate();
             sidebar.repaint();
+        }
+    }
+    
+    // --- PHÂN QUYỀN ĐỘNG (DÙNG CHUNG) ---
+    private java.util.List<Runnable> permissionReloaders = new java.util.ArrayList<>();
+    
+    public void registerPermissionReloader(Runnable reloader) {
+        permissionReloaders.add(reloader);
+    }
+    
+    public void reloadPermissions() {
+        for (Runnable reloader : permissionReloaders) {
+            try {
+                reloader.run();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }
 }

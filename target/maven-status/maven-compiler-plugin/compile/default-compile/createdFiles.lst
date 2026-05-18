@@ -3,6 +3,7 @@ Model\ShiftModel.class
 View\ProductEditDialog$WrapLayout.class
 View\StockPanel$10.class
 View\StockPanel$ActionButtonEditor.class
+View\RolePanel$AddEmployeeAccountDialog$1.class
 View\ProductEditDialog$DeleteActionPanel.class
 View\EmployeeSchedulePanel$IOSSwitch$1.class
 View\PosPanel$WrapLayout.class
@@ -62,6 +63,7 @@ View\MainFrame.class
 View\StockPanel$ActionButtonRenderer.class
 Common\ValidationUtil.class
 Service\ReportService.class
+View\RolePanel$AccountActionPanel.class
 View\ShiftSessionCloseDialog$3.class
 View\ToppingManagementPanel$ActionButtonRenderer.class
 View\OrderPanel$StatusCellRenderer.class
@@ -89,6 +91,7 @@ Model\SessionManager.class
 View\EmployeeSchedulePanel$2.class
 View\EmployeeSchedulePanel$IOSSwitch.class
 View\OrderOptionDialog.class
+View\RolePanel$AccountActionButtonRenderer.class
 Model\ProductModel.class
 Service\SessionService.class
 Service\ProductService.class
@@ -134,6 +137,7 @@ Controller\StockPanelController$2.class
 DatabaseAccessObject\VariantDAO.class
 Controller\CustomerController$1.class
 Model\OrderModel.class
+View\FirstLoginDialog.class
 View\MenuPanel$1.class
 Controller\RoleController$7.class
 View\PaymentMethodDialog$1.class
@@ -160,7 +164,9 @@ DatabaseAccessObject\RecipeDAO.class
 View\PosPanel$4.class
 View\RolePanel$DeleteActionButtonEditor.class
 Controller\AccountController.class
+View\FirstLoginDialog$1.class
 Service\CategoryService.class
+View\RolePanel$AccountActionButtonEditor.class
 Model\CartItemModel.class
 Model\VariantModel.class
 View\CategoryManagementPanel$ActionButtonsEditor.class
@@ -169,8 +175,10 @@ View\ForgotPasswordFrame.class
 View\EmployeeSchedulePanel$3.class
 View\StockPanel$5.class
 View\ProductEditDialog$ProductActionListener.class
+View\RolePanel$8.class
 Controller\CategoryController$1.class
 Controller\PosController$2.class
+View\RolePanel$AccountManagementActionListener.class
 View\RegisterFrame.class
 View\PosPanel$5.class
 Model\ProductCategoryListModel.class
@@ -197,6 +205,7 @@ View\StockPanel$StatCard.class
 View\CategoryManagementPanel$ToggleStatusCallback.class
 View\OrderPanel$2.class
 View\EmployeeSchedulePanel$DayPanel.class
+View\RolePanel$AddEmployeeAccountDialog.class
 View\MenuPanel$ProductClickListener.class
 View\NavButton.class
 Model\CategoryModel.class
@@ -248,6 +257,7 @@ View\StockPanel$9.class
 View\ShiftSessionCloseDialog$1.class
 View\StatCard.class
 View\ProductEditDialog$ProductActionPanel.class
+View\RolePanel$AddEmployeeAccountDialog$3.class
 View\EmployeeSchedulePanel$ShiftCard.class
 View\CategoryManagementPanel.class
 View\RolePanel$DeleteActionPanel.class
@@ -256,7 +266,6 @@ Service\AccountService.class
 View\RegisterFrame$3.class
 Model\ToppingModel.class
 View\OrderPanel.class
-Controller\AccountController$2.class
 View\OrderOptionDialog$InventoryValidator.class
 DatabaseAccessObject\ProductDAO.class
 View\ProductEditDialog$4.class
@@ -269,3 +278,4 @@ Controller\PosController.class
 Model\WarehouseReceiptListModel.class
 Service\ShiftService.class
 View\ProductDetailDialog$2.class
+View\RolePanel$AddEmployeeAccountDialog$2.class

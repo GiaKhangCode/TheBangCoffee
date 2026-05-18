@@ -11,6 +11,8 @@ import Service.CategoryService;
 import Service.ProductService;
 import Service.RecipeService;
 import Service.VariantService;
+import Service.RoleService;
+import Model.SessionManager;
 import View.MenuPanel;
 import View.MainFrame;
 import View.ProductEditDialog;
@@ -35,6 +37,10 @@ public class ProductController {
     private File selectedFile;
     private VariantService variantService;
     private ToppingService toppingService; 
+    private RoleService roleService;
+    private boolean hasAddPermission = true;
+    private boolean hasEditPermission = true;
+    private boolean hasDeletePermission = true;
     
     public ProductController(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
@@ -45,6 +51,18 @@ public class ProductController {
         this.ingredientService = new IngredientService();
         this.recipeService = new RecipeService();
         this.variantService = new VariantService();
+        this.roleService = new RoleService();
+        
+        try {
+            hiddenButton();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        if (mainFrame != null) {
+            mainFrame.registerPermissionReloader(() -> {
+                try { hiddenButton(); } catch (Exception ex) { ex.printStackTrace(); }
+            });
+        }
         
         this.selectedFile = null;
         
@@ -55,6 +73,7 @@ public class ProductController {
     private void initListeners() {
         menuPanel.addAddProductListener(e -> {
             ProductEditDialog createDialog = new ProductEditDialog(mainFrame, true);
+            createDialog.setActionPermissions(hasAddPermission, false);
             setupDialogData(createDialog, null); 
             createDialog.clearForm();
             
@@ -121,6 +140,7 @@ public class ProductController {
 
         menuPanel.setProductClickListener(product -> {
             ProductEditDialog editDialog = new ProductEditDialog(mainFrame, false);
+            editDialog.setActionPermissions(hasEditPermission, hasDeletePermission);
             setupDialogData(editDialog, product); 
             
             editDialog.addVariantSelectionListener(e -> {
@@ -415,5 +435,26 @@ public class ProductController {
             totalCost += Math.round(r.getQuantityRequired() * donGiaBQ);
         }
         editDialog.setEstimatedCost(totalCost);
+    }
+    
+    public void hiddenButton() throws Exception {
+        int currentAccountId = SessionManager.getAccountId();
+        int currentFunctionId = roleService.getFunctionIdByName("Menu đồ uống");
+        if (currentFunctionId == -1) currentFunctionId = 2; // Fallback
+        
+        boolean hasViewPermission = roleService.isPermissed("Xem", currentAccountId, currentFunctionId);
+        this.hasAddPermission = roleService.isPermissed("Them", currentAccountId, currentFunctionId);
+        this.hasEditPermission = roleService.isPermissed("Sua", currentAccountId, currentFunctionId);
+        this.hasDeletePermission = roleService.isPermissed("Xoa", currentAccountId, currentFunctionId);
+        
+        if (mainFrame != null) {
+            mainFrame.setMenuVisible("Menu", hasViewPermission);
+        }
+        
+        if (!hasViewPermission) {
+            return;
+        }
+        
+        if (menuPanel.getBtnAddProduct() != null) menuPanel.getBtnAddProduct().setVisible(hasAddPermission);
     }
 }

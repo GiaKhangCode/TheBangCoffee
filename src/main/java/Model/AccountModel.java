@@ -12,10 +12,15 @@ package Model;
 public class AccountModel {
     private int accountID;
     private String username, password, fullName, phoneNumber, email;
+    // 0 = chưa đăng nhập lần đầu (cần đổi mật khẩu), 1 = đã đổi mật khẩu
+    private int firstLogin;
+    // Trạng thái tài khoản: "Đang hoạt động" | "Chưa hoạt động"
+    private String status;
     
     public AccountModel(){
-        username = password =  fullName = phoneNumber = email = "";
+        username = password =  fullName = phoneNumber = email = status = "";
         accountID = -1;
+        firstLogin = 0;
     }
 
     public int getAccountID() {
@@ -64,5 +69,21 @@ public class AccountModel {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public int getFirstLogin() {
+        return firstLogin;
+    }
+
+    public void setFirstLogin(int firstLogin) {
+        this.firstLogin = firstLogin;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

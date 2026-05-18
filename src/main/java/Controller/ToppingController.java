@@ -3,6 +3,8 @@ package Controller;
 import Model.ToppingModel;
 import Service.IngredientService;
 import Service.ToppingService;
+import Service.RoleService;
+import Model.SessionManager;
 import View.ToppingManagementPanel;
 
 import javax.swing.*;
@@ -17,11 +19,19 @@ public class ToppingController {
     private ToppingService toppingService;
     private IngredientService ingredientService;
     private List<ToppingModel> allToppings;
+    private RoleService roleService;
 
     public ToppingController(ToppingManagementPanel view) {
         this.view = view;
         this.toppingService = new ToppingService();
         this.ingredientService = new IngredientService();
+        this.roleService = new RoleService();
+        
+        try {
+            hiddenButton();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
         
         initListeners();
         loadData();
@@ -164,5 +174,23 @@ public class ToppingController {
                 }
             }
         });
+    }
+    
+    public void hiddenButton() throws Exception {
+        int currentAccountId = SessionManager.getAccountId();
+        int currentFunctionId = roleService.getFunctionIdByName("Menu đồ uống");
+        if (currentFunctionId == -1) currentFunctionId = 2; // Fallback
+        
+        boolean hasViewPermission = roleService.isPermissed("Xem", currentAccountId, currentFunctionId);
+        boolean hasAddPermission = roleService.isPermissed("Them", currentAccountId, currentFunctionId);
+        boolean hasEditPermission = roleService.isPermissed("Sua", currentAccountId, currentFunctionId);
+        boolean hasDeletePermission = roleService.isPermissed("Xoa", currentAccountId, currentFunctionId);
+        
+        if (!hasViewPermission) {
+            return;
+        }
+        
+        if (view.getBtnAdd() != null) view.getBtnAdd().setVisible(hasAddPermission);
+        view.setActionPermissions(hasEditPermission, hasDeletePermission);
     }
 }

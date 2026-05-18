@@ -784,4 +784,20 @@ public class PosPanel extends JPanel {
         }
         @Override public Object getCellEditorValue() { return ""; }
     }
+    
+    // --- PHÂN QUYỀN ---
+    private boolean hasEditPermission = true;
+    private boolean hasDeletePermission = true;
+    
+    public void setActionPermissions(boolean canEdit, boolean canDelete) {
+        this.hasEditPermission = canEdit;
+        this.hasDeletePermission = canDelete;
+        this.repaint();
+    }
+    
+    public JButton getBtnClearCart() { return btnClearCart; }
+    public JButton getBtnUsePoints() { return btnUsePoints; }
+    public JButton getBtnCreateOrder() { return btnCreateOrder; }
+    public JButton getBtnCheckCustomer() { return btnCheckCustomer; }
+    public JButton getBtnRegisterCustomer() { return btnRegisterCustomer; }
 }

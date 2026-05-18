@@ -11,6 +11,7 @@ import Model.WarehouseReceiptModel;
 import Service.IngredientService;
 import Service.IngredientTypeService;
 import Service.WarehouseReceiptService;
+import Service.RoleService;
 import View.MainFrame;
 import View.StockPanel;
 
@@ -31,6 +32,7 @@ public class StockPanelController {
     private WarehouseReceiptService warehouseReceiptService;
     private IngredientTypeService ingredientTypeService;
     private List<IngredientTypeModel> ingredientTypeList;
+    private RoleService roleService;
     
     public StockPanelController(MainFrame sharedMainFrame) throws SQLException {
         this.mainFrame = sharedMainFrame;
@@ -38,9 +40,16 @@ public class StockPanelController {
         ingredientService = new IngredientService();
         warehouseReceiptService = new WarehouseReceiptService();
         ingredientTypeService = new IngredientTypeService();
+        roleService = new RoleService();
         
         this.stockPanelView = mainFrame.getStockPanel();
         
+        hiddenButton();
+        if (mainFrame != null) {
+            mainFrame.registerPermissionReloader(() -> {
+                try { hiddenButton(); } catch (Exception ex) { ex.printStackTrace(); }
+            });
+        }
         initStockListeners();
         
         loadCategoriesToView(); // [MỚI] Gọi hàm load danh mục
@@ -385,5 +394,29 @@ public class StockPanelController {
     public void loadWarehouseReceiptToView() throws SQLException {
         warehouseReceiptListModel = warehouseReceiptService.getWarehouseReceiptList();
         stockPanelView.displayWarehouseReceiptData(warehouseReceiptListModel);
+    }
+    
+    public void hiddenButton() throws SQLException {
+        int currentAccountId = SessionManager.getAccountId();
+        int currentFunctionId = roleService.getFunctionIdByName("Nhập kho");
+        if (currentFunctionId == -1) currentFunctionId = 3; // Fallback
+        
+        boolean hasViewPermission = roleService.isPermissed("Xem", currentAccountId, currentFunctionId);
+        boolean hasAddPermission = roleService.isPermissed("Them", currentAccountId, currentFunctionId);
+        boolean hasEditPermission = roleService.isPermissed("Sua", currentAccountId, currentFunctionId);
+        boolean hasDeletePermission = roleService.isPermissed("Xoa", currentAccountId, currentFunctionId);
+        
+        if (mainFrame != null) {
+            mainFrame.setMenuVisible("Stock", hasViewPermission);
+        }
+        
+        if (!hasViewPermission) {
+            return;
+        }
+        
+        if (stockPanelView.getBtnAddNewIngredient() != null) stockPanelView.getBtnAddNewIngredient().setVisible(hasAddPermission);
+        if (stockPanelView.getBtnImport() != null) stockPanelView.getBtnImport().setVisible(hasAddPermission);
+        
+        stockPanelView.setActionPermissions(hasEditPermission, hasDeletePermission);
     }
 }
