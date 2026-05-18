@@ -20,12 +20,21 @@ public class CategoryController {
     private List<CategoryModel> currentList;
     private MainFrame mainFrame; 
     private RoleService roleService;
+    private boolean hasAddPermission = true;
+    private boolean hasEditPermission = true;
+    private boolean hasDeletePermission = true;
 
     public CategoryController(CategoryManagementPanel view, MainFrame mainFrame) {
         this.view = view;
         this.service = new CategoryService();
         this.mainFrame = mainFrame; 
         this.roleService = new RoleService();
+
+        if (mainFrame != null) {
+            mainFrame.registerPermissionReloader(() -> {
+                try { hiddenButton(); } catch (Exception ex) { ex.printStackTrace(); }
+            });
+        }
 
         try {
             hiddenButton();
@@ -67,6 +76,10 @@ public class CategoryController {
 
         // --- 2. Thêm mới ---
         view.setAddAction((name, vat) -> {
+            if (!hasAddPermission) {
+                JOptionPane.showMessageDialog(view, "Bạn không có quyền thêm danh mục!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             try {
                 String msg = service.addCategory(name, vat);
                 if (msg.equals("SUCCESS")) {
@@ -83,6 +96,10 @@ public class CategoryController {
 
         // --- 3. Sửa danh mục ---
         view.setEditAction((id, newName, newVat) -> {
+            if (!hasEditPermission) {
+                JOptionPane.showMessageDialog(view, "Bạn không có quyền sửa danh mục!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             try {
                 String msg = service.updateCategory(id, newName, newVat);
                 if (msg.equals("SUCCESS")) {
@@ -99,6 +116,10 @@ public class CategoryController {
 
         // --- 4. Ẩn / Hiện danh mục ---
         view.setToggleStatusAction((id, currentStatus) -> {
+            if (!hasDeletePermission) {
+                JOptionPane.showMessageDialog(view, "Bạn không có quyền thay đổi trạng thái danh mục này!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             String actionName = currentStatus.equals("Đang sử dụng") ? "Tạm ngừng sử dụng" : "Sử dụng lại";
             int confirm = JOptionPane.showConfirmDialog(view, 
                 "Bạn có chắc muốn " + actionName + " danh mục này không?", 
@@ -132,9 +153,9 @@ public class CategoryController {
         if (currentFunctionId == -1) currentFunctionId = 2; // Fallback
         
         boolean hasViewPermission = roleService.isPermissed("Xem", currentAccountId, currentFunctionId);
-        boolean hasAddPermission = roleService.isPermissed("Them", currentAccountId, currentFunctionId);
-        boolean hasEditPermission = roleService.isPermissed("Sua", currentAccountId, currentFunctionId);
-        boolean hasDeletePermission = roleService.isPermissed("Xoa", currentAccountId, currentFunctionId);
+        this.hasAddPermission = roleService.isPermissed("Them", currentAccountId, currentFunctionId);
+        this.hasEditPermission = roleService.isPermissed("Sua", currentAccountId, currentFunctionId);
+        this.hasDeletePermission = roleService.isPermissed("Xoa", currentAccountId, currentFunctionId);
         
         if (!hasViewPermission) {
             return;

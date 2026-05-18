@@ -721,6 +721,7 @@ public class StockPanel extends JPanel {
     
     public JButton getBtnAddNewIngredient() { return btnAddNewIngredient; }
     public JButton getBtnImport() { return btnImport; }
+    public JButton getBtnAddCategory() { return btnAddCategory; }
     
     public String showAddCategoryDialog() {
         return JOptionPane.showInputDialog(this, "Nhập tên loại nguyên liệu mới:", "Thêm Loại Nguyên Liệu", JOptionPane.QUESTION_MESSAGE);
@@ -732,7 +733,7 @@ public class StockPanel extends JPanel {
     }
 
     // [CẬP NHẬT] Thêm tham số printListener và chèn nút "In phiếu nhập" vào Footer của hộp thoại
-    public void showReceiptDetailTableDialog(int receiptID, List<Object[]> details, PrintReceiptListener printListener) {
+    public void showReceiptDetailTableDialog(int receiptID, List<Object[]> details, boolean canPrint, PrintReceiptListener printListener) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Chi tiết phiếu nhập #" + receiptID, true);
         dialog.setLayout(new BorderLayout(10, 10));
         dialog.setSize(850, 450);
@@ -758,6 +759,7 @@ public class StockPanel extends JPanel {
         footer.setOpaque(false);
         
         JButton btnPrint = ComponentUI.createModernButton("In phiếu nhập", PRINT_COLOR, Color.WHITE);
+        btnPrint.setVisible(canPrint);
         btnPrint.addActionListener(e -> {
             if (printListener != null) {
                 printListener.onPrint(receiptID);

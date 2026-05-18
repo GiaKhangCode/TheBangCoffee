@@ -33,6 +33,10 @@ public class StockPanelController {
     private IngredientTypeService ingredientTypeService;
     private List<IngredientTypeModel> ingredientTypeList;
     private RoleService roleService;
+    private boolean hasAddPermission = true;
+    private boolean hasEditPermission = true;
+    private boolean hasDeletePermission = true;
+    private boolean hasPrintStock = true;
     
     public StockPanelController(MainFrame sharedMainFrame) throws SQLException {
         this.mainFrame = sharedMainFrame;
@@ -61,6 +65,10 @@ public class StockPanelController {
         
         // 1. LẮNG NGHE NÚT THÊM NGUYÊN LIỆU GỐC
         this.stockPanelView.addAddNewIngredientListener(e -> {
+            if (!hasAddPermission) {
+                JOptionPane.showMessageDialog(mainFrame, "Bạn không có quyền thêm nguyên liệu gốc!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             Object[] data = stockPanelView.showAddIngredientDialog(ingredientTypeList);
             if (data != null) {
                 IngredientTypeModel type = (IngredientTypeModel) data[0];
@@ -105,6 +113,10 @@ public class StockPanelController {
         
         // 3. LẬP PHIẾU NHẬP
         this.stockPanelView.addSubmitReceiptListener(e -> {
+            if (!hasAddPermission) {
+                JOptionPane.showMessageDialog(mainFrame, "Bạn không có quyền lập phiếu nhập kho!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             try {
                 implementCreateReceipt(); 
                 loadIngredientToView();
@@ -146,6 +158,10 @@ public class StockPanelController {
                 List<Object[]> batches = ingredientService.getIngredientBatches(maNL);
 
                 stockPanelView.showBatchDetailDialog(tenNL, batches, (maLo, qty, reason) -> {
+                    if (!hasDeletePermission) {
+                        JOptionPane.showMessageDialog(mainFrame, "Bạn không có quyền thực hiện xuất hủy lô nguyên liệu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
                     String result = ingredientService.disposeBatch(maLo, qty, reason);
                     if (result.equals("Thành công")) {
                         JOptionPane.showMessageDialog(null, "Xuất hủy lô thành công!");
@@ -160,6 +176,10 @@ public class StockPanelController {
             
             @Override
             public void onDelete(int row) {
+                if (!hasDeletePermission) {
+                    JOptionPane.showMessageDialog(mainFrame, "Bạn không có quyền xóa nguyên liệu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
                 int maNL = Integer.parseInt(stockPanelView.getInventoryTable().getValueAt(row, 0).toString());
                 String tenNL = stockPanelView.getInventoryTable().getValueAt(row, 1).toString();
 
@@ -188,6 +208,10 @@ public class StockPanelController {
         
             @Override
             public void onEdit(int row) {
+                if (!hasEditPermission) {
+                    JOptionPane.showMessageDialog(mainFrame, "Bạn không có quyền chỉnh sửa thông tin nguyên liệu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
                 int maNL = Integer.parseInt(stockPanelView.getInventoryTable().getValueAt(row, 0).toString());
                 String tenCu = stockPanelView.getInventoryTable().getValueAt(row, 1).toString();
                 String dvtCu = stockPanelView.getInventoryTable().getValueAt(row, 2).toString(); 
@@ -227,10 +251,14 @@ public class StockPanelController {
                 List<Object[]> detailData = warehouseReceiptService.getReceiptDetailList(receiptID);
 
                 if (detailData != null && !detailData.isEmpty()) {
-                    stockPanelView.showReceiptDetailTableDialog(receiptID, detailData, (idToPrint) -> {
-                    // [GỌI HÀM IN Ở ĐÂY]
-                    Service.InvoiceService invoiceService = new Service.InvoiceService();
-                    invoiceService.printWarehouseReceipt(idToPrint);
+                    stockPanelView.showReceiptDetailTableDialog(receiptID, detailData, hasPrintStock, (idToPrint) -> {
+                        if (!hasPrintStock) {
+                            JOptionPane.showMessageDialog(stockPanelView, "Bạn không có quyền in phiếu nhập kho!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                            return;
+                        }
+                        // [GỌI HÀM IN Ở ĐÂY]
+                        Service.InvoiceService invoiceService = new Service.InvoiceService();
+                        invoiceService.printWarehouseReceipt(idToPrint);
                     });
                 } else {
                     JOptionPane.showMessageDialog(null, "Không tìm thấy dữ liệu chi tiết cho phiếu này!", "Thông báo", JOptionPane.WARNING_MESSAGE);
@@ -244,6 +272,10 @@ public class StockPanelController {
 
             @Override
             public void onDelete(int row) {
+                if (!hasDeletePermission) {
+                    JOptionPane.showMessageDialog(mainFrame, "Bạn không có quyền xóa phiếu nhập kho!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
                 int maPhieuNhap = Integer.parseInt(stockPanelView.getHistoryTable().getValueAt(row, 0).toString());
                 String ngayNhap = stockPanelView.getHistoryTable().getValueAt(row, 1).toString();
                 
@@ -295,6 +327,10 @@ public class StockPanelController {
         
         // Lắng nghe nút Thêm Loại NL
         this.stockPanelView.addCategoryButtonListener(e -> {
+            if (!hasAddPermission) {
+                JOptionPane.showMessageDialog(mainFrame, "Bạn không có quyền thêm loại nguyên liệu mới!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             String newCategory = stockPanelView.showAddCategoryDialog();
             if (newCategory != null && !newCategory.trim().isEmpty()) {
                 newCategory = newCategory.trim();
@@ -316,6 +352,10 @@ public class StockPanelController {
         this.stockPanelView.setCategoryActionListener(new View.StockPanel.ActionButtonListener() {
             @Override
             public void onEdit(int row) {
+                if (!hasEditPermission) {
+                    JOptionPane.showMessageDialog(mainFrame, "Bạn không có quyền chỉnh sửa loại nguyên liệu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
                 int id = Integer.parseInt(stockPanelView.getCategoryTable().getValueAt(row, 0).toString());
                 String currentName = stockPanelView.getCategoryTable().getValueAt(row, 1).toString();
                 
@@ -402,9 +442,10 @@ public class StockPanelController {
         if (currentFunctionId == -1) currentFunctionId = 3; // Fallback
         
         boolean hasViewPermission = roleService.isPermissed("Xem", currentAccountId, currentFunctionId);
-        boolean hasAddPermission = roleService.isPermissed("Them", currentAccountId, currentFunctionId);
-        boolean hasEditPermission = roleService.isPermissed("Sua", currentAccountId, currentFunctionId);
-        boolean hasDeletePermission = roleService.isPermissed("Xoa", currentAccountId, currentFunctionId);
+        this.hasAddPermission = roleService.isPermissed("Them", currentAccountId, currentFunctionId);
+        this.hasEditPermission = roleService.isPermissed("Sua", currentAccountId, currentFunctionId);
+        this.hasDeletePermission = roleService.isPermissed("Xoa", currentAccountId, currentFunctionId);
+        this.hasPrintStock = roleService.isPermissed("XuatFile", currentAccountId, currentFunctionId);
         
         if (mainFrame != null) {
             mainFrame.setMenuVisible("Stock", hasViewPermission);
@@ -416,6 +457,7 @@ public class StockPanelController {
         
         if (stockPanelView.getBtnAddNewIngredient() != null) stockPanelView.getBtnAddNewIngredient().setVisible(hasAddPermission);
         if (stockPanelView.getBtnImport() != null) stockPanelView.getBtnImport().setVisible(hasAddPermission);
+        if (stockPanelView.getBtnAddCategory() != null) stockPanelView.getBtnAddCategory().setVisible(hasAddPermission);
         
         stockPanelView.setActionPermissions(hasEditPermission, hasDeletePermission);
     }

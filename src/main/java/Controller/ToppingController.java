@@ -6,6 +6,7 @@ import Service.ToppingService;
 import Service.RoleService;
 import Model.SessionManager;
 import View.ToppingManagementPanel;
+import View.MainFrame;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,12 +21,23 @@ public class ToppingController {
     private IngredientService ingredientService;
     private List<ToppingModel> allToppings;
     private RoleService roleService;
+    private MainFrame mainFrame;
+    private boolean hasAddPermission = true;
+    private boolean hasEditPermission = true;
+    private boolean hasDeletePermission = true;
 
-    public ToppingController(ToppingManagementPanel view) {
+    public ToppingController(ToppingManagementPanel view, MainFrame mainFrame) {
         this.view = view;
+        this.mainFrame = mainFrame;
         this.toppingService = new ToppingService();
         this.ingredientService = new IngredientService();
         this.roleService = new RoleService();
+        
+        if (mainFrame != null) {
+            mainFrame.registerPermissionReloader(() -> {
+                try { hiddenButton(); } catch (Exception ex) { ex.printStackTrace(); }
+            });
+        }
         
         try {
             hiddenButton();
@@ -62,6 +74,10 @@ public class ToppingController {
 
         // --- 2. THÊM TOPPING ---
         view.addAddButtonListener(e -> {
+            if (!hasAddPermission) {
+                JOptionPane.showMessageDialog(view, "Bạn không có quyền thêm topping!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             JPanel panel = new JPanel(new GridLayout(0, 1, 5, 5));
             JTextField txtName = new JTextField();
             JTextField txtPrice = new JTextField("0"); 
@@ -104,6 +120,10 @@ public class ToppingController {
         view.setActionListener(new ToppingManagementPanel.ActionButtonListener() {
             @Override
             public void onEdit(int row) {
+                if (!hasEditPermission) {
+                    JOptionPane.showMessageDialog(view, "Bạn không có quyền sửa topping!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
                 int selectedId = view.getToppingIdAt(row);
                 String currentName = view.getToppingNameAt(row);
                 long currentPrice = view.getToppingPriceAt(row);
@@ -163,6 +183,10 @@ public class ToppingController {
 
             @Override
             public void onDelete(int row) {
+                if (!hasDeletePermission) {
+                    JOptionPane.showMessageDialog(view, "Bạn không có quyền xóa topping!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
                 int selectedId = view.getToppingIdAt(row);
                 if (JOptionPane.showConfirmDialog(view, "Xóa Topping này?", "Xác nhận", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                     if (toppingService.deleteTopping(selectedId)) {
@@ -182,9 +206,9 @@ public class ToppingController {
         if (currentFunctionId == -1) currentFunctionId = 2; // Fallback
         
         boolean hasViewPermission = roleService.isPermissed("Xem", currentAccountId, currentFunctionId);
-        boolean hasAddPermission = roleService.isPermissed("Them", currentAccountId, currentFunctionId);
-        boolean hasEditPermission = roleService.isPermissed("Sua", currentAccountId, currentFunctionId);
-        boolean hasDeletePermission = roleService.isPermissed("Xoa", currentAccountId, currentFunctionId);
+        this.hasAddPermission = roleService.isPermissed("Them", currentAccountId, currentFunctionId);
+        this.hasEditPermission = roleService.isPermissed("Sua", currentAccountId, currentFunctionId);
+        this.hasDeletePermission = roleService.isPermissed("Xoa", currentAccountId, currentFunctionId);
         
         if (!hasViewPermission) {
             return;

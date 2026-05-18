@@ -67,7 +67,7 @@ public class MenuPanel extends JPanel {
         // Khởi tạo Tab 3: Topping
         toppingPanel = new ToppingManagementPanel();
         try {
-            new ToppingController(toppingPanel);
+            new ToppingController(toppingPanel, this.mainFrame);
         } catch (Exception e) {
             e.printStackTrace();
         }

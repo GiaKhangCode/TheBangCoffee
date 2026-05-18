@@ -421,7 +421,7 @@ public class OrderPanel extends JPanel {
     private boolean hasEditPermission = true;
     private boolean hasDeletePermission = true;
     
-    public void setActionPermissions(boolean canEdit, boolean canDelete) {
+    public void setActionPermissions(boolean canEdit, boolean canDelete, boolean canPrint) {
         this.hasEditPermission = canEdit;
         this.hasDeletePermission = canDelete;
         
@@ -429,6 +429,7 @@ public class OrderPanel extends JPanel {
         btnComplete.setVisible(canEdit);
         btnPay.setVisible(canEdit);
         btnCancel.setVisible(canDelete);
+        btnPrintInvoice.setVisible(canPrint);
     }
     
     public JButton getBtnAccept() { return btnAccept; }

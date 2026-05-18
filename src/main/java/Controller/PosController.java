@@ -58,6 +58,7 @@ public class PosController {
     private int globalPointsUsed = 0;
     private long globalDiscountAmount = 0;
     private RoleService roleService;
+    private boolean hasPrintOrder = true;
 
     public PosController(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
@@ -571,6 +572,10 @@ public class PosController {
         });
         
         orderPanel.addPrintInvoiceListener(e -> {
+            if (!hasPrintOrder) {
+                JOptionPane.showMessageDialog(orderPanel, "Bạn không có quyền in hóa đơn!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             if (currentSelectedOrderId > 0) {
                 invoiceService.printInvoice(currentSelectedOrderId, false); 
             }
@@ -770,8 +775,9 @@ public class PosController {
         boolean hasViewOrder = roleService.isPermissed("Xem", currentAccountId, functionIdOrder);
         boolean hasEditOrder = roleService.isPermissed("Sua", currentAccountId, functionIdOrder);
         boolean hasDeleteOrder = roleService.isPermissed("Xoa", currentAccountId, functionIdOrder);
+        this.hasPrintOrder = roleService.isPermissed("XuatFile", currentAccountId, functionIdOrder);
         
         if (mainFrame != null) mainFrame.setMenuVisible("OrderList", hasViewOrder);
-        orderPanel.setActionPermissions(hasEditOrder, hasDeleteOrder);
+        orderPanel.setActionPermissions(hasEditOrder, hasDeleteOrder, hasPrintOrder);
     }
 }
