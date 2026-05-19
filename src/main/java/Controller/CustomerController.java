@@ -122,32 +122,49 @@ public class CustomerController {
         }
     }
 
+    private void applyCustomerFilter() {
+        String searchText = customerView.getTxtSearchCustomer().getText().trim();
+        if (searchText.equals("Nhập SĐT hoặc Tên...")) {
+            searchText = "";
+        }
+        Object selectedItem = customerView.getCbMembershipTier().getSelectedItem();
+        String selectedTier = selectedItem != null ? selectedItem.toString() : "Tất cả hạng";
+
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(customerView.getTableModel());
+        customerView.getCustomerTable().setRowSorter(sorter);
+
+        List<RowFilter<Object,Object>> filters = new ArrayList<>();
+        
+        if (!searchText.isEmpty()) {
+            filters.add(RowFilter.regexFilter("(?i)" + searchText, 1, 2));
+        }
+        
+        if (!selectedTier.equals("Tất cả hạng")) {
+            filters.add(RowFilter.regexFilter("(?i)^" + selectedTier + "$", 6)); 
+        }
+
+        if (filters.isEmpty()) {
+            sorter.setRowFilter(null);
+        } else {
+            sorter.setRowFilter(RowFilter.andFilter(filters));
+        }
+    }
+
     private void initCustomerListeners() {
-        customerView.getBtnSearch().addActionListener(e -> {
-            String searchText = customerView.getTxtSearchCustomer().getText().trim();
-            if (searchText.equals("Nhập SĐT hoặc Tên...")) {
-                searchText = "";
-            }
-            String selectedTier = customerView.getCbMembershipTier().getSelectedItem().toString();
+        // Lọc tự động khi thay đổi giá trị Combobox hạng thẻ
+        customerView.getCbMembershipTier().addActionListener(e -> applyCustomerFilter());
 
-            TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(customerView.getTableModel());
-            customerView.getCustomerTable().setRowSorter(sorter);
-
-            List<RowFilter<Object,Object>> filters = new ArrayList<>();
-            
-            if (!searchText.isEmpty()) {
-                filters.add(RowFilter.regexFilter("(?i)" + searchText, 1, 2));
+        // Lọc tự động khi gõ phím tìm kiếm
+        customerView.getTxtSearchCustomer().getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            private void triggerFilter() {
+                SwingUtilities.invokeLater(() -> applyCustomerFilter());
             }
-            
-            if (!selectedTier.equals("Tất cả hạng")) {
-                filters.add(RowFilter.regexFilter("(?i)^" + selectedTier + "$", 6)); 
-            }
-
-            if (filters.isEmpty()) {
-                sorter.setRowFilter(null);
-            } else {
-                sorter.setRowFilter(RowFilter.andFilter(filters));
-            }
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { triggerFilter(); }
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { triggerFilter(); }
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { triggerFilter(); }
         });
 
         customerView.getBtnAddCustomer().addActionListener(e -> {

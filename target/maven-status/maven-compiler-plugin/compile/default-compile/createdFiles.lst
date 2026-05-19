@@ -65,6 +65,7 @@ Common\ValidationUtil.class
 Service\ReportService.class
 View\RolePanel$AccountActionPanel.class
 View\ShiftSessionCloseDialog$3.class
+View\PosPanel$QuantityActionListener.class
 View\ToppingManagementPanel$ActionButtonRenderer.class
 View\OrderPanel$StatusCellRenderer.class
 Controller\CustomerController.class
@@ -103,6 +104,7 @@ View\StockPanel$PrintReceiptListener.class
 Model\RecipeModel.class
 Model\IngredientModel.class
 DatabaseAccessObject\ReportDAO.class
+Controller\CustomerController$2.class
 View\CustomerManagementPanel$1.class
 Controller\RoleController$6.class
 View\ShiftSessionOpenDialog$2.class
@@ -112,6 +114,7 @@ View\LoginFrame$3.class
 Controller\ToppingController$1.class
 View\StockPanel$11.class
 Model\FunctionModel.class
+Controller\PosController$3.class
 Controller\RoleController$9.class
 View\CategoryManagementPanel$ActionButtonsRenderer.class
 View\MenuPanel$3.class
@@ -119,6 +122,7 @@ DatabaseAccessObject\CategoryDAO.class
 View\PaymentMethodDialog.class
 View\LoyaltyManagementPanel$2.class
 View\DashboardPanel$3.class
+View\PosPanel$QuantityPanel.class
 View\RolePanel$2.class
 DatabaseAccessObject\ShiftDAO.class
 View\RolePanel$RoleActionButtonEditor.class
@@ -132,6 +136,7 @@ Common\ComponentUI$1.class
 View\SidebarPanel.class
 View\StockPanel$Receipt.class
 View\StockPanel$BatchDisposeListener.class
+View\PosPanel$QuantityButtonEditor.class
 View\ProductDetailDialog$DeleteActionPanel.class
 View\StockPanel$4.class
 Controller\StockPanelController$2.class
@@ -177,6 +182,7 @@ View\EmployeeSchedulePanel$3.class
 View\StockPanel$5.class
 View\ProductEditDialog$ProductActionListener.class
 View\RolePanel$8.class
+View\PosPanel$QuantityButtonRenderer.class
 Controller\CategoryController$1.class
 Controller\PosController$2.class
 View\RolePanel$AccountManagementActionListener.class
@@ -267,6 +273,7 @@ DatabaseAccessObject\ShiftSessionDAO.class
 Service\AccountService.class
 View\RegisterFrame$3.class
 Model\ToppingModel.class
+View\PosPanel$9.class
 View\OrderPanel.class
 View\OrderOptionDialog$InventoryValidator.class
 DatabaseAccessObject\ProductDAO.class

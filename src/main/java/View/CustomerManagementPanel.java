@@ -10,7 +10,6 @@ public class CustomerManagementPanel extends JPanel {
     private final Color PRIMARY_COLOR = new Color(67, 142, 104);
     private JTextField txtSearchCustomer;
     private JComboBox<String> cbMembershipTier;
-    private JButton btnSearch;
     private JButton btnAddCustomer;
     private JTable customerTable;
     private DefaultTableModel tableModel;
@@ -57,18 +56,10 @@ public class CustomerManagementPanel extends JPanel {
         cbMembershipTier.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         cbMembershipTier.setBackground(Color.WHITE);
 
-        btnSearch = new JButton("Lọc");
-        btnSearch.setPreferredSize(new Dimension(80, 35));
-        btnSearch.setBackground(new Color(240, 240, 240));
-        btnSearch.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnSearch.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnSearch.setFocusPainted(false);
-
         filterPanel.add(new JLabel("Tìm kiếm:"));
         filterPanel.add(txtSearchCustomer);
         filterPanel.add(new JLabel("Hạng:"));
         filterPanel.add(cbMembershipTier);
-        filterPanel.add(btnSearch);
 
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         actionPanel.setBackground(Color.WHITE);
@@ -112,7 +103,6 @@ public class CustomerManagementPanel extends JPanel {
 
     public JTextField getTxtSearchCustomer() { return txtSearchCustomer; }
     public JComboBox<String> getCbMembershipTier() { return cbMembershipTier; }
-    public JButton getBtnSearch() { return btnSearch; }
     public JButton getBtnAddCustomer() { return btnAddCustomer; }
     public JTable getCustomerTable() { return customerTable; }
     public DefaultTableModel getTableModel() { return tableModel; }

@@ -297,7 +297,7 @@ public class PosPanel extends JPanel {
         cartTableModel = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 3; 
+                return column == 1 || column == 3; 
             }
         };
         cartTable = new JTable(cartTableModel);
@@ -309,11 +309,34 @@ public class PosPanel extends JPanel {
         cartTable.setSelectionBackground(new Color(PRIMARY_COLOR.getRed(), PRIMARY_COLOR.getGreen(), PRIMARY_COLOR.getBlue(), 30));
 
         TableColumnModel tcm = cartTable.getColumnModel();
-        tcm.getColumn(0).setPreferredWidth(170); 
-        tcm.getColumn(1).setPreferredWidth(20);  
-        tcm.getColumn(2).setPreferredWidth(80);  
-        tcm.getColumn(3).setPreferredWidth(50);  
+        tcm.getColumn(0).setPreferredWidth(135); 
+        tcm.getColumn(1).setPreferredWidth(85);  
+        tcm.getColumn(2).setPreferredWidth(60);  
+        tcm.getColumn(3).setPreferredWidth(55);  
         
+        TableColumn qtyCol = cartTable.getColumnModel().getColumn(1);
+        qtyCol.setCellRenderer(new QuantityButtonRenderer(new QuantityPanel()));
+        qtyCol.setCellEditor(new QuantityButtonEditor(new QuantityActionListener() {
+            @Override
+            public void onIncrease(int row) {
+                if (cartTable.isEditing()) {
+                    cartTable.getCellEditor().stopCellEditing();
+                }
+                if (cartQuantityListener != null) {
+                    cartQuantityListener.onIncrease(row);
+                }
+            }
+            @Override
+            public void onDecrease(int row) {
+                if (cartTable.isEditing()) {
+                    cartTable.getCellEditor().stopCellEditing();
+                }
+                if (cartQuantityListener != null) {
+                    cartQuantityListener.onDecrease(row);
+                }
+            }
+        }, new QuantityPanel()));
+
         TableColumn delCol = cartTable.getColumnModel().getColumn(3);
         delCol.setCellRenderer(new DeleteActionButtonRenderer(new DeleteActionPanel()));
         delCol.setCellEditor(new DeleteActionButtonEditor(row -> {
@@ -788,6 +811,112 @@ public class PosPanel extends JPanel {
             currentRow = row; panel.setBackground(table.getSelectionBackground()); return panel;
         }
         @Override public Object getCellEditorValue() { return ""; }
+    }
+
+    private QuantityActionListener cartQuantityListener;
+
+    public void setCartQuantityListener(QuantityActionListener listener) {
+        this.cartQuantityListener = listener;
+    }
+
+    public interface QuantityActionListener {
+        void onIncrease(int row);
+        void onDecrease(int row);
+    }
+
+    class QuantityPanel extends JPanel {
+        protected JButton btnMinus = new JButton("-");
+        protected JLabel lblQty = new JLabel("1", SwingConstants.CENTER);
+        protected JButton btnPlus = new JButton("+");
+        
+        public QuantityPanel() {
+            setLayout(new GridBagLayout());
+            setOpaque(true);
+            
+            styleBtn(btnMinus);
+            styleBtn(btnPlus);
+            
+            lblQty.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            lblQty.setPreferredSize(new Dimension(20, 24));
+            lblQty.setHorizontalAlignment(SwingConstants.CENTER);
+            
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.gridy = 0;
+            gbc.fill = GridBagConstraints.NONE;
+            
+            gbc.gridx = 0;
+            gbc.insets = new Insets(0, 0, 0, 3);
+            add(btnMinus, gbc);
+            
+            gbc.gridx = 1;
+            gbc.insets = new Insets(0, 0, 0, 3);
+            add(lblQty, gbc);
+            
+            gbc.gridx = 2;
+            gbc.insets = new Insets(0, 0, 0, 0);
+            add(btnPlus, gbc);
+        }
+        
+        private void styleBtn(JButton btn) {
+            btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            btn.setFocusPainted(false);
+            btn.setPreferredSize(new Dimension(24, 24));
+            btn.setBackground(new Color(240, 240, 240));
+            btn.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+            btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        }
+    }
+
+    class QuantityButtonRenderer implements TableCellRenderer {
+        protected QuantityPanel panel;
+        public QuantityButtonRenderer(QuantityPanel panel) {
+            this.panel = panel;
+        }
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
+            panel.lblQty.setText(value != null ? value.toString() : "1");
+            return panel;
+        }
+    }
+
+    class QuantityButtonEditor extends DefaultCellEditor {
+        protected QuantityPanel panel;
+        protected int currentRow;
+        protected QuantityActionListener listener;
+        
+        public QuantityButtonEditor(QuantityActionListener listener, QuantityPanel panel) {
+            super(new JCheckBox());
+            this.listener = listener;
+            this.panel = panel;
+            
+            this.panel.btnMinus.addActionListener(e -> {
+                stopCellEditing();
+                if (listener != null) {
+                    listener.onDecrease(currentRow);
+                }
+            });
+            
+            this.panel.btnPlus.addActionListener(e -> {
+                stopCellEditing();
+                if (listener != null) {
+                    listener.onIncrease(currentRow);
+                }
+            });
+        }
+        
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            currentRow = row;
+            panel.setBackground(table.getSelectionBackground());
+            panel.lblQty.setText(value != null ? value.toString() : "1");
+            return panel;
+        }
+        
+        @Override
+        public Object getCellEditorValue() {
+            return panel.lblQty.getText();
+        }
     }
     
     // --- PHÂN QUYỀN ---

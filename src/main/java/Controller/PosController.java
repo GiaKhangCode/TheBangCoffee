@@ -177,6 +177,64 @@ public class PosController {
                 updateCartView();
             }
         });
+
+        posPanel.setCartQuantityListener(new View.PosPanel.QuantityActionListener() {
+            @Override
+            public void onIncrease(int row) {
+                if (row >= 0 && row < currentCart.size()) {
+                    CartItemModel item = currentCart.get(row);
+                    
+                    // Tạo bản sao để kiểm tra kho
+                    List<CartItemModel> testCart = new ArrayList<>();
+                    for (CartItemModel cartItem : currentCart) {
+                        CartItemModel cloneItem = new CartItemModel(
+                            cartItem.getProduct(), 
+                            cartItem.getSelectedVariant(), 
+                            cartItem.getSelectedToppings(), 
+                            cartItem.getQuantity(), 
+                            cartItem.getNote()
+                        );
+                        cloneItem.setReward(cartItem.isReward());
+                        testCart.add(cloneItem);
+                    }
+                    
+                    // Tăng thử số lượng của dòng tương ứng trong testCart lên 1
+                    testCart.get(row).setQuantity(testCart.get(row).getQuantity() + 1);
+                    
+                    // Thực hiện kiểm tra kho
+                    String errorMsg = orderService.validateInventory(testCart);
+                    if (errorMsg != null) {
+                        JOptionPane.showMessageDialog(posPanel, 
+                            "Kho không đủ nguyên liệu để thêm lượng này!\n\n" + errorMsg, 
+                            "Cảnh báo Hết Hàng", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                    
+                    // Nếu đủ nguyên liệu, tăng số lượng thật
+                    item.setQuantity(item.getQuantity() + 1);
+                    updateCartView();
+                }
+            }
+
+            @Override
+            public void onDecrease(int row) {
+                if (row >= 0 && row < currentCart.size()) {
+                    CartItemModel item = currentCart.get(row);
+                    if (item.getQuantity() > 1) {
+                        item.setQuantity(item.getQuantity() - 1);
+                        updateCartView();
+                    } else {
+                        int confirm = JOptionPane.showConfirmDialog(posPanel,
+                            "Bạn có muốn xoá sản phẩm \"" + item.getDisplayName() + "\" khỏi giỏ hàng?",
+                            "Xác nhận xoá", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        if (confirm == JOptionPane.YES_OPTION) {
+                            currentCart.remove(row);
+                            updateCartView();
+                        }
+                    }
+                }
+            }
+        });
         
         posPanel.addCreateOrderListener(e -> {
             if (currentCart.isEmpty()) {

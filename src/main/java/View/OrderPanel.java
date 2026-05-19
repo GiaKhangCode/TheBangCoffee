@@ -432,15 +432,16 @@ public class OrderPanel extends JPanel {
     }
 
     public void updateActionButtons(String prepStatus, String payStatus) {
-        // [CẬP NHẬT] Miễn là có chọn 1 đơn hàng (thông qua việc gọi hàm này), nút in hóa đơn luôn khả dụng
-        btnPrintInvoice.setEnabled(true);
+        // Miễn là có chọn 1 đơn hàng và chưa bị hủy, nút in hóa đơn sẽ khả dụng
+        btnPrintInvoice.setEnabled(!prepStatus.equals("Đã hủy"));
 
-        // Nếu đơn đã hủy -> Đóng băng toàn bộ các nút xử lý trạng thái
+        // Nếu đơn đã hủy -> Đóng băng toàn bộ các nút xử lý trạng thái và in hóa đơn
         if (prepStatus.equals("Đã hủy")) {
             btnAccept.setEnabled(false);
             btnComplete.setEnabled(false);
             btnPay.setEnabled(false);
             btnCancel.setEnabled(false);
+            btnPrintInvoice.setEnabled(false);
             return;
         }
 
