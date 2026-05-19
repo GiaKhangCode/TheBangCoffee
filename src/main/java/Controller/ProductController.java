@@ -85,10 +85,6 @@ public class ProductController {
             createDialog.addUpdateListener(ev -> {
                 String productName = createDialog.getProductName();
                 
-                long dineInPrice = createDialog.getDineInPrice();
-                long takeawayPrice = createDialog.getTakeawayPrice();
-                long holidayPrice = createDialog.getHolidayPrice();
-                
                 double vat = createDialog.getVat();
                 String category = createDialog.getCategory();
                 String status = createDialog.getStatus();
@@ -107,7 +103,7 @@ public class ProductController {
                     }
                 }
                 
-                productService.insertProduct(category, productName, dineInPrice, takeawayPrice, holidayPrice, vat, selectedFile, status, description, listVariants, selectedToppings);
+                productService.insertProduct(category, productName, vat, selectedFile, status, description, listVariants, selectedToppings);
                 JOptionPane.showMessageDialog(createDialog, "Tạo sản phẩm thành công! \n(Lưu ý: Chuyển qua Sửa để cấu hình công thức cho các Size vừa tạo)");
                 createDialog.dispose();
                 loadMainMenuData();
@@ -253,10 +249,6 @@ public class ProductController {
             editDialog.addUpdateListener(ev -> {
                 String productName = editDialog.getProductName();
                 
-                long dineInPrice = editDialog.getDineInPrice();
-                long takeawayPrice = editDialog.getTakeawayPrice();
-                long holidayPrice = editDialog.getHolidayPrice();
-                
                 double vat = editDialog.getVat();
                 String category = editDialog.getCategory();
                 String status = editDialog.getStatus();
@@ -275,7 +267,7 @@ public class ProductController {
                     }
                 }
                 
-                productService.updateProduct(product.getProductID(), category, productName, dineInPrice, takeawayPrice, holidayPrice, vat, selectedFile, status, description, listVariants, selectedToppings);
+                productService.updateProduct(product.getProductID(), category, productName, vat, selectedFile, status, description, listVariants, selectedToppings);
                 JOptionPane.showMessageDialog(editDialog, "Cập nhật sản phẩm thành công!");
                 editDialog.dispose();
                 loadMainMenuData();
@@ -377,7 +369,6 @@ public class ProductController {
             if (product != null) {
                 dialog.setProductData(
                     product.getProductName(), product.getCategoryName(), 
-                    product.getDineInPrice(), product.getTakeawayPrice(), product.getHolidayPrice(), 
                     product.getVat(), product.getProductStatus(), product.getDescription(), product.getImageData()
                 );
                 dialog.loadVariantData(product.getVariants());

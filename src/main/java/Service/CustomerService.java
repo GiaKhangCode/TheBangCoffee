@@ -62,6 +62,10 @@ public class CustomerService {
         customerDAO.addPointsToCustomerByOrderId(orderId, pointsToAdd);
     }
 
+    public void refundPointsToCustomerByOrderId(int orderId, int pointsToRefund) {
+        customerDAO.refundPointsToCustomerByOrderId(orderId, pointsToRefund);
+    }
+
     public ResultSet getAllTiers() throws SQLException, ClassNotFoundException {
         return customerDAO.getAllTiers();
     }

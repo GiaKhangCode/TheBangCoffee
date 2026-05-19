@@ -236,7 +236,13 @@ public class MenuPanel extends JPanel {
         JLabel lblCategory = new JLabel(product.getCategoryName());
         lblCategory.setForeground(TEXT_MUTED);
 
-        JLabel lblPrice = new JLabel(String.format("Tại quán: %,d đ", product.getDineInPrice()));
+        // Lấy giá từ biến thể đầu tiên (giá không còn lưu ở cấp sản phẩm nữa)
+        String priceText = "Chưa có giá";
+        if (product.getVariants() != null && !product.getVariants().isEmpty()) {
+            long basePrice = product.getVariants().get(0).getDineInPrice();
+            priceText = String.format("Từ: %,d đ", basePrice);
+        }
+        JLabel lblPrice = new JLabel(priceText);
         lblPrice.setForeground(PRIMARY_COLOR);
 
         lblName.setAlignmentX(Component.CENTER_ALIGNMENT);

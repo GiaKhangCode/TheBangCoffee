@@ -25,7 +25,7 @@ public class ProductDAO {
         
         String sqlProduct = "SELECT SP.MaSanPham, SP.TenSanPham, SP.TenAnhSanPham, SP.KieuDuLieuAnh, " +
                             "SP.TrangThai AS TrangThaiSP, LSP.TenLoaiSanPham, LSP.TrangThai AS TrangThaiLoai, " +
-                            "SP.GiaTaiQuan, SP.GiaMangVe, SP.GiaNgayLe, SP.DuLieuAnh, SP.MoTa, SP.Thue_GTGT " +
+                            "SP.DuLieuAnh, SP.MoTa, SP.Thue_GTGT " +
                             "FROM SAN_PHAM SP " +
                             "JOIN LOAI_SAN_PHAM LSP on SP.MaLoaiSanPham = LSP.MaLoaiSanPham " +
                             "ORDER BY SP.MaSanPham DESC";
@@ -51,11 +51,10 @@ public class ProductDAO {
                         rs.getString("TenAnhSanPham"), rs.getString("KieuDuLieuAnh"),
                         rs.getString("TrangThaiSP"), rs.getString("TenLoaiSanPham"),
                         rs.getString("TrangThaiLoai"), 
-                        rs.getLong("GiaTaiQuan"), rs.getLong("GiaMangVe"), rs.getLong("GiaNgayLe"),
                         rs.getDouble("Thue_GTGT"), imageIcon, rs.getString("MoTa")
                 );
                 
-                // [SỬA] Cập nhật truy vấn Size lấy 3 cột giá
+                // Tải các biến thể (Size) cùng 3 loại giá từ bảng BIEN_THE
                 try (PreparedStatement psVariant = conn.prepareStatement("SELECT MaBienThe, TenSize, GiaTaiQuan, GiaMangVe, GiaNgayLe FROM BIEN_THE WHERE MaSanPham = ?")) {
                     psVariant.setInt(1, product.getProductID());
                     try (ResultSet rsVar = psVariant.executeQuery()) {
@@ -77,10 +76,10 @@ public class ProductDAO {
         return productList;
     }
     
-    public void insertProduct(String categoryName, String productName, long dineInPrice, long takeawayPrice, long holidayPrice, double vat, File imageFile, 
+    public void insertProduct(String categoryName, String productName, double vat, File imageFile, 
                               String status, String description, List<VariantModel> listVariants, List<Integer> listToppingIds) {
         
-        String sqlProduct = "{call SP_INSERT_SAN_PHAM(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}"; // 12 tham số (bao gồm cả OUT_MaSanPham)
+        String sqlProduct = "{call SP_INSERT_SAN_PHAM(?, ?, ?, ?, ?, ?, ?, ?, ?)}"; // 9 tham số (bao gồm cả OUT_MaSanPham)
         String sqlVariant = "INSERT INTO BIEN_THE (MaSanPham, TenSize, GiaTaiQuan, GiaMangVe, GiaNgayLe) VALUES (?, ?, ?, ?, ?)";
         String sqlTopping = "INSERT INTO SAN_PHAM_TOPPING (MaSanPham, MaTopping) VALUES (?, ?)";
 
@@ -91,31 +90,28 @@ public class ProductDAO {
             // 1. Thêm Sản Phẩm
             try (CallableStatement cs = conn.prepareCall(sqlProduct)){
                 cs.setString(1, productName);
-                cs.setLong(2, dineInPrice);
-                cs.setLong(3, takeawayPrice);
-                cs.setLong(4, holidayPrice);
-                cs.setDouble(5, vat);
-                cs.setString(6, status);
-                cs.setString(7, categoryName);
-                cs.setString(8, description);
+                cs.setDouble(2, vat);
+                cs.setString(3, status);
+                cs.setString(4, categoryName);
+                cs.setString(5, description);
 
                 if (imageFile != null) {
                     FileInputStream fis = new FileInputStream(imageFile);
                     String fileName = imageFile.getName();
                     String mimeType = "image/" + fileName.substring(fileName.lastIndexOf(".") + 1);
 
-                    cs.setString(9, fileName);
-                    cs.setString(10, mimeType);
-                    cs.setBinaryStream(11, fis, imageFile.length());
+                    cs.setString(6, fileName);
+                    cs.setString(7, mimeType);
+                    cs.setBinaryStream(8, fis, imageFile.length());
                 } else {
-                    cs.setString(9, null);
-                    cs.setString(10, null);
-                    cs.setNull(11, java.sql.Types.BLOB);
+                    cs.setString(6, null);
+                    cs.setString(7, null);
+                    cs.setNull(8, java.sql.Types.BLOB);
                 }
 
-                cs.registerOutParameter(12, Types.NUMERIC);
+                cs.registerOutParameter(9, Types.NUMERIC);
                 cs.execute();
-                newProductId = cs.getInt(12);
+                newProductId = cs.getInt(9);
             }
             
             if (newProductId > 0) {
@@ -157,10 +153,10 @@ public class ProductDAO {
         }
     }
     
-    public void updateProduct(int productId, String categoryName, String productName, long dineInPrice, long takeawayPrice, long holidayPrice, double vat, File imageFile, 
+    public void updateProduct(int productId, String categoryName, String productName, double vat, File imageFile, 
                               String status, String description, List<VariantModel> listVariants, List<Integer> listToppingIds) {
         
-        String sqlProduct = "{call SP_UPDATE_SAN_PHAM(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}"; // 11 tham số
+        String sqlProduct = "{call SP_UPDATE_SAN_PHAM(?, ?, ?, ?, ?, ?, ?, ?)}"; // 8 tham số
         String sqlDeleteToppings = "DELETE FROM SAN_PHAM_TOPPING WHERE MaSanPham = ?";
         String sqlInsertTopping = "INSERT INTO SAN_PHAM_TOPPING (MaSanPham, MaTopping) VALUES (?, ?)";
         
@@ -171,27 +167,24 @@ public class ProductDAO {
             try (CallableStatement cs = conn.prepareCall(sqlProduct)) {
                 cs.setInt(1, productId);
                 cs.setString(2, productName);
-                cs.setLong(3, dineInPrice);
-                cs.setLong(4, takeawayPrice);
-                cs.setLong(5, holidayPrice);
-                cs.setDouble(6, vat);
+                cs.setDouble(3, vat);
 
                 if (imageFile != null) {
                     FileInputStream fis = new FileInputStream(imageFile);
                     String fileName = imageFile.getName();
                     String mimeType = "image/" + fileName.substring(fileName.lastIndexOf(".") + 1);
 
-                    cs.setString(7, fileName);
-                    cs.setString(8, mimeType);
-                    cs.setBinaryStream(9, fis, imageFile.length());
+                    cs.setString(4, fileName);
+                    cs.setString(5, mimeType);
+                    cs.setBinaryStream(6, fis, imageFile.length());
                 } else {
-                    cs.setString(7, null);
-                    cs.setString(8, null);
-                    cs.setNull(9, java.sql.Types.BLOB);
+                    cs.setString(4, null);
+                    cs.setString(5, null);
+                    cs.setNull(6, java.sql.Types.BLOB);
                 }
 
-                cs.setString(10, status);
-                cs.setString(11, categoryName);
+                cs.setString(7, status);
+                cs.setString(8, categoryName);
                 cs.execute();
             }
 
@@ -330,7 +323,7 @@ public class ProductDAO {
         }
         
         StringBuilder sql = new StringBuilder(
-            "SELECT sp.MaSanPham, lsp.TenLoaiSanPham, sp.TenSanPham, sp.GiaTaiQuan, sp.GiaMangVe, sp.GiaNgayLe, sp.DuLieuAnh " +
+            "SELECT sp.MaSanPham, lsp.TenLoaiSanPham, sp.TenSanPham, sp.DuLieuAnh " +
             "FROM SAN_PHAM sp " +
             "JOIN LOAI_SAN_PHAM lsp ON sp.MaLoaiSanPham = lsp.MaLoaiSanPham " +
             "WHERE sp.TrangThai = N'Đang bán' " +
@@ -357,16 +350,10 @@ public class ProductDAO {
                     ProductModel product = new ProductModel();
                     product.setProductID(rs.getInt("MaSanPham"));
                     
-                    // [ĐÃ SỬA] Set CategoryName thay vì CategoryID
+                    // Set CategoryName thay vì CategoryID
                     product.setCategoryName(rs.getString("TenLoaiSanPham")); 
                     
                     product.setProductName(rs.getString("TenSanPham"));
-                    product.setDineInPrice(rs.getLong("GiaTaiQuan"));
-                    product.setTakeawayPrice(rs.getLong("GiaMangVe"));
-                    product.setHolidayPrice(rs.getLong("GiaNgayLe"));
-                    
-                    // Xử lý hình ảnh (Nếu bạn có logic lấy ảnh từ Blob thì thêm vào đây)
-                    // ... 
                     
                     list.add(product);
                 }

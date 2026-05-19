@@ -77,15 +77,46 @@ public class DashboardController {
             }
         });
         
+        // --- SỰ KIỆN LÀM MỚI BÁO CÁO ---
+        this.dashboardPanel.addRefreshListener(e -> {
+            refreshData();
+        });
+        
         loadData();
     }
 
     private void loadData() {
-        loadRevenueStats("Hôm nay");
+        refreshData();
+    }
+
+    public void refreshData() {
+        // Tab 1 & Tab 2: Báo cáo Doanh thu & Báo cáo Bán hàng
+        String revFilter = dashboardPanel.getSelectedRevenueFilter();
+        if (revFilter.contains("Tùy chỉnh")) {
+            revFilter = "Hôm nay";
+            dashboardPanel.setSelectedRevenueFilter("Hôm nay");
+        }
+        loadRevenueStats(revFilter);
         loadSalesStats();
+        
+        // Tab 4: Báo cáo Kho
         loadInventoryStats();
-        loadShiftStats("Tuần này"); // Mở khóa dòng này để gọi Load dữ liệu Ca làm việc
-        loadCustomerStats("Tuần này"); 
+        
+        // Tab 3: Báo cáo Ca làm việc
+        String shiftFilter = dashboardPanel.getSelectedShiftFilter();
+        if (shiftFilter.contains("Tùy chỉnh")) {
+            shiftFilter = "Tuần này";
+            dashboardPanel.setSelectedShiftFilter("Tuần này");
+        }
+        loadShiftStats(shiftFilter);
+        
+        // Tab 5: Báo cáo Khách hàng
+        String customerFilter = dashboardPanel.getSelectedCustomerFilter();
+        if (customerFilter.contains("Tùy chỉnh")) {
+            customerFilter = "Tuần này";
+            dashboardPanel.setSelectedCustomerFilter("Tuần này");
+        }
+        loadCustomerStats(customerFilter);
     }
 
     private void loadRevenueStats(String filterType) {

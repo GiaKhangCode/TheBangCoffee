@@ -68,6 +68,20 @@ public class CustomerDAO {
         }
     }
 
+    public void refundPointsToCustomerByOrderId(int orderId, int pointsToRefund) {
+        String sql = "UPDATE KHACH_HANG SET DiemHienTai = DiemHienTai + ? " +
+                     "WHERE MaKhachHang = (SELECT MaKhachHang FROM DON_HANG WHERE MaDonHang = ? AND MaKhachHang IS NOT NULL)";
+
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, pointsToRefund);
+            ps.setInt(2, orderId);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public ResultSet getAllTiers() throws SQLException, ClassNotFoundException {
         Connection conn = getMyConnection();
         String sql = "SELECT * FROM HANG_THANH_VIEN ORDER BY DiemYeuCau ASC";

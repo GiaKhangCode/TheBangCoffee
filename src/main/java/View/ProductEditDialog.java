@@ -24,7 +24,7 @@ public class ProductEditDialog extends JDialog {
     private Color DANGER_COLOR = new Color(231, 76, 60); 
     private Color TEXT_DARK = AppColor.TEXT_DARK;
 
-    private JTextField txtProductName, txtDineInPrice, txtTakeawayPrice, txtHolidayPrice, txtVat;
+    private JTextField txtProductName, txtVat;
     private JComboBox<String> cbCategory;
     private JTextArea txtDescription;
     private JLabel lblImagePlaceholder;
@@ -137,9 +137,6 @@ public class ProductEditDialog extends JDialog {
         txtProductName = createStyledTextField("");
         cbCategory = new JComboBox<>();
         
-        txtDineInPrice = createStyledTextField("0");
-        txtTakeawayPrice = createStyledTextField("0");
-        txtHolidayPrice = createStyledTextField("0");
         txtVat = createStyledTextField("8");
         
         txtDescription = new JTextArea(3, 20);
@@ -151,19 +148,12 @@ public class ProductEditDialog extends JDialog {
         
         gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.0; leftPanel.add(new JLabel("Danh mục: *"), gbc);
         gbc.gridx = 1; gbc.gridy = 1; gbc.weightx = 1.0; leftPanel.add(cbCategory, gbc);
-        
-        JPanel pricePanel1 = new JPanel(new GridLayout(1, 2, 10, 0));
-        pricePanel1.setOpaque(false);
-        pricePanel1.add(createInputWrapper("Giá tại quán:", txtDineInPrice));
-        pricePanel1.add(createInputWrapper("Giá mang về:", txtTakeawayPrice));
 
-        JPanel pricePanel2 = new JPanel(new GridLayout(1, 2, 10, 0));
-        pricePanel2.setOpaque(false);
-        pricePanel2.add(createInputWrapper("Giá ngày lễ:", txtHolidayPrice));
-        pricePanel2.add(createInputWrapper("Thuế VAT (%):", txtVat));
+        JPanel vatPanel = new JPanel(new GridLayout(1, 1, 10, 0));
+        vatPanel.setOpaque(false);
+        vatPanel.add(createInputWrapper("Thuế VAT (%):", txtVat));
         
-        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2; leftPanel.add(pricePanel1, gbc);
-        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2; leftPanel.add(pricePanel2, gbc);
+        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2; leftPanel.add(vatPanel, gbc);
         
         JPanel imgPanel = new JPanel(new GridBagLayout()); imgPanel.setOpaque(false);
         GridBagConstraints imgGbc = new GridBagConstraints(); imgGbc.anchor = GridBagConstraints.WEST; imgGbc.insets = new Insets(0, 0, 0, 15);
@@ -177,12 +167,12 @@ public class ProductEditDialog extends JDialog {
         imgGbc.gridx = 1; imgGbc.gridy = 0; imgPanel.add(btnUpload, imgGbc);
         
         gbc.gridwidth = 1;
-        gbc.gridx = 0; gbc.gridy = 4; gbc.weightx = 0.0; leftPanel.add(new JLabel("Hình ảnh:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 4; gbc.weightx = 1.0; leftPanel.add(imgPanel, gbc);
+        gbc.gridx = 0; gbc.gridy = 3; gbc.weightx = 0.0; leftPanel.add(new JLabel("Hình ảnh:"), gbc);
+        gbc.gridx = 1; gbc.gridy = 3; gbc.weightx = 1.0; leftPanel.add(imgPanel, gbc);
         
-        gbc.gridx = 0; gbc.gridy = 5; gbc.weightx = 0.0; gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.gridx = 0; gbc.gridy = 4; gbc.weightx = 0.0; gbc.anchor = GridBagConstraints.NORTHWEST;
         leftPanel.add(new JLabel("Mô tả:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 5; gbc.weightx = 1.0; gbc.fill = GridBagConstraints.BOTH; 
+        gbc.gridx = 1; gbc.gridy = 4; gbc.weightx = 1.0; gbc.fill = GridBagConstraints.BOTH; 
         leftPanel.add(new JScrollPane(txtDescription), gbc);
 
         // ==== RIGHT PANEL ====
@@ -493,11 +483,8 @@ public class ProductEditDialog extends JDialog {
     public void addIngredientSelectionListener(ItemListener listener) { cbIngredient.addItemListener(listener); }
     public void setUnitText(String unit) { txtUnit.setText(unit); }
 
-    public void setProductData(String name, String category, long dineInPrice, long takeawayPrice, long holidayPrice, double vat, String status, String description, ImageIcon icon) {
+    public void setProductData(String name, String category, double vat, String status, String description, ImageIcon icon) {
         txtProductName.setText(name); cbCategory.setSelectedItem(category);
-        txtDineInPrice.setText(String.format("%d", dineInPrice));
-        txtTakeawayPrice.setText(String.format("%d", takeawayPrice));
-        txtHolidayPrice.setText(String.format("%d", holidayPrice));
         txtVat.setText(String.valueOf(vat));
         txtDescription.setText(description); setImage(icon);
 
@@ -526,9 +513,6 @@ public class ProductEditDialog extends JDialog {
     public void clearForm() {
         if(txtProductName == null) return;
         txtProductName.setText(""); 
-        txtDineInPrice.setText("0"); 
-        txtTakeawayPrice.setText("0"); 
-        txtHolidayPrice.setText("0"); 
         txtVat.setText("8");
         txtDescription.setText("");
         
@@ -553,18 +537,6 @@ public class ProductEditDialog extends JDialog {
 
     public String getProductName() { return txtProductName.getText().trim(); }
     
-    public long getDineInPrice() {
-        try { return Long.parseLong(txtDineInPrice.getText().trim().replace(".", "").replace(",", "")); } 
-        catch (Exception e) { return 0; }
-    }
-    public long getTakeawayPrice() {
-        try { return Long.parseLong(txtTakeawayPrice.getText().trim().replace(".", "").replace(",", "")); } 
-        catch (Exception e) { return 0; }
-    }
-    public long getHolidayPrice() {
-        try { return Long.parseLong(txtHolidayPrice.getText().trim().replace(".", "").replace(",", "")); } 
-        catch (Exception e) { return 0; }
-    }
 
     public double getVat() {
         try { return Double.parseDouble(txtVat.getText().trim()); } catch (Exception e) { return 8.0; }
@@ -601,9 +573,6 @@ public class ProductEditDialog extends JDialog {
         
         // Khóa/Mở khóa thông tin cơ bản
         txtProductName.setEditable(canEdit);
-        txtDineInPrice.setEditable(canEdit);
-        txtTakeawayPrice.setEditable(canEdit);
-        txtHolidayPrice.setEditable(canEdit);
         txtVat.setEditable(canEdit);
         txtDescription.setEditable(canEdit);
         

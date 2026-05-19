@@ -210,6 +210,7 @@ public class CustomerController {
                 if (confirm == JOptionPane.YES_OPTION) {
                     try {
                         String result = customerService.deleteTier(id);
+                        customerService.syncTiers(); // Đồng bộ lại toàn bộ khách hàng sau khi xóa hạng
                         JOptionPane.showMessageDialog(loyaltyView, result);
                         loadTiers();
                         loadCustomers(); 
@@ -220,21 +221,7 @@ public class CustomerController {
             }
         });
 
-        loyaltyView.getBtnSyncTiers().addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(loyaltyView, 
-                "Hệ thống sẽ dựa vào luật thăng hạng mới nhất để quét và cập nhật lại Hạng cho TOÀN BỘ khách hàng.\nBạn có muốn tiếp tục?", 
-                "Xác nhận Đồng bộ", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
-            
-            if (confirm == JOptionPane.YES_OPTION) {
-                try {
-                    String result = customerService.syncTiers();
-                    JOptionPane.showMessageDialog(loyaltyView, result);
-                    loadCustomers(); 
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(loyaltyView, "Sự cố: " + ex.getMessage(), "Lỗi Đồng Bộ", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        });
+
 
         loyaltyView.getBtnSaveRule().addActionListener(e -> {
             try {
@@ -277,8 +264,10 @@ public class CustomerController {
                 }
                 
                 customerService.saveTier(id, name, points);
+                customerService.syncTiers(); // Tự động quét đồng bộ lại hạng cho toàn bộ khách hàng khi thêm/sửa hạng
                 JOptionPane.showMessageDialog(loyaltyView, id == 0 ? "Thêm hạng thẻ thành công!" : "Cập nhật thành công!");
                 loadTiers(); 
+                loadCustomers();
                 
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(loyaltyView, "Vui lòng nhập Điểm là một số hợp lệ!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
@@ -311,7 +300,6 @@ public class CustomerController {
         if (mainFrame != null) mainFrame.setMenuVisible("Loyalty", hasViewLoy);
         
         if (loyaltyView.getBtnAddTier() != null) loyaltyView.getBtnAddTier().setVisible(hasAddLoy);
-        if (loyaltyView.getBtnSyncTiers() != null) loyaltyView.getBtnSyncTiers().setVisible(hasEditLoy);
         if (loyaltyView.getBtnSaveRule() != null) loyaltyView.getBtnSaveRule().setVisible(hasEditLoy);
         
         loyaltyView.setActionPermissions(hasEditLoy, hasDeleteLoy);

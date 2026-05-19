@@ -253,6 +253,17 @@ public class PosController {
                 );
 
                 if (isSuccess) {
+                    // Tự động đồng bộ hạng khách hàng khi điểm thay đổi (do dùng điểm)
+                    if (currentCustomerId != null && totalPointsToDeduct > 0) {
+                        try {
+                            customerService.syncTiers();
+                            if (Controller.CustomerController.getInstance() != null) {
+                                Controller.CustomerController.getInstance().loadCustomers();
+                            }
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }
                     JOptionPane.showMessageDialog(posPanel, "Tạo đơn hàng thành công (Chờ tiếp nhận)!");
                     currentCart.clear(); 
                     globalPointsUsed = 0;
@@ -564,6 +575,16 @@ public class PosController {
                 if (isSuccess) {
                     JOptionPane.showMessageDialog(orderPanel, "Hoàn thành món và trừ kho thành công!");
                     checkAndRewardPoints(currentSelectedOrderId, "Đã hoàn thành", null);
+                    
+                    // Tải lại bảng nguyên liệu tồn kho ở Tab Nhập kho
+                    try {
+                        if (Controller.StockPanelController.getInstance() != null) {
+                            Controller.StockPanelController.getInstance().loadIngredientToView();
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                    
                     loadOrderList();
                     loadOrderDetails(currentSelectedOrderId);
                 } else {
@@ -704,10 +725,17 @@ public class PosController {
                 paySuccess = orderService.updatePaymentStatus(currentSelectedOrderId, "Đã hoàn tiền", "Chưa thanh toán");
                 JOptionPane.showMessageDialog(orderPanel, "Đơn hàng đã thanh toán trước đó. Vui lòng hoàn lại tiền cho khách: " + String.format("%,d đ", order.getFinalTotal()));
             } else {
-                paySuccess = orderService.updatePaymentStatus(currentSelectedOrderId, "Đã hủy", "Chưa thanh toán");
+                paySuccess = orderService.updatePaymentStatus(currentSelectedOrderId, "Chưa thanh toán", "Chưa thanh toán");
             }
 
             if (prepSuccess && paySuccess) {
+                // Hoàn lại điểm tích lũy đã dùng cho khách hàng (nếu có)
+                if (order != null && order.getDiemDaDung() > 0) {
+                    customerService.refundPointsToCustomerByOrderId(currentSelectedOrderId, order.getDiemDaDung());
+                    if (Controller.CustomerController.getInstance() != null) {
+                        Controller.CustomerController.getInstance().loadCustomers();
+                    }
+                }
                 loadOrderList(); 
                 loadOrderDetails(currentSelectedOrderId); 
             } else {
@@ -742,6 +770,7 @@ public class PosController {
                 
                 if (pointsToAdd > 0) {
                     customerService.addPointsToCustomerByOrderId(orderId, pointsToAdd);
+                    customerService.syncTiers(); // Tự động quét đồng bộ lại hạng cho toàn bộ khách hàng khi điểm tăng
                     
                     // [CẬP NHẬT QUAN TRỌNG] Gọi lệnh Tự Động Refresh lại Tab Khách Hàng sau khi Đơn hàng hoàn tất
                     if (Controller.CustomerController.getInstance() != null) {

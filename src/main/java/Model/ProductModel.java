@@ -8,18 +8,13 @@ public class ProductModel {
     private int productID;
     private String productName, imageName, imageType, productStatus, categoryName, categoryStatus, description;
     
-    // 3 Types of Prices
-    private long dineInPrice; 
-    private long takeawayPrice;  
-    private long holidayPrice;  
-    
     private double vat;
     private ImageIcon imageData;
     
     private List<VariantModel> variants; 
 
     public ProductModel(int productID, String productName, String imageName, String imageType, String productStatus, 
-                        String categoryName, String categoryStatus, long dineInPrice, long takeawayPrice, long holidayPrice, double vat, ImageIcon imageData, String description) {
+                        String categoryName, String categoryStatus, double vat, ImageIcon imageData, String description) {
         this.productID = productID;
         this.productName = productName;
         this.imageName = imageName;
@@ -27,9 +22,6 @@ public class ProductModel {
         this.productStatus = productStatus;
         this.categoryName = categoryName;
         this.categoryStatus = categoryStatus;
-        this.dineInPrice = dineInPrice;
-        this.takeawayPrice = takeawayPrice;
-        this.holidayPrice = holidayPrice;
         this.vat = vat;
         this.imageData = imageData;
         this.description = description;
@@ -39,9 +31,6 @@ public class ProductModel {
     public ProductModel() {
         this.productID = 0;
         this.productName = this.imageName = this.imageType = this.productStatus = this.categoryName = this.categoryStatus = this.description = "";
-        this.dineInPrice = 0;
-        this.takeawayPrice = 0;
-        this.holidayPrice = 0;
         this.vat = 8.0;
         this.imageData = null;
         this.variants = new ArrayList<>();
@@ -67,17 +56,6 @@ public class ProductModel {
 
     public String getCategoryStatus() { return categoryStatus; }
     public void setCategoryStatus(String categoryStatus) { this.categoryStatus = categoryStatus; }
-
-    // --- GETTERS & SETTERS FOR PRICES ---
-    public long getDineInPrice() { return dineInPrice; }
-    public void setDineInPrice(long dineInPrice) { this.dineInPrice = dineInPrice; }
-
-    public long getTakeawayPrice() { return takeawayPrice; }
-    public void setTakeawayPrice(long takeawayPrice) { this.takeawayPrice = takeawayPrice; }
-
-    public long getHolidayPrice() { return holidayPrice; }
-    public void setHolidayPrice(long holidayPrice) { this.holidayPrice = holidayPrice; }
-    // --------------------------------------
 
     public double getVat() { return vat; }
     public void setVat(double vat) { this.vat = vat; }

@@ -40,6 +40,7 @@ public class DashboardPanel extends JPanel {
     private int labelFont = Math.max(14, (int)(screenW * 0.011));
 
     private JTabbedPane tabbedPane;
+    private JButton btnRefresh;
     
     // Khai báo Báo Cáo Doanh Thu
     private StatCard cardTotalRevenue;
@@ -92,6 +93,22 @@ public class DashboardPanel extends JPanel {
         setLayout(new BorderLayout(0, 20));
         setBackground(BG_LIGHT);
         setBorder(new EmptyBorder(15, 15, 15, 15));
+
+        // Tạo thanh tiêu đề trên cùng
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setOpaque(false);
+
+        JLabel lblTitle = new JLabel("Báo cáo & Thống kê");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, titleFont));
+        lblTitle.setForeground(TEXT_DARK);
+        headerPanel.add(lblTitle, BorderLayout.WEST);
+
+        btnRefresh = ComponentUI.createModernButton(" Làm mới", PRIMARY_COLOR, Color.WHITE);
+        btnRefresh.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
+        btnRefresh.setPreferredSize(new Dimension(140, 35));
+        headerPanel.add(btnRefresh, BorderLayout.EAST);
+
+        add(headerPanel, BorderLayout.NORTH);
 
         tabbedPane = new JTabbedPane(JTabbedPane.TOP);
         tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
@@ -626,6 +643,14 @@ public class DashboardPanel extends JPanel {
             customerGrowthDataset.addValue(count, "Khách Mới", dateStr);
         }
     }
+
+    public void addRefreshListener(ActionListener listener) {
+        btnRefresh.addActionListener(listener);
+    }
+
+    public void setSelectedRevenueFilter(String filter) { cbFilterRevenue.setSelectedItem(filter); }
+    public void setSelectedShiftFilter(String filter) { cbFilterShift.setSelectedItem(filter); }
+    public void setSelectedCustomerFilter(String filter) { cbFilterCustomer.setSelectedItem(filter); }
 
     // ==========================================================
     // POPUP TÙY CHỈNH THỜI GIAN

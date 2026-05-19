@@ -165,7 +165,9 @@ public class OrderDAO {
                    + "FROM DON_HANG WHERE 1=1 ";
         
         if (!statusFilter.equals("Tất cả")) {
-            if (statusFilter.equals("Chưa thanh toán") || statusFilter.equals("Đã thanh toán") || statusFilter.equals("Đã hoàn tiền")) {
+            if (statusFilter.equals("Chưa thanh toán")) {
+                sql += " AND TrangThaiThanhToan = ? AND TrangThaiPhaChe <> N'Đã hủy' ";
+            } else if (statusFilter.equals("Đã thanh toán") || statusFilter.equals("Đã hoàn tiền")) {
                 sql += " AND TrangThaiThanhToan = ? ";
             } else {
                 sql += " AND TrangThaiPhaChe = ? "; 

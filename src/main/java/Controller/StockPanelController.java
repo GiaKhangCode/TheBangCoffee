@@ -38,8 +38,15 @@ public class StockPanelController {
     private boolean hasDeletePermission = true;
     private boolean hasPrintStock = true;
     
+    private static StockPanelController instance;
+    
+    public static StockPanelController getInstance() {
+        return instance;
+    }
+    
     public StockPanelController(MainFrame sharedMainFrame) throws SQLException {
         this.mainFrame = sharedMainFrame;
+        instance = this;
         
         ingredientService = new IngredientService();
         warehouseReceiptService = new WarehouseReceiptService();

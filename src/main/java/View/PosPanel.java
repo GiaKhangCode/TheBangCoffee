@@ -43,7 +43,7 @@ public class PosPanel extends JPanel {
     // Các biến UI cho Tùy chọn đơn hàng
     private JRadioButton rbDineIn;
     private JRadioButton rbTakeaway;
-    private JCheckBox chkHoliday;
+    private JRadioButton rbHoliday;
     
     private JLabel lblSubTotal;
     private JLabel lblVat;
@@ -331,7 +331,7 @@ public class PosPanel extends JPanel {
         JPanel bottomContainer = new JPanel(new BorderLayout());
         bottomContainer.setOpaque(false);
 
-        JPanel optionsPanel = new JPanel(new GridLayout(2, 1, 0, 5));
+        JPanel optionsPanel = new JPanel(new BorderLayout());
         optionsPanel.setOpaque(false);
         optionsPanel.setBorder(new CompoundBorder(
             new MatteBorder(0, 0, 1, 0, new Color(230, 230, 230)), 
@@ -342,22 +342,21 @@ public class PosPanel extends JPanel {
         typePanel.setOpaque(false);
         rbDineIn = new JRadioButton("Tại quán", true);
         rbTakeaway = new JRadioButton("Mang đi");
+        rbHoliday = new JRadioButton("Ngày lễ");
+        rbHoliday.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        rbHoliday.setForeground(new Color(231, 76, 60)); 
+        
         ButtonGroup bgOrderType = new ButtonGroup();
         bgOrderType.add(rbDineIn);
         bgOrderType.add(rbTakeaway);
+        bgOrderType.add(rbHoliday);
+        
         typePanel.add(new JLabel("Loại:"));
         typePanel.add(rbDineIn);
         typePanel.add(rbTakeaway);
-
-        JPanel holidayPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        holidayPanel.setOpaque(false);
-        chkHoliday = new JCheckBox("Bật giá ngày lễ");
-        chkHoliday.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        chkHoliday.setForeground(new Color(231, 76, 60)); 
-        holidayPanel.add(chkHoliday);
+        typePanel.add(rbHoliday);
 
         optionsPanel.add(typePanel);
-        optionsPanel.add(holidayPanel);
         
         JPanel topBottomWrapper = new JPanel(new BorderLayout(0, 10));
         topBottomWrapper.setOpaque(false);
@@ -551,7 +550,12 @@ public class PosPanel extends JPanel {
         JLabel lblName = new JLabel(product.getProductName());
         lblName.setFont(new Font("Segoe UI", Font.BOLD, 16));
 
-        JLabel lblPrice = new JLabel(String.format("%,d đ", product.getDineInPrice()));
+        // Lấy giá từ biến thể đầu tiên (giá không còn lưu ở cấp sản phẩm nữa)
+        String priceText = "Chưa có giá";
+        if (product.getVariants() != null && !product.getVariants().isEmpty()) {
+            priceText = String.format("Từ: %,d đ", product.getVariants().get(0).getDineInPrice());
+        }
+        JLabel lblPrice = new JLabel(priceText);
         
         if (isOutOfStock) {
             lblName.setForeground(Color.GRAY);
@@ -641,12 +645,12 @@ public class PosPanel extends JPanel {
     }
 
     public boolean isTakeaway() { return rbTakeaway.isSelected(); }
-    public boolean isHoliday() { return chkHoliday.isSelected(); }
+    public boolean isHoliday() { return rbHoliday.isSelected(); }
     
     public void addOrderOptionListener(ActionListener listener) {
         rbDineIn.addActionListener(listener);
         rbTakeaway.addActionListener(listener);
-        chkHoliday.addActionListener(listener);
+        rbHoliday.addActionListener(listener);
     }
 
     public void addSearchListener(java.awt.event.KeyListener listener) { txtSearch.addKeyListener(listener); }

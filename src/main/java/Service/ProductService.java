@@ -35,14 +35,14 @@ public class ProductService {
         return null;
     }
     
-    public void insertProduct(String categoryName, String productName, long dineInPrice, long takeawayPrice, long holidayPrice, double vat, File imageFile, 
+    public void insertProduct(String categoryName, String productName, double vat, File imageFile, 
                               String status, String description, List<VariantModel> listVariants, List<Integer> listToppingIds){
-        productDAO.insertProduct(categoryName, productName, dineInPrice, takeawayPrice, holidayPrice, vat, imageFile, status, description, listVariants, listToppingIds);
+        productDAO.insertProduct(categoryName, productName, vat, imageFile, status, description, listVariants, listToppingIds);
     }
     
-    public void updateProduct(int productId, String categoryName, String productName, long dineInPrice, long takeawayPrice, long holidayPrice, double vat, File imageFile, 
+    public void updateProduct(int productId, String categoryName, String productName, double vat, File imageFile, 
                               String status, String description, List<VariantModel> listVariants, List<Integer> listToppingIds){
-        productDAO.updateProduct(productId, categoryName, productName, dineInPrice, takeawayPrice, holidayPrice, vat, imageFile, status, description, listVariants, listToppingIds);
+        productDAO.updateProduct(productId, categoryName, productName, vat, imageFile, status, description, listVariants, listToppingIds);
     }
     
     public void deleteProduct(int id) throws SQLException, ClassNotFoundException{

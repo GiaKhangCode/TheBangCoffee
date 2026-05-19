@@ -19,7 +19,6 @@ public class LoyaltyManagementPanel extends JPanel {
     private JTable tierTable;
     private DefaultTableModel tierTableModel;
     private JButton btnAddTier;
-    private JButton btnSyncTiers;
     private ActionButtonListener actionListener;
     private boolean hasEditPermission = true;
     private boolean hasDeletePermission = true;
@@ -54,10 +53,8 @@ public class LoyaltyManagementPanel extends JPanel {
         actionPanel.setBackground(Color.WHITE);
 
         btnAddTier = createButton("+ Thêm Hạng", PRIMARY_COLOR); 
-        btnSyncTiers = createButton("Đồng Bộ Thứ Hạng", WARNING_COLOR);
 
         actionPanel.add(btnAddTier);
-        actionPanel.add(btnSyncTiers);
 
         String[] columns = {"Mã Hạng", "Tên Hạng", "Điểm Yêu Cầu", "Mặc Định", "Hành động"};
         tierTableModel = new DefaultTableModel(columns, 0) {
@@ -242,7 +239,6 @@ public class LoyaltyManagementPanel extends JPanel {
     public DefaultTableModel getTierTableModel() { return tierTableModel; }
     public JTable getTierTable() { return tierTable; }
     public JButton getBtnAddTier() { return btnAddTier; }
-    public JButton getBtnSyncTiers() { return btnSyncTiers; }
     public JButton getBtnSaveRule() { return btnSaveRule; }
     public JTextField getTxtTienTichMotDiem() { return txtTienTichMotDiem; }
     public JTextField getTxtGiaTriMotDiem() { return txtGiaTriMotDiem; }

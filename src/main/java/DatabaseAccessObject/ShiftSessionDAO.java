@@ -149,7 +149,7 @@ public class ShiftSessionDAO {
     }
 
     public int countUnpaidOrders() {
-        String sql = "SELECT COUNT(*) FROM DON_HANG WHERE TrangThaiThanhToan = N'Chưa thanh toán'";
+        String sql = "SELECT COUNT(*) FROM DON_HANG WHERE TrangThaiThanhToan = N'Chưa thanh toán' AND TrangThaiPhaChe <> N'Đã hủy'";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {

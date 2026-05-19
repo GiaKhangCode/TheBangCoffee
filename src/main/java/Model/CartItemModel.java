@@ -38,9 +38,13 @@ public class CartItemModel {
             if (isTakeaway) return selectedVariant.getTakeawayPrice();
             return selectedVariant.getDineInPrice();
         } else {
-            if (isHoliday) return product.getHolidayPrice();
-            if (isTakeaway) return product.getTakeawayPrice();
-            return product.getDineInPrice();
+            if (product.getVariants() != null && !product.getVariants().isEmpty()) {
+                VariantModel fallback = product.getVariants().get(0);
+                if (isHoliday) return fallback.getHolidayPrice();
+                if (isTakeaway) return fallback.getTakeawayPrice();
+                return fallback.getDineInPrice();
+            }
+            return 0;
         }
     }
  
@@ -72,20 +76,8 @@ public class CartItemModel {
     }
  
     public long getTotalPrice() {
-    // 1. Lấy giá của món nước (Size)
-    long basePrice = selectedVariant.getDineInPrice(); // Hoặc giá mang về tùy logic
-
-    // 2. Tính tổng giá Topping
-    long toppingPrice = 0;
-    if (selectedToppings != null) {
-        for (ToppingModel topping : selectedToppings) {
-            toppingPrice += topping.getPrice(); 
-        }
+        return getUnitPrice() * quantity;
     }
-
-    // 3. Trả về: (Giá nước + Giá topping) * Số lượng
-    return (basePrice + toppingPrice) * quantity;
-}
     public double getTotalVatAmount() {
         return getMainVatAmount() + getToppingsVatAmount();
     }
