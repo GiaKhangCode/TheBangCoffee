@@ -9,6 +9,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
+import java.net.URL;
 import java.util.List;
 
 public class CategoryManagementPanel extends JPanel {
@@ -72,12 +73,7 @@ public class CategoryManagementPanel extends JPanel {
         // --- Thêm Mới (Bên phải) ---
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         btnPanel.setOpaque(false);
-        btnAddCategory = new JButton("+ Thêm Danh Mục");
-        btnAddCategory.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnAddCategory.setBackground(PRIMARY_COLOR);
-        btnAddCategory.setForeground(Color.WHITE);
-        btnAddCategory.setFocusPainted(false);
-        btnAddCategory.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnAddCategory = Common.ComponentUI.createModernButton("+ Thêm Danh Mục", PRIMARY_COLOR, Color.WHITE);
         btnAddCategory.setPreferredSize(new Dimension(180, 40));
 
         btnAddCategory.addActionListener(e -> showAddDialog());
@@ -215,6 +211,7 @@ public class CategoryManagementPanel extends JPanel {
     // 4. LỚP PANEL GỘP 2 NÚT ĐỒNG BỘ UI
     // ==========================================
     class ActionButtonsPanel extends JPanel {
+        URL editIconUrl = getClass().getResource("/images/edit-247.png");
         JButton btnEdit;
         JButton btnToggle;
 
@@ -223,7 +220,7 @@ public class CategoryManagementPanel extends JPanel {
             setOpaque(true);
             setBackground(Color.WHITE);
 
-            btnEdit = new JButton("Sửa");
+            btnEdit = new JButton("<html><img src='" + editIconUrl + "' width='12' height='12'> Sửa</html>");
             btnToggle = new JButton("Ẩn");
 
             add(btnEdit);

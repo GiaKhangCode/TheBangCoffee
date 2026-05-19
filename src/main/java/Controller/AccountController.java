@@ -60,7 +60,7 @@ public class AccountController {
             
             if(accountModel != null) {
                 // Kiểm tra tài khoản có bị vô hiệu hoá không
-                if ("Chưa hoạt động".equals(accountModel.getStatus())) {
+                if ("Đang bị khóa".equals(accountModel.getStatus())) {
                     JOptionPane.showMessageDialog(loginFrame,
                         "Tài khoản của bạn đã bị vô hiệu hoá. Vui lòng liên hệ quản lý!",
                         "Tài khoản bị khóa", JOptionPane.ERROR_MESSAGE);

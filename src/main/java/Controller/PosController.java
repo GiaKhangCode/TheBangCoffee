@@ -248,7 +248,8 @@ public class PosController {
                     isTakeaway, 
                     isHoliday,
                     0, 
-                    totalPointsToDeduct
+                    totalPointsToDeduct,
+                    globalDiscountAmount // [MỚI] Truyền số tiền được giảm giá để lưu vào DB
                 );
 
                 if (isSuccess) {
@@ -620,7 +621,9 @@ public class PosController {
                 order.getOrderTypeNote(), 
                 order.getPreparationStatus(), 
                 order.getPaymentStatus(),
-                String.format("%,d đ", order.getFinalTotal())
+                String.format("%,d đ", order.getFinalTotal()),
+                order.getDiemDaDung(),
+                order.getTienGiamGia()
             );
             
             orderPanel.updateActionButtons(order.getPreparationStatus(), order.getPaymentStatus());

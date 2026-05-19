@@ -666,7 +666,7 @@ public class RoleController {
             
             AccountModel target = currentAccountManagementList.get(row);
             String currentStatus = target.getStatus();
-            String newStatus = "Đang hoạt động".equals(currentStatus) ? "Chưa hoạt động" : "Đang hoạt động";
+            String newStatus = "Đang hoạt động".equals(currentStatus) ? "Đang bị khóa" : "Đang hoạt động";
             String action = "Đang hoạt động".equals(currentStatus) ? "vô hiệu hoá" : "kích hoạt lại";
             
             int confirm = JOptionPane.showConfirmDialog(null,

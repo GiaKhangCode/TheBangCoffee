@@ -11,9 +11,10 @@
     dh.MaDonHang, 
     TO_CHAR(dh.NgayDat, 'DD/MM/YYYY HH24:MI') AS NgayDat,
     dh.TongTien, 
-    dh.SoTienGiam, 
+    dh.TienGiamGia, 
     dh.TongTienThue, 
     dh.ThanhTien AS TongCong,
+    dh.DiemDaDung,
     NVL(kh.HoTen, N'Khách vãng lai') AS TenKhachHang,
     nd.HoTen AS TenNhanVien,
     sp.TenSanPham, 
@@ -37,9 +38,10 @@ WHERE dh.MaDonHang = $P{p_MaDonHang}]]>
 	<field name="MADONHANG" class="java.math.BigDecimal"/>
 	<field name="NGAYDAT" class="java.lang.String"/>
 	<field name="TONGTIEN" class="java.math.BigDecimal"/>
-	<field name="SOTIENGIAM" class="java.math.BigDecimal"/>
+	<field name="TIENGIAMGIA" class="java.math.BigDecimal"/>
 	<field name="TONGTIENTHUE" class="java.math.BigDecimal"/>
 	<field name="TONGCONG" class="java.math.BigDecimal"/>
+	<field name="DIEMDADUNG" class="java.math.BigDecimal"/>
 	<field name="TENKHACHHANG" class="java.lang.String"/>
 	<field name="TENNHANVIEN" class="java.lang.String"/>
 	<field name="TENSANPHAM" class="java.lang.String"/>
@@ -217,7 +219,7 @@ WHERE dh.MaDonHang = $P{p_MaDonHang}]]>
 	</detail>
 
 <summary>
-		<band height="400" splitType="Stretch">
+		<band height="410" splitType="Stretch">
 			<staticText>
 				<reportElement x="330" y="15" width="100" height="20" uuid="88e0ab8d-2a81-4b13-8d00-4b2a4e402685"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle"/>
@@ -242,28 +244,43 @@ WHERE dh.MaDonHang = $P{p_MaDonHang}]]>
 
 			<staticText>
 				<reportElement x="330" y="55" width="100" height="20" forecolor="#E74C3C" uuid="1c9f4d71-5f21-4f32-841f-82ff3074b6a8">
-					<printWhenExpression><![CDATA[$F{SOTIENGIAM}.compareTo(java.math.BigDecimal.ZERO) > 0]]></printWhenExpression>
+					<printWhenExpression><![CDATA[$F{TIENGIAMGIA} != null && $F{TIENGIAMGIA}.compareTo(java.math.BigDecimal.ZERO) > 0]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Right" verticalAlignment="Middle"/>
-				<text><![CDATA[Khuyến mãi:]]></text>
+				<text><![CDATA[Giảm giá:]]></text>
 			</staticText>
 			<textField pattern="-#,##0 đ">
 				<reportElement x="430" y="55" width="125" height="20" forecolor="#E74C3C" uuid="7cfcb9ef-0cf7-4a11-b0e6-99cfdf2b3a1a">
-					<printWhenExpression><![CDATA[$F{SOTIENGIAM}.compareTo(java.math.BigDecimal.ZERO) > 0]]></printWhenExpression>
+					<printWhenExpression><![CDATA[$F{TIENGIAMGIA} != null && $F{TIENGIAMGIA}.compareTo(java.math.BigDecimal.ZERO) > 0]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Right" verticalAlignment="Middle"/>
-				<textFieldExpression><![CDATA[$F{SOTIENGIAM}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{TIENGIAMGIA}]]></textFieldExpression>
 			</textField>
 
 			<staticText>
-				<reportElement x="280" y="85" width="150" height="25" forecolor="#438E68" uuid="559ec8b2-5f81-4bcf-a877-2c9e7bdfa67b"/>
+				<reportElement x="330" y="75" width="100" height="20" forecolor="#666666" uuid="3b3f11c7-c1d3-4a11-b1e9-4e4b2d113c2f">
+					<printWhenExpression><![CDATA[$F{DIEMDADUNG} != null && $F{DIEMDADUNG}.compareTo(java.math.BigDecimal.ZERO) > 0]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<text><![CDATA[Điểm đã dùng:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="430" y="75" width="125" height="20" forecolor="#666666" uuid="6cfd02cd-3e9a-41e9-9132-72c0c16ea5ff">
+					<printWhenExpression><![CDATA[$F{DIEMDADUNG} != null && $F{DIEMDADUNG}.compareTo(java.math.BigDecimal.ZERO) > 0]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{DIEMDADUNG}.intValue() + " điểm"]]></textFieldExpression>
+			</textField>
+
+			<staticText>
+				<reportElement x="280" y="105" width="150" height="25" forecolor="#438E68" uuid="559ec8b2-5f81-4bcf-a877-2c9e7bdfa67b"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font size="14" isBold="true"/>
 				</textElement>
 				<text><![CDATA[TỔNG THANH TOÁN:]]></text>
 			</staticText>
 			<textField pattern="#,##0 đ">
-				<reportElement x="430" y="85" width="125" height="25" forecolor="#438E68" uuid="2a1e0b5f-3957-4b95-a228-2d2c1ef4b898"/>
+				<reportElement x="430" y="105" width="125" height="25" forecolor="#438E68" uuid="2a1e0b5f-3957-4b95-a228-2d2c1ef4b898"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font size="14" isBold="true"/>
 				</textElement>
@@ -271,7 +288,7 @@ WHERE dh.MaDonHang = $P{p_MaDonHang}]]>
 			</textField>
 
 			<staticText>
-				<reportElement x="0" y="125" width="555" height="20" uuid="e63e9f45-9df0-4b2a-8742-1e9b25a39513"/>
+				<reportElement x="0" y="145" width="555" height="20" uuid="e63e9f45-9df0-4b2a-8742-1e9b25a39513"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font isBold="true"/>
 				</textElement>
@@ -279,12 +296,12 @@ WHERE dh.MaDonHang = $P{p_MaDonHang}]]>
 			</staticText>
 			
 			<image scaleImage="RetainShape" hAlign="Center" vAlign="Middle">
-				<reportElement x="177" y="150" width="200" height="200" uuid="f74f0a56-0ea1-5c3b-9853-2f0c36b40624"/>
+				<reportElement x="177" y="170" width="200" height="200" uuid="f74f0a56-0ea1-5c3b-9853-2f0c36b40624"/>
 				<imageExpression><![CDATA[this.getClass().getResourceAsStream("/images/qr_code.jpg")]]></imageExpression>
 			</image>
 
 			<staticText>
-				<reportElement x="0" y="360" width="555" height="20" forecolor="#666666" uuid="e622b7bf-8f5b-4c5c-9c31-7e8c3a11075d"/>
+				<reportElement x="0" y="380" width="555" height="20" forecolor="#666666" uuid="e622b7bf-8f5b-4c5c-9c31-7e8c3a11075d"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font isItalic="true"/>
 				</textElement>

@@ -9,6 +9,7 @@ import javax.swing.border.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -708,12 +709,14 @@ public class ProductEditDialog extends JDialog {
     public interface ProductActionListener { void onEdit(int row); void onDelete(int row); }
 
     class ProductActionPanel extends JPanel {
-        protected JButton btnEdit = new JButton("Sửa");
-        protected JButton btnDelete = new JButton("Xóa");
+        URL editIconUrl = getClass().getResource("/images/edit-247.png");
+        URL deleteIconUrl = getClass().getResource("/images/delete-icon.png");
+        protected JButton btnEdit = new JButton("<html><img src='" + editIconUrl + "' width='12' height='12'> Sửa</html>");
+        protected JButton btnDelete = new JButton("<html><img src='" + deleteIconUrl + "' width='12' height='12'> Xóa</html>");
         public ProductActionPanel() {
             setLayout(new FlowLayout(FlowLayout.CENTER, 5, 8)); setOpaque(true);
-            styleButton(btnEdit, new Color(0, 122, 255), 60, 30);
-            styleButton(btnDelete, new Color(255, 59, 48), 60, 30);
+            styleButton(btnEdit, new Color(0, 122, 255), 75, 30);
+            styleButton(btnDelete, new Color(255, 59, 48), 75, 30);
             add(btnEdit); add(btnDelete);
         }
         protected void styleButton(JButton btn, Color color, int width, int height) {

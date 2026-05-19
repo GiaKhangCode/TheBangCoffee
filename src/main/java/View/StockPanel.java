@@ -10,6 +10,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.net.URL;
 import java.util.List;
 import java.util.ArrayList;
 import java.text.SimpleDateFormat;
@@ -72,8 +73,8 @@ public class StockPanel extends JPanel {
     private JDateChooser jdExpiryDate;
     
     // --- Stats ---
-    private StatCard cardTotalIngredients;
-    private StatCard cardWarning;
+    private JTextField txtSearch; // [MỚI] Ô tìm kiếm nguyên liệu
+    private JToggleButton btnFilterWarning; // [MỚI] Nút lọc những nguyên liệu cần nhập (hết hàng/sắp hết)
 
     public StockPanel() {
         setLayout(new BorderLayout());
@@ -100,14 +101,7 @@ public class StockPanel extends JPanel {
         inventoryListView = new JPanel(new BorderLayout(0, 25));
         inventoryListView.setOpaque(false);
 
-        JPanel statsPanel = new JPanel(new GridLayout(1, 3, 20, 0));
-        statsPanel.setOpaque(false);
-        
-        cardTotalIngredients = new StatCard("Tổng nguyên liệu", "0", "Loại");
-        cardWarning = new StatCard("Cần nhập hàng", "0", "Cảnh báo");
-
-        statsPanel.add(cardTotalIngredients);
-        statsPanel.add(cardWarning);
+        // [CẬP NHẬT] Đã loại bỏ hoàn toàn StatCard "Cần nhập hàng"
 
         JPanel actionBar = new JPanel(new BorderLayout());
         actionBar.setOpaque(false);
@@ -115,10 +109,48 @@ public class StockPanel extends JPanel {
         JPanel leftActions = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         leftActions.setOpaque(false);
         
-        JTextField searchField = new JTextField(20);
-        searchField.putClientProperty("JTextField.placeholderText", "Tìm kiếm nguyên liệu...");
-        searchField.setPreferredSize(new Dimension(250, 40));
-        leftActions.add(searchField);
+        txtSearch = new JTextField(20);
+        txtSearch.setPreferredSize(new Dimension(250, 40));
+        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        txtSearch.setText("Tìm kiếm nguyên liệu...");
+        txtSearch.setForeground(Color.GRAY);
+
+        txtSearch.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                if (txtSearch.getText().equals("Tìm kiếm nguyên liệu...")) {
+                    txtSearch.setText("");
+                    txtSearch.setForeground(TEXT_DARK);
+                }
+            }
+            @Override
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                if (txtSearch.getText().trim().isEmpty()) {
+                    txtSearch.setForeground(Color.GRAY);
+                    txtSearch.setText("Tìm kiếm nguyên liệu...");
+                }
+            }
+        });
+        leftActions.add(txtSearch);
+
+        // [MỚI] Khởi tạo và cấu hình JToggleButton lọc các nguyên liệu cần nhập
+        btnFilterWarning = new JToggleButton("Cần nhập hàng");
+        btnFilterWarning.setPreferredSize(new Dimension(140, 40));
+        btnFilterWarning.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnFilterWarning.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnFilterWarning.setFocusPainted(false);
+        btnFilterWarning.setBackground(Color.WHITE);
+        btnFilterWarning.setForeground(new Color(220, 53, 69)); // Màu chữ đỏ cảnh báo
+        btnFilterWarning.setBorder(BorderFactory.createLineBorder(new Color(220, 53, 69), 1)); // Viền đỏ
+
+        btnFilterWarning.addActionListener(e -> {
+            if (btnFilterWarning.isSelected()) {
+                btnFilterWarning.setBackground(new Color(255, 230, 230)); // Đỏ nhạt đồng bộ khi được chọn
+            } else {
+                btnFilterWarning.setBackground(Color.WHITE);
+            }
+        });
+        leftActions.add(btnFilterWarning);
 
         JPanel rightActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         rightActions.setOpaque(false);
@@ -179,7 +211,7 @@ public class StockPanel extends JPanel {
         scrollPane.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230)));
         scrollPane.getViewport().setBackground(Color.WHITE);
 
-        inventoryListView.add(statsPanel, BorderLayout.NORTH);
+        // [CẬP NHẬT] Đã loại bỏ statsPanel khỏi layout
         
         JPanel centerWrapper = new JPanel(new BorderLayout(0, 15));
         centerWrapper.setOpaque(false);
@@ -615,12 +647,16 @@ public class StockPanel extends JPanel {
     public interface ActionButtonListener { void onDetail(int row); void onEdit(int row); void onDelete(int row); }
 
     class ActionPanel extends JPanel {
-        protected JButton btnDetail = new JButton("Xem chi tiết"); protected JButton btnEdit = new JButton("Sửa"); protected JButton btnDelete = new JButton("Xóa");
+        URL editIconUrl = getClass().getResource("/images/edit-247.png");
+        URL deleteIconUrl = getClass().getResource("/images/delete-icon.png");
+        protected JButton btnDetail = new JButton("Xem chi tiết"); 
+        protected JButton btnEdit = new JButton("<html><img src='" + editIconUrl + "' width='12' height='12'> Sửa</html>"); 
+        protected JButton btnDelete = new JButton("<html><img src='" + deleteIconUrl + "' width='12' height='12'> Xóa</html>");
         public ActionPanel(boolean showDetail, boolean showEdit, boolean showDelete) {
             setLayout(new FlowLayout(FlowLayout.CENTER, 5, 8)); setOpaque(true); setBackground(Color.WHITE);
             if (showDetail) { styleButton(btnDetail, new Color(0, 0, 0), 95, 30); add(btnDetail); }
-            if (showEdit) { styleButton(btnEdit, new Color(0, 122, 255), 60, 30); add(btnEdit); }
-            if (showDelete) { styleButton(btnDelete, new Color(255, 59, 48), 60, 30); add(btnDelete); }
+            if (showEdit) { styleButton(btnEdit, new Color(0, 122, 255), 75, 30); add(btnEdit); }
+            if (showDelete) { styleButton(btnDelete, new Color(255, 59, 48), 75, 30); add(btnDelete); }
         }
         protected void styleButton(JButton btn, Color color, int width, int height) {
             btn.setFont(new Font("Segoe UI", Font.BOLD, 12)); btn.setForeground(color); btn.setBackground(Color.WHITE); btn.setBorder(BorderFactory.createLineBorder(color, 1));
@@ -664,9 +700,12 @@ public class StockPanel extends JPanel {
     public DefaultTableModel getInventoryModel() { return inventoryModel; }
     
     public Object[] showEditDialog(String ten, String dvt, int ton, int nguong) {
-        JTextField txtTen = new JTextField(ten); JTextField txtDVT = new JTextField(dvt); JTextField txtTon = new JTextField(String.valueOf(ton));
+        JTextField txtTen = new JTextField(ten); JTextField txtDVT = new JTextField(dvt); 
+        JTextField txtTon = new JTextField(String.valueOf(ton));
+        txtTon.setEditable(false); // [MỚI] Vô hiệu hóa việc sửa số lượng tồn kho trực tiếp
+        
         JTextField txtNguong = new JTextField(String.valueOf(nguong)); JTextField txtLyDo = new JTextField(); 
-        Object[] message = { "Tên nguyên liệu:", txtTen, "Đơn vị tính:", txtDVT, "Số lượng tồn hiện tại:", txtTon, "Ngưỡng báo động:", txtNguong, "Lý do chỉnh sửa:", txtLyDo };
+        Object[] message = { "Tên nguyên liệu:", txtTen, "Đơn vị tính:", txtDVT, "Số lượng tồn hiện tại (Không thể sửa trực tiếp):", txtTon, "Ngưỡng báo động:", txtNguong, "Lý do chỉnh sửa:", txtLyDo };
         int option = JOptionPane.showConfirmDialog(this, message, "Chỉnh sửa nguyên liệu", JOptionPane.OK_CANCEL_OPTION);
         if (option == JOptionPane.OK_OPTION) {
             try {
@@ -704,9 +743,12 @@ public class StockPanel extends JPanel {
     public JTable getHistoryTable() { return historyTable; }
     public DefaultTableModel getHistoryModel() { return historyModel; }
     public void setTotalAmountLabel(long tongCong) { if (lblTotal != null) lblTotal.setText("Tổng cộng: " + String.format("%,d", tongCong) + " VND"); }
+    // [CẬP NHẬT] Đã xóa StatCard, giữ lại hàm trống để tương thích ngược với Controller
+    public void updateDashboardStats(int warningCount) {
+    }
+
+    // [CẬP NHẬT] Đã xóa StatCard, giữ lại hàm trống để tương thích ngược với Controller
     public void updateDashboardStats(int totalTypes, int warningCount) {
-        if (cardTotalIngredients != null) cardTotalIngredients.setValue(String.valueOf(totalTypes));
-        if (cardWarning != null) cardWarning.setValue(String.valueOf(warningCount));
     }
 
     // --- PHÂN QUYỀN ---
@@ -827,6 +869,30 @@ public class StockPanel extends JPanel {
 
         dialog.add(new JScrollPane(table), BorderLayout.CENTER);
         dialog.setVisible(true);
+    }
+
+    // [MỚI] Lấy từ khóa tìm kiếm hiện tại từ ô txtSearch, bỏ qua text mặc định gợi ý
+    public String getSearchText() {
+        String text = txtSearch.getText().trim();
+        if (text.equals("Tìm kiếm nguyên liệu...")) {
+            return "";
+        }
+        return text;
+    }
+
+    // [MỚI] Đăng ký bộ lắng nghe sự kiện gõ phím trên ô tìm kiếm
+    public void addSearchListener(java.awt.event.KeyListener listener) {
+        txtSearch.addKeyListener(listener);
+    }
+
+    // [MỚI] Kiểm tra xem nút lọc nguyên liệu cần nhập có đang được chọn hay không
+    public boolean isFilterWarningSelected() {
+        return btnFilterWarning.isSelected();
+    }
+
+    // [MỚI] Đăng ký bộ lắng nghe sự kiện khi click nút lọc nguyên liệu cần nhập
+    public void addFilterWarningListener(java.awt.event.ActionListener listener) {
+        btnFilterWarning.addActionListener(listener);
     }
 
     public interface BatchDisposeListener { void onDispose(int maLo, double qty, String reason); }

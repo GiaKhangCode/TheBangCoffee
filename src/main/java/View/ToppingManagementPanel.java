@@ -10,6 +10,7 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
+import java.net.URL;
 import java.util.List;
 
 public class ToppingManagementPanel extends JPanel {
@@ -51,13 +52,8 @@ public class ToppingManagementPanel extends JPanel {
 
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         btnPanel.setOpaque(false);
-        btnAdd = new JButton("+ Thêm Topping");
+        btnAdd = Common.ComponentUI.createModernButton("+ Thêm Topping", new Color(67, 142, 104), Color.WHITE);
         btnAdd.setPreferredSize(new Dimension(150, 40));
-        btnAdd.setBackground(new Color(67, 142, 104));
-        btnAdd.setForeground(Color.WHITE);
-        btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnAdd.setFocusPainted(false);
-        btnAdd.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnPanel.add(btnAdd);
 
         topPanel.add(searchPanel, BorderLayout.WEST);
@@ -77,9 +73,17 @@ public class ToppingManagementPanel extends JPanel {
         table.setIntercellSpacing(new Dimension(0, 0));
 
         // Cột Hành động (Sửa / Xóa)
+        table.getColumnModel().getColumn(0).setPreferredWidth(100); // Mã Topping
+        table.getColumnModel().getColumn(1).setPreferredWidth(180); // Tên Topping
+        table.getColumnModel().getColumn(2).setPreferredWidth(100); // Giá Bán
+        table.getColumnModel().getColumn(3).setPreferredWidth(100); // Mã NL Trừ
+        table.getColumnModel().getColumn(4).setPreferredWidth(100); // Hao Hụt
+        table.getColumnModel().getColumn(5).setPreferredWidth(120); // Thuế VAT (%)
+
         TableColumn actionCol = table.getColumnModel().getColumn(6);
         actionCol.setCellRenderer(new ActionButtonRenderer());
         actionCol.setCellEditor(new ActionButtonEditor(new JCheckBox()));
+        actionCol.setPreferredWidth(160); // Đảm bảo đủ chiều rộng để hiển thị 2 nút trên cùng 1 dòng
 
         add(topPanel, BorderLayout.NORTH);
         add(new JScrollPane(table), BorderLayout.CENTER);
@@ -117,8 +121,10 @@ public class ToppingManagementPanel extends JPanel {
     public interface ActionButtonListener { void onEdit(int row); void onDelete(int row); }
 
     class ActionPanel extends JPanel {
-        JButton btnEdit = new JButton("Sửa");
-        JButton btnDelete = new JButton("Xóa");
+        URL editIconUrl = getClass().getResource("/images/edit-247.png");
+        URL deleteIconUrl = getClass().getResource("/images/delete-icon.png");
+        JButton btnEdit = new JButton("<html><img src='" + editIconUrl + "' width='12' height='12'> Sửa</html>");
+        JButton btnDelete = new JButton("<html><img src='" + deleteIconUrl + "' width='12' height='12'> Xóa</html>");
         public ActionPanel() {
             setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5)); setOpaque(true); setBackground(Color.WHITE);
             styleBtn(btnEdit, new Color(0, 122, 255)); styleBtn(btnDelete, new Color(255, 59, 48));
@@ -127,7 +133,7 @@ public class ToppingManagementPanel extends JPanel {
         void styleBtn(JButton b, Color c) {
             b.setFont(new Font("Segoe UI", Font.BOLD, 12)); b.setForeground(c);
             b.setBackground(Color.WHITE); b.setBorder(new LineBorder(c, 1));
-            b.setPreferredSize(new Dimension(50, 25)); b.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            b.setPreferredSize(new Dimension(65, 25)); b.setCursor(new Cursor(Cursor.HAND_CURSOR));
         }
     }
 

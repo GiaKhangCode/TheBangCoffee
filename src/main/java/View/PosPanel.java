@@ -752,14 +752,15 @@ public class PosPanel extends JPanel {
     public interface DeleteActionListener { void onDelete(int row); }
 
     class DeleteActionPanel extends JPanel {
-        protected JButton btnDelete = new JButton("Xóa");
+        URL deleteIconUrl = getClass().getResource("/images/delete-icon.png");
+        protected JButton btnDelete = new JButton("<html><img src='" + deleteIconUrl + "' width='10' height='10'> Xóa</html>");
         public DeleteActionPanel() {
             setLayout(new FlowLayout(FlowLayout.CENTER, 0, 4)); setOpaque(true);
             btnDelete.setFont(new Font("Segoe UI", Font.BOLD, 11)); 
             btnDelete.setForeground(new Color(255, 59, 48));
             btnDelete.setBackground(Color.WHITE);
             btnDelete.setBorder(BorderFactory.createLineBorder(new Color(255, 59, 48), 1));
-            btnDelete.setFocusPainted(false); btnDelete.setPreferredSize(new Dimension(45, 25)); 
+            btnDelete.setFocusPainted(false); btnDelete.setPreferredSize(new Dimension(58, 25)); 
             btnDelete.setCursor(new Cursor(Cursor.HAND_CURSOR));
             add(btnDelete);
         }

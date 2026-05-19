@@ -28,10 +28,30 @@ public class ComponentUI {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getBackground());
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                
+                Color baseBg = getBackground();
+                // Thiết lập màu vẽ dựa trên trạng thái nút (Nhấn / Di chuột / Bình thường)
+                if (getModel().isPressed()) {
+                    g2.setColor(getPressedColor(baseBg));
+                    g2.translate(0, 1); // Dịch chuyển nhẹ 1px xuống dưới để tạo hiệu ứng 3D lún nút
+                } else if (getModel().isRollover()) {
+                    g2.setColor(getHoverColor(baseBg));
+                } else {
+                    g2.setColor(baseBg);
+                }
+                
+                // Đảm bảo vẽ nền không bị lòi ngoài viền khi dịch xuống 1px
+                g2.fillRoundRect(0, 0, getWidth(), getModel().isPressed() ? getHeight() - 1 : getHeight(), 10, 10);
                 g2.dispose();
+                
+                // Dịch chuyển graphics chính để vẽ chữ/icon cũng thụt xuống 1px tương ứng
+                if (getModel().isPressed()) {
+                    g.translate(0, 1);
+                }
                 super.paintComponent(g);
+                if (getModel().isPressed()) {
+                    g.translate(0, -1); // Trả graphics chính về trạng thái ban đầu để tránh ảnh hưởng lần vẽ sau
+                }
             }
         };
         Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
@@ -47,6 +67,44 @@ public class ComponentUI {
         btn.setContentAreaFilled(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
+    }
+    
+    // Hàm hỗ trợ giảm độ sáng của màu khi nhấn nút
+    private static Color getPressedColor(Color bg) {
+        int r = bg.getRed();
+        int g = bg.getGreen();
+        int b = bg.getBlue();
+        int a = bg.getAlpha();
+        
+        // Giảm độ sáng khoảng 30 đơn vị để tạo hiệu ứng nhấn mạnh rõ rệt
+        r = Math.max(0, r - 30);
+        g = Math.max(0, g - 30);
+        b = Math.max(0, b - 30);
+        
+        return new Color(r, g, b, a);
+    }
+    
+    // Hàm hỗ trợ điều chỉnh màu khi di chuột qua nút (Hover)
+    private static Color getHoverColor(Color bg) {
+        int r = bg.getRed();
+        int g = bg.getGreen();
+        int b = bg.getBlue();
+        int a = bg.getAlpha();
+        
+        // Xác định độ sáng tổng thể để điều chỉnh màu Hover phù hợp
+        int brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        if (brightness > 200) {
+            // Nút màu sáng (Trắng/Xám nhạt): di chuột vào sẽ hơi sẫm màu đi 12 đơn vị
+            r = Math.max(0, r - 12);
+            g = Math.max(0, g - 12);
+            b = Math.max(0, b - 12);
+        } else {
+            // Nút màu tối (Xanh/Đỏ/Đậm): di chuột vào sẽ sáng lên 20 đơn vị
+            r = Math.min(255, r + 20);
+            g = Math.min(255, g + 20);
+            b = Math.min(255, b + 20);
+        }
+        return new Color(r, g, b, a);
     }
     
     public static void styleTable(JTable table, Color foreground, Color selectionForeground, Color selectionBackground) {

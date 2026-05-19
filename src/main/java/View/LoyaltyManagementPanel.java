@@ -10,6 +10,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.net.URL;
 
 public class LoyaltyManagementPanel extends JPanel {
     private final Color PRIMARY_COLOR = new Color(67, 142, 104);
@@ -42,10 +43,11 @@ public class LoyaltyManagementPanel extends JPanel {
         panel.setBackground(Color.WHITE);
 
         TitledBorder title = BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.LIGHT_GRAY), 
+            BorderFactory.createLineBorder(new Color(172, 197, 219), 1), 
             "1. Danh sách Hạng thẻ"
         );
         title.setTitleFont(new Font("Segoe UI", Font.BOLD, 14));
+        title.setTitleColor(new Color(0, 0, 0));
         panel.setBorder(BorderFactory.createCompoundBorder(title, new EmptyBorder(10, 10, 10, 10)));
 
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
@@ -110,10 +112,11 @@ public class LoyaltyManagementPanel extends JPanel {
         panel.setBackground(Color.WHITE);
 
         TitledBorder title = BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.LIGHT_GRAY), 
+            BorderFactory.createLineBorder(new Color(172, 197, 219), 1), 
             "2. Tỷ lệ Quy đổi Điểm"
         );
         title.setTitleFont(new Font("Segoe UI", Font.BOLD, 14));
+        title.setTitleColor(new Color(0, 0, 0));
         panel.setBorder(title);
 
         txtTienTichMotDiem = new JTextField("10000", 8);
@@ -140,13 +143,8 @@ public class LoyaltyManagementPanel extends JPanel {
     }
 
     private JButton createButton(String text, Color color) {
-        JButton btn = new JButton(text);
-        btn.setBackground(color);
-        btn.setForeground(Color.WHITE);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btn.setFocusPainted(false);
+        JButton btn = Common.ComponentUI.createModernButton(text, color, Color.WHITE);
         btn.setPreferredSize(new Dimension(160, 35));
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
     }
 
@@ -180,8 +178,10 @@ public class LoyaltyManagementPanel extends JPanel {
     }
 
     class ActionPanel extends JPanel {
-        JButton btnEdit = new JButton("Sửa");
-        JButton btnDelete = new JButton("Xóa");
+        URL editIconUrl = getClass().getResource("/images/edit-247.png");
+        URL deleteIconUrl = getClass().getResource("/images/delete-icon.png");
+        JButton btnEdit = new JButton("<html><img src='" + editIconUrl + "' width='12' height='12'> Sửa</html>");
+        JButton btnDelete = new JButton("<html><img src='" + deleteIconUrl + "' width='12' height='12'> Xóa</html>");
         public ActionPanel() {
             setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5)); 
             setOpaque(true); setBackground(Color.WHITE);
@@ -192,7 +192,7 @@ public class LoyaltyManagementPanel extends JPanel {
         void styleBtn(JButton b, Color c) {
             b.setFont(new Font("Segoe UI", Font.BOLD, 12)); b.setForeground(c);
             b.setBackground(Color.WHITE); b.setBorder(new LineBorder(c, 1));
-            b.setPreferredSize(new Dimension(50, 25)); b.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            b.setPreferredSize(new Dimension(65, 25)); b.setCursor(new Cursor(Cursor.HAND_CURSOR));
         }
     }
 

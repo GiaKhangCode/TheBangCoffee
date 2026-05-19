@@ -159,8 +159,8 @@ public class RolePanel extends JPanel {
             }
             @Override 
             public boolean isCellEditable(int r, int c) { 
-                // Chỉ cho phép click vào các checkbox (2-6) và nút Hành động (7)
-                return c > 1; 
+                // Chỉ cho phép click vào nút Hành động (cột 7), tắt quyền click trực tiếp của các checkbox (cột 2-6)
+                return c == 7; 
             }
         };
         

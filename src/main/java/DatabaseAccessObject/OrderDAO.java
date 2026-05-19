@@ -14,8 +14,8 @@ import java.util.List;
 
 public class OrderDAO {
 
-    public boolean createOrder(int accountId, Integer maKhachHang, List<CartItemModel> cart, long finalTotal, double totalVat, String prepStatus, String payStatus, boolean isTakeaway, boolean isHoliday, int pointsEarned, int pointsUsed) {
-        String insertOrderSQL = "INSERT INTO DON_HANG (MaTaiKhoan, MaKhachHang, TongTien, TongTienThue, ThanhTien, TrangThaiPhaChe, TrangThaiThanhToan, GhiChu, MaPhienCa) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    public boolean createOrder(int accountId, Integer maKhachHang, List<CartItemModel> cart, long finalTotal, double totalVat, String prepStatus, String payStatus, boolean isTakeaway, boolean isHoliday, int pointsEarned, int pointsUsed, long discountAmount) {
+        String insertOrderSQL = "INSERT INTO DON_HANG (MaTaiKhoan, MaKhachHang, TongTien, TongTienThue, ThanhTien, TrangThaiPhaChe, TrangThaiThanhToan, GhiChu, MaPhienCa, DiemDaDung, TienGiamGia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         String insertOrderDetailSQL = "INSERT INTO CHI_TIET_DON_HANG (MaDonHang, MaBienThe, SoLuong, GiaTruocThue, TienThue, ThanhTien, GhiChuMon) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String insertToppingSQL = "INSERT INTO CHI_TIET_TOPPING (MaCTHD, MaTopping, SoLuong, GiaTruocThue, TienThue) VALUES (?, ?, ?, ?, ?)";
         
@@ -59,6 +59,10 @@ public class OrderDAO {
                     } else {
                         psOrder.setNull(9, java.sql.Types.INTEGER);
                     }
+                    
+                    // [MỚI] Gán giá trị điểm đã sử dụng và số tiền được giảm giá
+                    psOrder.setInt(10, pointsUsed);
+                    psOrder.setLong(11, discountAmount);
                     
                     psOrder.executeUpdate();
 
@@ -157,7 +161,7 @@ public class OrderDAO {
     public List<OrderModel> getAllOrders(String statusFilter, String keyword) {
         List<OrderModel> list = new ArrayList<>();
         String sql = "SELECT MaDonHang, MaTaiKhoan, TO_CHAR(NgayDat, 'DD/MM/YYYY HH24:MI') as Ngay, "
-                   + "TongTien, TongTienThue, ThanhTien, TrangThaiPhaChe, TrangThaiThanhToan, GhiChu "
+                   + "TongTien, TongTienThue, ThanhTien, TrangThaiPhaChe, TrangThaiThanhToan, GhiChu, DiemDaDung, TienGiamGia "
                    + "FROM DON_HANG WHERE 1=1 ";
         
         if (!statusFilter.equals("Tất cả")) {
@@ -183,7 +187,8 @@ public class OrderDAO {
                     list.add(new OrderModel(
                         rs.getInt("MaDonHang"), rs.getInt("MaTaiKhoan"), rs.getString("Ngay"),
                         rs.getLong("TongTien"), rs.getLong("TongTienThue"), rs.getLong("ThanhTien"),
-                        rs.getString("TrangThaiPhaChe"), rs.getString("TrangThaiThanhToan"), rs.getString("GhiChu")
+                        rs.getString("TrangThaiPhaChe"), rs.getString("TrangThaiThanhToan"), rs.getString("GhiChu"),
+                        rs.getInt("DiemDaDung"), rs.getLong("TienGiamGia")
                     ));
                 }
             }
@@ -362,7 +367,7 @@ public class OrderDAO {
     
     public OrderModel getOrderById(int orderId) {
         String sql = "SELECT MaDonHang, MaTaiKhoan, TO_CHAR(NgayDat, 'DD/MM/YYYY HH24:MI') as Ngay, "
-                   + "TongTien, TongTienThue, ThanhTien, TrangThaiPhaChe, TrangThaiThanhToan, GhiChu "
+                   + "TongTien, TongTienThue, ThanhTien, TrangThaiPhaChe, TrangThaiThanhToan, GhiChu, DiemDaDung, TienGiamGia "
                    + "FROM DON_HANG WHERE MaDonHang = ?";
                    
         try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection();
@@ -374,7 +379,8 @@ public class OrderDAO {
                     return new OrderModel(
                         rs.getInt("MaDonHang"), rs.getInt("MaTaiKhoan"), rs.getString("Ngay"),
                         rs.getLong("TongTien"), rs.getLong("TongTienThue"), rs.getLong("ThanhTien"),
-                        rs.getString("TrangThaiPhaChe"), rs.getString("TrangThaiThanhToan"), rs.getString("GhiChu")
+                        rs.getString("TrangThaiPhaChe"), rs.getString("TrangThaiThanhToan"), rs.getString("GhiChu"),
+                        rs.getInt("DiemDaDung"), rs.getLong("TienGiamGia")
                     );
                 }
             }

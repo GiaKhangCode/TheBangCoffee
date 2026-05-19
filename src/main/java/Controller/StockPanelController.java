@@ -371,6 +371,19 @@ public class StockPanelController {
             @Override public void onDelete(int row) {}
             @Override public void onDetail(int row) {}
         });
+        
+        // [MỚI] Lắng nghe sự kiện gõ phím trên ô tìm kiếm (Tự động lọc thời gian thực)
+        this.stockPanelView.addSearchListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyReleased(java.awt.event.KeyEvent e) {
+                filterIngredients();
+            }
+        });
+
+        // [MỚI] Lắng nghe sự kiện click trên nút lọc nguyên liệu cần nhập
+        this.stockPanelView.addFilterWarningListener(e -> {
+            filterIngredients();
+        });
     }
         
     private void implementCreateReceipt() throws Exception {
@@ -427,8 +440,42 @@ public class StockPanelController {
     
     public void loadIngredientToView() throws SQLException {
         ingredientListModel = ingredientService.getIngredientList();
-        stockPanelView.displayIngredientData(ingredientListModel);
+        
+        // [MỚI] Tính toán số lượng nguyên liệu cần nhập (tồn kho dưới hoặc bằng ngưỡng cảnh báo)
+        int warningCount = 0;
+        if (ingredientListModel != null) {
+            for (IngredientModel ing : ingredientListModel) {
+                if (ing.getInStock() <= ing.getThreshold()) {
+                    warningCount++;
+                }
+            }
+        }
+        stockPanelView.updateDashboardStats(warningCount); // Cập nhật lên StatCard cảnh báo
+        
+        filterIngredients(); // [CẬP NHẬT] Lọc lại danh sách dựa trên từ khóa tìm kiếm hiện tại để giữ trạng thái
         stockPanelView.loadIngredientsToComboBox(ingredientListModel);
+    }
+
+    // [MỚI] Hàm lọc nguyên liệu thời gian thực kết hợp ô tìm kiếm và trạng thái nút lọc "Cần nhập hàng"
+    private void filterIngredients() {
+        String keyword = stockPanelView.getSearchText().toLowerCase().trim();
+        boolean filterWarning = stockPanelView.isFilterWarningSelected();
+        if (ingredientListModel == null) return;
+        
+        List<IngredientModel> filteredList = new ArrayList<>();
+        for (IngredientModel ing : ingredientListModel) {
+            // Kiểm tra khớp từ khóa tìm kiếm (tên hoặc ID)
+            boolean matchesKeyword = ing.getIngredientName().toLowerCase().contains(keyword) || 
+                                     String.valueOf(ing.getIngredientID()).contains(keyword);
+                                     
+            // Kiểm tra điều kiện tồn kho dưới hoặc bằng ngưỡng cảnh báo (nếu bộ lọc cảnh báo được bật)
+            boolean matchesWarning = !filterWarning || (ing.getInStock() <= ing.getThreshold());
+            
+            if (matchesKeyword && matchesWarning) {
+                filteredList.add(ing);
+            }
+        }
+        stockPanelView.displayIngredientData(filteredList);
     }
     
     public void loadWarehouseReceiptToView() throws SQLException {

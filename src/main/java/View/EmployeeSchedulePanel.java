@@ -226,9 +226,7 @@ public class EmployeeSchedulePanel extends JPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonPanel.setBackground(Color.WHITE); 
         
-        btnSaveShift = new JButton("Lưu mẫu ca");
-        btnSaveShift.setBackground(new Color(46, 139, 87)); btnSaveShift.setForeground(Color.WHITE);
-        btnSaveShift.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnSaveShift = Common.ComponentUI.createModernButton("Lưu mẫu ca", new Color(46, 139, 87), Color.WHITE);
         
         btnDeleteShift = new JButton("Ngưng sử dụng"); 
         btnDeleteShift.setBackground(new Color(231, 76, 60)); btnDeleteShift.setForeground(Color.WHITE);
@@ -386,11 +384,8 @@ public class EmployeeSchedulePanel extends JPanel {
         spnRepeatWeeks = new JSpinner(new SpinnerNumberModel(1, 1, 12, 1)); spnRepeatWeeks.setFont(new Font("Segoe UI", Font.PLAIN, 14)); spnRepeatWeeks.setEnabled(false); 
         
         // [CẬP NHẬT Ở ĐÂY] - Thiết lập mặc định Nút Lặp Lịch
-        btnSaveSchedule = new JButton("Lặp lịch tuần"); 
+        btnSaveSchedule = Common.ComponentUI.createModernButton("Lặp lịch tuần", Color.GRAY, Color.WHITE); 
         btnSaveSchedule.setEnabled(false); // Mặc định disable
-        btnSaveSchedule.setBackground(Color.GRAY); // Mặc định xám
-        btnSaveSchedule.setForeground(Color.WHITE); 
-        btnSaveSchedule.setFont(new Font("Segoe UI", Font.BOLD, 13));
 
         // [CẬP NHẬT Ở ĐÂY] - Bắt sự kiện Tích vào Checkbox
         chkRepeat.addActionListener(e -> {

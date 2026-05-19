@@ -547,7 +547,7 @@ public class AccountDAO {
     
     /**
      * Vô hiệu hoá hoặc kích hoạt lại tài khoản.
-     * status: "Đang hoạt động" hoặc "Chưa hoạt động"
+     * status: "Đang hoạt động" hoặc "Đang bị khóa"
      */
     public boolean updateAccountStatus(int accountId, String status) {
         String sql = "UPDATE TAI_KHOAN SET TrangThai = ? WHERE MaTaiKhoan = ?";

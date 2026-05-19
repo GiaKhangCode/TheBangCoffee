@@ -124,14 +124,8 @@ public class MenuPanel extends JPanel {
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         rightPanel.setBackground(Color.WHITE);
 
-        btnAddProduct = new JButton("+ Thêm Món Mới");
-        btnAddProduct.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnAddProduct.setForeground(Color.WHITE);
-        btnAddProduct.setBackground(PRIMARY_COLOR);
+        btnAddProduct = Common.ComponentUI.createModernButton("+ Thêm Món Mới", PRIMARY_COLOR, Color.WHITE);
         btnAddProduct.setPreferredSize(new Dimension(160, 40));
-        btnAddProduct.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnAddProduct.setFocusPainted(false);
-        btnAddProduct.setBorderPainted(false);
 
         rightPanel.add(btnAddProduct);
 

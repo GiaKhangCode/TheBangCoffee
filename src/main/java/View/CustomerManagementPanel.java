@@ -73,14 +73,8 @@ public class CustomerManagementPanel extends JPanel {
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         actionPanel.setBackground(Color.WHITE);
 
-        btnAddCustomer = new JButton("+ Thêm Khách Hàng");
-        btnAddCustomer.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnAddCustomer.setForeground(Color.WHITE);
-        btnAddCustomer.setBackground(PRIMARY_COLOR);
+        btnAddCustomer = Common.ComponentUI.createModernButton("+ Thêm Khách Hàng", PRIMARY_COLOR, Color.WHITE);
         btnAddCustomer.setPreferredSize(new Dimension(180, 35));
-        btnAddCustomer.setFocusPainted(false);
-        btnAddCustomer.setBorderPainted(false);
-        btnAddCustomer.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         actionPanel.add(btnAddCustomer);
 

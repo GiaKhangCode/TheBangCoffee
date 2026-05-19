@@ -37,6 +37,10 @@ public class OrderPanel extends JPanel {
     private DefaultTableModel detailTableModel;
     private JTable detailTable;
     private JLabel lblTotalAmount;
+    
+    // [MỚI] Các Label hiển thị Điểm sử dụng và Số tiền giảm giá
+    private JLabel lblPointsUsed;
+    private JLabel lblDiscountAmount;
 
     // Nút cập nhật trạng thái
     private JButton btnAccept;   // Tiếp nhận
@@ -177,6 +181,15 @@ public class OrderPanel extends JPanel {
         
         lblPayStatus = new JLabel("Thanh toán: --");
         lblPayStatus.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        
+        // [MỚI] Khởi tạo các label điểm và giảm giá
+        lblPointsUsed = new JLabel("Điểm đã dùng: --");
+        lblPointsUsed.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblPointsUsed.setForeground(TEXT_DARK);
+        
+        lblDiscountAmount = new JLabel("Giảm giá: --");
+        lblDiscountAmount.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblDiscountAmount.setForeground(DANGER_COLOR);
 
         infoPanel.add(lblOrderId);
         infoPanel.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -187,6 +200,10 @@ public class OrderPanel extends JPanel {
         infoPanel.add(lblPrepStatus);
         infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         infoPanel.add(lblPayStatus);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        infoPanel.add(lblPointsUsed);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        infoPanel.add(lblDiscountAmount);
 
         // 2. Bảng Chi Tiết Món
         String[] detailCols = {"Tên Món (Kèm Size/Topping)", "SL", "Thành Tiền"};
@@ -252,6 +269,9 @@ public class OrderPanel extends JPanel {
     // CUSTOM CELL RENDERER ĐỂ TÔ MÀU TRẠNG THÁI
     // ==========================================================
     class StatusCellRenderer extends DefaultTableCellRenderer {
+        public StatusCellRenderer() {
+            setHorizontalAlignment(JLabel.CENTER); // [MỚI] Căn giữa văn bản cho cột trạng thái
+        }
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -287,6 +307,13 @@ public class OrderPanel extends JPanel {
         table.getTableHeader().setForeground(TEXT_DARK);
         table.setShowVerticalLines(false);
         table.setSelectionBackground(new Color(PRIMARY_COLOR.getRed(), PRIMARY_COLOR.getGreen(), PRIMARY_COLOR.getBlue(), 180));
+        
+        // [MỚI] Căn giữa nội dung dữ liệu cho toàn bộ các cột trong bảng
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
     }
 
     private JButton createModernButton(String text, Color bg, Color fg) {
@@ -342,6 +369,11 @@ public class OrderPanel extends JPanel {
     public DefaultTableModel getDetailTableModel() { return detailTableModel; }
 
     public void setOrderInfo(String id, String time, String type, String prepStatus, String payStatus, String total) {
+        setOrderInfo(id, time, type, prepStatus, payStatus, total, 0, 0);
+    }
+
+    // [MỚI] Nạp chồng phương thức setOrderInfo để cập nhật thêm Điểm đã dùng và Số tiền giảm giá
+    public void setOrderInfo(String id, String time, String type, String prepStatus, String payStatus, String total, int pointsUsed, long discountAmount) {
         lblOrderId.setText("Mã đơn: #" + id);
         lblOrderTime.setText("Thời gian: " + time);
         lblOrderType.setText("Loại: " + type);
@@ -350,6 +382,15 @@ public class OrderPanel extends JPanel {
         lblPayStatus.setText("Thanh toán: " + payStatus);
         
         lblTotalAmount.setText("Tổng cộng: " + total);
+        
+        lblPointsUsed.setText("Điểm đã dùng: " + pointsUsed + " điểm");
+        if (discountAmount > 0) {
+            lblDiscountAmount.setText("Giảm giá: -" + String.format("%,d đ", discountAmount));
+            lblDiscountAmount.setVisible(true);
+        } else {
+            lblDiscountAmount.setText("Giảm giá: 0 đ");
+            lblDiscountAmount.setVisible(false);
+        }
         
         // Cập nhật màu cho Label Pha Chế
         switch (prepStatus) {
@@ -379,6 +420,11 @@ public class OrderPanel extends JPanel {
         
         lblPayStatus.setText("Thanh toán: --");
         lblPayStatus.setForeground(TEXT_MUTED);
+        
+        // [MỚI] Xóa thông tin điểm và giảm giá
+        lblPointsUsed.setText("Điểm đã dùng: --");
+        lblDiscountAmount.setText("Giảm giá: --");
+        lblDiscountAmount.setVisible(true);
         
         lblTotalAmount.setText("Tổng cộng: 0 đ");
         detailTableModel.setRowCount(0);

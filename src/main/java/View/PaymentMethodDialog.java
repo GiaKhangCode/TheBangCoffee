@@ -40,8 +40,8 @@ public class PaymentMethodDialog extends JDialog {
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 25));
         btnPanel.setBackground(Color.WHITE);
 
-        JButton btnCash = createButton("💵 Tiền mặt", PRIMARY_COLOR, Color.WHITE);
-        JButton btnTransfer = createButton("💳 Chuyển khoản", INFO_COLOR, Color.WHITE);
+        JButton btnCash = createButton("Tiền mặt", PRIMARY_COLOR, Color.WHITE);
+        JButton btnTransfer = createButton("Chuyển khoản", INFO_COLOR, Color.WHITE);
         JButton btnCancel = createButton("Hủy bỏ", DANGER_COLOR, Color.WHITE);
 
         btnCash.addActionListener(e -> { selectedOption = 0; dispose(); });

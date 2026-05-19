@@ -14,7 +14,7 @@ public class AccountModel {
     private String username, password, fullName, phoneNumber, email;
     // 0 = chưa đăng nhập lần đầu (cần đổi mật khẩu), 1 = đã đổi mật khẩu
     private int firstLogin;
-    // Trạng thái tài khoản: "Đang hoạt động" | "Chưa hoạt động"
+    // Trạng thái tài khoản: "Đang hoạt động" | "Đang bị khóa"
     private String status;
     
     public AccountModel(){
