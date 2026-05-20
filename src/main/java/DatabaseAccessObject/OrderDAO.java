@@ -14,7 +14,7 @@ import java.util.List;
 
 public class OrderDAO {
 
-    public boolean createOrder(int accountId, Integer maKhachHang, List<CartItemModel> cart, long finalTotal, double totalVat, String prepStatus, String payStatus, boolean isTakeaway, boolean isHoliday, int pointsEarned, int pointsUsed, long discountAmount) {
+    public int createOrder(int accountId, Integer maKhachHang, List<CartItemModel> cart, long finalTotal, double totalVat, String prepStatus, String payStatus, boolean isTakeaway, boolean isHoliday, int pointsEarned, int pointsUsed, long discountAmount) {
         String insertOrderSQL = "INSERT INTO DON_HANG (MaTaiKhoan, MaKhachHang, TongTien, TongTienThue, ThanhTien, TrangThaiPhaChe, TrangThaiThanhToan, GhiChu, MaPhienCa, DiemDaDung, TienGiamGia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         String insertOrderDetailSQL = "INSERT INTO CHI_TIET_DON_HANG (MaDonHang, MaBienThe, SoLuong, GiaTruocThue, TienThue, ThanhTien, GhiChuMon) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String insertToppingSQL = "INSERT INTO CHI_TIET_TOPPING (MaCTHD, MaTopping, SoLuong, GiaTruocThue, TienThue) VALUES (?, ?, ?, ?, ?)";
@@ -27,16 +27,26 @@ public class OrderDAO {
 
             try {
                 int orderId = -1;
-                long subTotal = finalTotal - Math.round(totalVat);
-                String orderTypeNote = isHoliday ? "[LỄ] " : "";
-                orderTypeNote += isTakeaway ? "Mua mang đi" : "Dùng tại quán";
+                
+                // [SỬA] Tính tổng giá hàng gốc (trước giảm giá) từ giỏ hàng để có subTotal đúng.
+                // Không dùng finalTotal (đã trừ giảm giá) để tránh subTotal = 0 khi khách dùng điểm về 0đ.
+                long originalCartTotal = 0;
+                for (CartItemModel cartItem : cart) {
+                    originalCartTotal += cartItem.getTotalPrice();
+                }
+                // subTotal = tiền hàng gốc trước thuế (chưa trừ giảm giá)
+                long subTotal = originalCartTotal - Math.round(totalVat);
+                String orderTypeNote = "";
+                if (isHoliday) {
+                    orderTypeNote += "[Ngày lễ]";
+                }
+                orderTypeNote += isTakeaway ? "[Mang đi]" : "[Tại quán]";
                 
                 // Gom toàn bộ Ghi chú của từng món thành 1 dòng Ghi chú tổng cho Đơn hàng
-                StringBuilder overallNote = new StringBuilder();
+                StringBuilder overallNote = new StringBuilder(orderTypeNote);
                 for (CartItemModel item : cart) {
                     if (item.getNote() != null && !item.getNote().isEmpty()) {
-                        if (overallNote.length() > 0) overallNote.append("; ");
-                        overallNote.append(item.getNote());
+                        overallNote.append(" | ").append(item.getNote());
                     }
                 }
 
@@ -50,9 +60,9 @@ public class OrderDAO {
                     psOrder.setLong(3, subTotal);
                     psOrder.setLong(4, Math.round(totalVat));
                     psOrder.setLong(5, finalTotal);
-                    psOrder.setString(6, prepStatus);
-                    psOrder.setString(7, payStatus);
-                    psOrder.setString(8, overallNote.length() > 0 ? overallNote.toString() : ""); 
+                    psOrder.setNString(6, prepStatus);
+                    psOrder.setNString(7, payStatus);
+                    psOrder.setNString(8, overallNote.length() > 0 ? overallNote.toString() : ""); 
                     
                     if (SessionManager.hasOpenShift()) {
                         psOrder.setInt(9, SessionManager.getCurrentMaPhienCa());
@@ -75,7 +85,7 @@ public class OrderDAO {
 
                 if (orderId == -1) {
                     conn.rollback();
-                    return false;
+                    return -1;
                 }
 
                 try (PreparedStatement psDetail = conn.prepareStatement(insertOrderDetailSQL, new String[]{"MACHITIETDON"});
@@ -106,7 +116,7 @@ public class OrderDAO {
                         psDetail.setLong(4, Math.round(priceBeforeTax)); 
                         psDetail.setLong(5, Math.round(taxAmount));     
                         psDetail.setLong(6, totalRowPrice); 
-                        psDetail.setString(7, item.getNote()); 
+                        psDetail.setNString(7, item.getNote()); 
                         psDetail.executeUpdate();
 
                         int detailId = -1;
@@ -145,16 +155,16 @@ public class OrderDAO {
                 }
 
                 conn.commit();
-                return true;
+                return orderId;
 
             } catch (Exception e) {
                 conn.rollback();
                 e.printStackTrace();
-                return false;
+                return -1;
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return -1;
         }
     }
     
@@ -181,7 +191,7 @@ public class OrderDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
             int paramIdx = 1;
-            if (!statusFilter.equals("Tất cả")) ps.setString(paramIdx++, statusFilter);
+            if (!statusFilter.equals("Tất cả")) ps.setNString(paramIdx++, statusFilter);
             if (!keyword.isEmpty()) ps.setString(paramIdx++, "%" + keyword + "%");
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -239,7 +249,7 @@ public class OrderDAO {
         String sql = "UPDATE DON_HANG SET TrangThaiPhaChe = ? WHERE MaDonHang = ?";
         try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, newStatus);
+            ps.setNString(1, newStatus);
             ps.setInt(2, orderId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) { e.printStackTrace(); return false; }
@@ -251,8 +261,8 @@ public class OrderDAO {
         try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
              
-            ps.setString(1, newStatus);
-            ps.setString(2, phuongThucThanhToan);
+            ps.setNString(1, newStatus);
+            ps.setNString(2, phuongThucThanhToan);
             ps.setInt(3, orderId);
             
             return ps.executeUpdate() > 0;

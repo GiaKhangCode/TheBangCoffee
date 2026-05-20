@@ -242,18 +242,24 @@ public class CustomerController {
 
         loyaltyView.getBtnSaveRule().addActionListener(e -> {
             try {
-                int tien = Integer.parseInt(loyaltyView.getTxtTienTichMotDiem().getText());
-                int giaTri = Integer.parseInt(loyaltyView.getTxtGiaTriMotDiem().getText());
-                int diemDoi = Integer.parseInt(loyaltyView.getTxtDiemDoiMotLy().getText()); // [CẬP NHẬT] Lấy N
+                int tien = Integer.parseInt(loyaltyView.getTxtTienTichMotDiem().getText().trim());
+                int giaTri = Integer.parseInt(loyaltyView.getTxtGiaTriMotDiem().getText().trim());
+                int diemDoi = Integer.parseInt(loyaltyView.getTxtDiemDoiMotLy().getText().trim());
                 
-                if(tien <= 0 || giaTri <= 0 || diemDoi <= 0) throw new NumberFormatException();
+                if (tien <= 0 || giaTri <= 0 || diemDoi <= 0) throw new NumberFormatException();
                 
                 customerService.updatePointRule(tien, giaTri, diemDoi);
-                JOptionPane.showMessageDialog(loyaltyView, "Lưu Tỷ lệ quy đổi thành công!");
+                
+                // [SỬA] Reload lại từ DB để xác nhận dữ liệu đã được lưu đúng
+                loadRules();
+                
+                JOptionPane.showMessageDialog(loyaltyView, "Lưu Tỷ lệ quy đổi thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(loyaltyView, "Tỷ lệ quy đổi phải là số nguyên dương lớn hơn 0!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(loyaltyView, "Lỗi hệ thống: " + ex.getMessage());
+                // [SỬA] Tránh hiện "null" nếu exception không có message
+                String errMsg = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
+                JOptionPane.showMessageDialog(loyaltyView, "Lỗi hệ thống: " + errMsg, "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
     }

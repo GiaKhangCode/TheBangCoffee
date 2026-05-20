@@ -61,6 +61,7 @@ View\CustomerManagementPanel.class
 Service\CustomerService.class
 View\MainFrame.class
 View\StockPanel$ActionButtonRenderer.class
+View\CheckoutDialog$1.class
 Common\ValidationUtil.class
 Service\ReportService.class
 View\RolePanel$AccountActionPanel.class
@@ -132,6 +133,7 @@ View\LoginFrame$2.class
 Service\VariantService.class
 DatabaseAccessObject\IngredientDAO.class
 View\MenuPanel$ScrollablePanel.class
+View\CheckoutDialog.class
 Common\ComponentUI$1.class
 View\SidebarPanel.class
 View\StockPanel$Receipt.class
@@ -243,7 +245,6 @@ View\RolePanel$DeleteActionListener.class
 Service\OtpService$OtpType.class
 Service\WarehouseReceiptService.class
 View\PosPanel$DeleteActionListener.class
-View\PosPanel$8.class
 View\ProductDetailDialog$DeleteActionListener.class
 View\OrderPanel$4.class
 View\DashboardPanel$RoundedChartPlaceholder.class
@@ -273,7 +274,6 @@ DatabaseAccessObject\ShiftSessionDAO.class
 Service\AccountService.class
 View\RegisterFrame$3.class
 Model\ToppingModel.class
-View\PosPanel$9.class
 View\OrderPanel.class
 View\OrderOptionDialog$InventoryValidator.class
 DatabaseAccessObject\ProductDAO.class

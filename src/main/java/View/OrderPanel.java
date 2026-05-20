@@ -59,7 +59,7 @@ public class OrderPanel extends JPanel {
         setBorder(new EmptyBorder(15, 15, 15, 15));
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int rightPanelWidth = (int) (screenSize.width * 0.35); // Bên phải chiếm 35% màn hình
+        int rightPanelWidth = (int) (screenSize.width * 0.28); // Bên phải chiếm 28% màn hình
 
         add(createLeftPanel(), BorderLayout.CENTER);
         add(createRightPanel(rightPanelWidth), BorderLayout.EAST);

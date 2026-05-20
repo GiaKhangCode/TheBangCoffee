@@ -28,6 +28,7 @@ public class ShiftSessionCloseDialog extends JDialog {
     private JButton btnCancel, btnCloseShift, btnCloseAndPrint;
     
     private boolean isConfirmed = false;
+    private boolean printRequested = false; // [MỚI] Biến cờ kiểm tra có in không
     private double tienMatThucTe = 0.0, tienHeThong;
     private String ghiChu = "";
     private Integer maTaiKhoanNhan = null;
@@ -116,7 +117,7 @@ public class ShiftSessionCloseDialog extends JDialog {
         contentPanel.add(new JLabel("<html><b>Nhận bàn giao ca sau:</b></html>"));
         cbNhanBanGiao = new JComboBox<>();
         cbNhanBanGiao.addItem("--- Chọn nhân viên nhận ca ---");
-        if(accounts != null) for(AccountModel a : accounts) cbNhanBanGiao.addItem(a.getFullName());
+        if(accounts != null) for(AccountModel a : accounts) cbNhanBanGiao.addItem(a.getUsername());
         cbNhanBanGiao.setMaximumSize(new Dimension(Short.MAX_VALUE, 40));
         contentPanel.add(cbNhanBanGiao);
         contentPanel.add(Box.createVerticalStrut(15));
@@ -203,14 +204,24 @@ public class ShiftSessionCloseDialog extends JDialog {
                 tienMatThucTe = Double.parseDouble(txtTienMatThucTe.getText().replaceAll("[,.]", ""));
                 ghiChu = txtGhiChu.getText().trim();
                 if(cbNhanBanGiao.getSelectedIndex() > 0) maTaiKhoanNhan = accounts.get(cbNhanBanGiao.getSelectedIndex()-1).getAccountID();
-                isConfirmed = true; dispose();
+                isConfirmed = true; 
+                dispose();
             } catch (Exception ex) { JOptionPane.showMessageDialog(this, "Nhập số tiền hợp lệ!"); }
         };
-        btnCloseShift.addActionListener(confirm);
-        btnCloseAndPrint.addActionListener(confirm);
+        
+        btnCloseShift.addActionListener(e -> {
+            printRequested = false; // Chỉ đóng
+            confirm.actionPerformed(e);
+        });
+        
+        btnCloseAndPrint.addActionListener(e -> {
+            printRequested = true; // Đóng và In
+            confirm.actionPerformed(e);
+        });
     }
 
     public boolean isConfirmed() { return isConfirmed; }
+    public boolean isPrintRequested() { return printRequested; } 
     public double getTienMatThucTe() { return tienMatThucTe; }
     public String getGhiChu() { return ghiChu; }
     public Integer getMaTaiKhoanNhan() { return maTaiKhoanNhan; }

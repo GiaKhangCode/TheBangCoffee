@@ -54,6 +54,7 @@ public class PosController {
     
     private int tienTichMotDiem = 10000;
     private int giaTriMotDiem = 100;
+    private int diemDoiMotLy = 50;
     
     private int globalPointsUsed = 0;
     private long globalDiscountAmount = 0;
@@ -98,6 +99,7 @@ public class PosController {
             int[] rules = customerService.getPointRule();
             tienTichMotDiem = rules[0] > 0 ? rules[0] : 10000;
             giaTriMotDiem = rules[1] > 0 ? rules[1] : 100;
+            diemDoiMotLy = rules[2] > 0 ? rules[2] : 50;
 
             loadCategories();
             allProducts = productService.getProductList().getProductList(); 
@@ -121,45 +123,6 @@ public class PosController {
             }
         });
         
-        posPanel.addCheckCustomerListener(e -> handleCheckCustomer());
-        
-        posPanel.addClearCustomerListener(e -> {
-            posPanel.clearCustomerInfo();
-            currentCustomerId = null; 
-            globalPointsUsed = 0;
-            globalDiscountAmount = 0;
-            updateCartView(); 
-        });
-        
-        posPanel.addRegisterCustomerListener(e -> {
-            String phone = posPanel.getCustomerPhone();
-            String name = posPanel.getCustomerName();
-
-            if (name.isEmpty()) {
-                JOptionPane.showMessageDialog(posPanel, "Vui lòng nhập tên để đăng ký thành viên!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            try {
-                Model.CustomerModel newCustomer = customerService.registerNewCustomer(phone, name);
-                
-                if (newCustomer != null) {
-                    JOptionPane.showMessageDialog(posPanel, "Đăng ký thành viên thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                    // [ĐÃ SỬA] Hiển thị rõ HT và TL
-                    String info = String.format("%s | HT: %d - TL: %d (%s)", 
-                        newCustomer.getTenKH(), newCustomer.getDiemHienTai(), newCustomer.getDiemTichLuy(), newCustomer.getHangThanhVien());
-                    posPanel.setCustomerStatus(info, false); 
-                    
-                    currentCustomerId = newCustomer.getMaKH();
-                    updateCartView(); 
-                } else {
-                    JOptionPane.showMessageDialog(posPanel, "Đăng ký thất bại, vui lòng thử lại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(posPanel, "Lỗi cơ sở dữ liệu khi đăng ký khách hàng!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
-        });
         
         posPanel.addClearCartListener(e -> {
             if (currentCart.isEmpty()) return;
@@ -252,67 +215,81 @@ public class PosController {
             
             long finalTotal = 0; 
             double totalVat = 0; 
-            int pointsUsedForItems = 0;  
 
             for (CartItemModel item : currentCart) {
                 finalTotal += item.getTotalPrice();
                 totalVat += item.getTotalVatAmount();
-                if (item.isReward()) {
-                    long unitPrice = item.getSelectedVariant().getDineInPrice();
-                    if (posPanel.isHoliday()) unitPrice = item.getSelectedVariant().getHolidayPrice();
-                    else if (posPanel.isTakeaway()) unitPrice = item.getSelectedVariant().getTakeawayPrice();
-                    
-                    long toppingPrice = 0;
-                    for (ToppingModel t : item.getSelectedToppings()) {
-                        toppingPrice += t.getPrice();
-                    }
-                    long originalTotal = (unitPrice + toppingPrice) * item.getQuantity();
-                    pointsUsedForItems += (int) Math.ceil((double) originalTotal / giaTriMotDiem);
-                } 
             }
             
-            long actualFinalTotal = finalTotal - globalDiscountAmount;
-            if (actualFinalTotal < 0) actualFinalTotal = 0;
+            long nonRewardTotal = 0;
+            for (CartItemModel item : currentCart) {
+                if (!item.isReward()) {
+                    nonRewardTotal += item.getTotalPrice();
+                }
+            }
             
-            int totalPointsToDeduct = pointsUsedForItems + globalPointsUsed;
+            long subTotal = finalTotal - Math.round(totalVat);
+            
+            Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(posPanel);
+            View.CheckoutDialog dialog = new View.CheckoutDialog(parentFrame, subTotal, totalVat, finalTotal, nonRewardTotal, giaTriMotDiem, tienTichMotDiem, diemDoiMotLy, currentCart);
+            dialog.setVisible(true);
 
-            int confirm = JOptionPane.showConfirmDialog(posPanel, 
-                    "Bạn có chắc muốn tạo đơn hàng này?\nTổng tiền: " + String.format("%,d đ", actualFinalTotal), 
-                    "Xác nhận tạo đơn", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (dialog.isConfirmed()) {
+                int selectedCustomerId = dialog.getCustomerId(); // -1 nếu là khách vãng lai
+                int pointsUsed = dialog.getPointsUsed();
+                long discountAmt = dialog.getDiscountAmount();
+                long actualFinalTotal = finalTotal - discountAmt;
+                if (actualFinalTotal < 0) actualFinalTotal = 0;
 
-            if (confirm == JOptionPane.YES_OPTION) {
+                int pointsUsedForItems = 0;
+                for (CartItemModel item : currentCart) {
+                    if (item.isReward()) {
+                        long unitPrice = item.getSelectedVariant().getDineInPrice();
+                        if (posPanel.isHoliday()) unitPrice = item.getSelectedVariant().getHolidayPrice();
+                        else if (posPanel.isTakeaway()) unitPrice = item.getSelectedVariant().getTakeawayPrice();
+                        
+                        long toppingPrice = 0;
+                        for (ToppingModel t : item.getSelectedToppings()) {
+                            toppingPrice += t.getPrice();
+                        }
+                        long originalTotal = (unitPrice + toppingPrice) * item.getQuantity();
+                        pointsUsedForItems += (int) Math.ceil((double) originalTotal / giaTriMotDiem);
+                    } 
+                }
+                
+                int totalPointsToDeduct = pointsUsedForItems + pointsUsed;
+
+                // [SỬA] VAT luôn tính trên tiền hàng GỐC (trước khi giảm giá bằng điểm).
+                // Không scale VAT theo tỉ lệ actualFinalTotal/finalTotal nữa.
+                // Lý do: Nghĩa vụ thuế phát sinh từ giá trị hàng hoá, không phải từ số tiền khách trả.
+                // ThanhTien (tiền khách trả thực tế) vẫn = 0đ, còn TongTienThue vẫn ghi đúng.
+                double adjustedVat = totalVat; // Giữ nguyên VAT gốc
+
                 int currentAccountId = 1; 
                 boolean isTakeaway = posPanel.isTakeaway();
                 boolean isHoliday = posPanel.isHoliday();
 
-                if (currentCustomerId == null && !posPanel.getCustomerName().isEmpty() && !posPanel.getCustomerPhone().isEmpty()) {
-                    try {
-                        CustomerModel newCus = customerService.registerNewCustomer(posPanel.getCustomerPhone(), posPanel.getCustomerName());
-                        if (newCus != null) currentCustomerId = newCus.getMaKH();
-                    } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(posPanel, "Lỗi khi lưu khách hàng mới!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                }
-
-                boolean isSuccess = orderService.createOrder(
+                int newOrderId = orderService.createOrder(
                     currentAccountId, 
-                    currentCustomerId,       
+                    selectedCustomerId > 0 ? selectedCustomerId : null,       
                     currentCart, 
                     actualFinalTotal, 
-                    Math.round(totalVat), 
+                    Math.round(adjustedVat), 
                     "Chờ tiếp nhận",   
                     "Chưa thanh toán",
                     isTakeaway, 
                     isHoliday,
                     0, 
                     totalPointsToDeduct,
-                    globalDiscountAmount // [MỚI] Truyền số tiền được giảm giá để lưu vào DB
+                    discountAmt 
                 );
 
-                if (isSuccess) {
+                if (newOrderId > 0) {
+                    // Tự động in hoá đơn
+                    invoiceService.printInvoice(newOrderId, false);
+
                     // Tự động đồng bộ hạng khách hàng khi điểm thay đổi (do dùng điểm)
-                    if (currentCustomerId != null && totalPointsToDeduct > 0) {
+                    if (selectedCustomerId > 0 && totalPointsToDeduct > 0) {
                         try {
                             customerService.syncTiers();
                             if (Controller.CustomerController.getInstance() != null) {
@@ -326,9 +303,8 @@ public class PosController {
                     currentCart.clear(); 
                     globalPointsUsed = 0;
                     globalDiscountAmount = 0;
-                    updateCartView();    
-                    posPanel.clearCustomerInfo(); 
                     currentCustomerId = null;
+                    updateCartView();    
                     loadOrderList(); 
                 } else {
                     JOptionPane.showMessageDialog(posPanel, "Lỗi khi tạo đơn hàng. Vui lòng kiểm tra lại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -342,75 +318,8 @@ public class PosController {
             for (CartItemModel item : currentCart) item.setOrderType(isTakeaway, isHoliday);
             updateCartView();
         });
-        
-        posPanel.addUsePointsListener(e -> {
-            if (currentCart.isEmpty()) {
-                JOptionPane.showMessageDialog(posPanel, "Giỏ hàng trống!");
-                return;
-            }
-            if (currentCustomerId == null) {
-                JOptionPane.showMessageDialog(posPanel, "Vui lòng nhập thông tin Khách hàng thành viên trước!");
-                return;
-            }
-
-            CustomerModel c = customerService.findCustomerByPhone(posPanel.getCustomerPhone());
-            // [CẬP NHẬT] Kiểm tra Điểm Hiện Tại chứ không phải Tích Lũy
-            if (c == null || c.getDiemHienTai() <= 0) {
-                JOptionPane.showMessageDialog(posPanel, "Khách hàng không có đủ điểm hiện tại để sử dụng!");
-                return;
-            }
-
-            long currentBillTotal = 0;
-            for (CartItemModel item : currentCart) currentBillTotal += item.getTotalPrice();
-
-            Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(posPanel);
-            
-            // [CẬP NHẬT] Truyền Điểm Hiện Tại vào Popup
-            RedeemPointsDialog dialog = new RedeemPointsDialog(parentFrame, c.getDiemHienTai(), giaTriMotDiem, currentBillTotal);
-            dialog.setVisible(true);
-
-            if (dialog.isConfirmed()) {
-                globalPointsUsed = dialog.getAppliedPoints();
-                globalDiscountAmount = dialog.getDiscountAmount();
-                updateCartView(); 
-            }
-        });
     }
     
-    private void handleCheckCustomer() {
-        String phone = posPanel.getCustomerPhone();
-        
-        if (phone.isEmpty()) {
-            posPanel.clearCustomerInfo();
-            currentCustomerId = null;
-            globalPointsUsed = 0;
-            globalDiscountAmount = 0;
-            updateCartView();
-            return;
-        }
-
-        if (!phone.matches("\\d{10,11}")) {
-            JOptionPane.showMessageDialog(posPanel, "Số điện thoại không hợp lệ!", "Lỗi", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        CustomerModel customer = customerService.findCustomerByPhone(phone);
-        
-        if (customer != null) {
-            // [CẬP NHẬT QUAN TRỌNG] Hiển thị rõ rệt Điểm Hiện Tại và Điểm Tích Lũy
-            String info = String.format("%s | HT: %d - TL: %d (%s)", 
-                    customer.getTenKH(), customer.getDiemHienTai(), customer.getDiemTichLuy(), customer.getHangThanhVien());
-            posPanel.setCustomerStatus(info, false); 
-            currentCustomerId = customer.getMaKH(); 
-            updateCartView(); 
-        } else {
-            posPanel.setCustomerStatus("Khách mới! Nhập tên để tạo TK:", true); 
-            currentCustomerId = null; 
-            globalPointsUsed = 0;
-            globalDiscountAmount = 0;
-            updateCartView(); 
-        }
-    }
 
     private void loadCategories() throws SQLException, ClassNotFoundException {
         posPanel.clearCategories();
@@ -488,15 +397,11 @@ public class PosController {
                 boolean isHoliday = posPanel.isHoliday();
 
                 int currentPoints = 0;
-                if (currentCustomerId != null) {
-                    CustomerModel c = customerService.findCustomerByPhone(posPanel.getCustomerPhone());
-                    // [CẬP NHẬT] Chỉ truyền Điểm Hiện Tại vào Popup đổi quà
-                    if (c != null) currentPoints = c.getDiemHienTai();
-                }
 
                 Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(posPanel);
                 
-                OrderOptionDialog dialog = new OrderOptionDialog(parentFrame, p, variants, toppings, isTakeaway, isHoliday, currentPoints, giaTriMotDiem);
+                // [SỬA BUG] Truyền đúng diemDoiMotLy (số điểm cần để đổi 1 ly), không phải giaTriMotDiem (giá trị tiền của 1 điểm)
+                OrderOptionDialog dialog = new OrderOptionDialog(parentFrame, p, variants, toppings, isTakeaway, isHoliday, currentPoints, diemDoiMotLy);
 
                 dialog.setInventoryValidator((newQty, variant, selToppings) -> {
                     List<CartItemModel> testCart = new ArrayList<>();
@@ -558,31 +463,6 @@ public class PosController {
             globalPointsUsed = 0;
             globalDiscountAmount = 0;
         }
-
-        long cartTotal = 0; 
-        double totalVat = 0; 
-        long nonRewardTotal = 0; 
-        
-        for (CartItemModel item : currentCart) {
-            cartTotal += item.getTotalPrice();
-            totalVat += item.getTotalVatAmount(); 
-            if (!item.isReward()) {
-                nonRewardTotal += item.getTotalPrice();
-            }
-        }
-        
-        long subTotal = cartTotal - Math.round(totalVat);
-        long finalTotal = cartTotal - globalDiscountAmount;
-        if (finalTotal < 0) finalTotal = 0;
-        
-        int earnedPoints = 0;
-        if (currentCustomerId != null && tienTichMotDiem > 0) {
-            long amountPaid = nonRewardTotal - globalDiscountAmount;
-            if (amountPaid < 0) amountPaid = 0;
-            earnedPoints = (int) (amountPaid / tienTichMotDiem);
-        }
-        
-        posPanel.updateSummary(subTotal, totalVat, globalDiscountAmount, finalTotal, earnedPoints);
     }
 
     private void initOrderPanelListeners() {
@@ -853,10 +733,6 @@ public class PosController {
         if (mainFrame != null) mainFrame.setMenuVisible("Order", hasViewPos);
         if (posPanel.getBtnCreateOrder() != null) posPanel.getBtnCreateOrder().setVisible(hasAddPos);
         if (posPanel.getBtnClearCart() != null) posPanel.getBtnClearCart().setVisible(hasAddPos);
-        if (posPanel.getBtnCheckCustomer() != null) posPanel.getBtnCheckCustomer().setVisible(hasAddPos);
-        if (posPanel.getBtnRegisterCustomer() != null) posPanel.getBtnRegisterCustomer().setVisible(hasAddPos);
-        if (posPanel.getBtnUsePoints() != null) posPanel.getBtnUsePoints().setVisible(hasAddPos);
-        
         posPanel.setActionPermissions(hasAddPos, hasAddPos); // Edit/Delete trong cart cần quyền Add đơn
 
         // 2. Phân quyền Quản lý đơn hàng (Order)

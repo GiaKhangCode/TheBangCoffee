@@ -19,9 +19,9 @@ public class OrderService {
         this.orderDAO = new OrderDAO();
     }
 
-    public boolean createOrder(int accountId, Integer maKhachHang, List<CartItemModel> cart, long finalTotal, double totalVat, String prepStatus, String payStatus, boolean isTakeaway, boolean isHoliday, int pointsEarned, int pointsUsed, long discountAmount) {
+    public int createOrder(int accountId, Integer maKhachHang, List<CartItemModel> cart, long finalTotal, double totalVat, String prepStatus, String payStatus, boolean isTakeaway, boolean isHoliday, int pointsEarned, int pointsUsed, long discountAmount) {
         if (cart == null || cart.isEmpty()) {
-            return false;
+            return -1;
         }
  
         return orderDAO.createOrder(accountId, maKhachHang, cart, finalTotal, totalVat, prepStatus, payStatus, isTakeaway, isHoliday, pointsEarned, pointsUsed, discountAmount);

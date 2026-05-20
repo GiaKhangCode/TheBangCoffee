@@ -31,27 +31,12 @@ public class PosPanel extends JPanel {
     private DefaultTableModel cartTableModel;
     private JTable cartTable;
     
-    // Các biến UI cho Khách hàng thành viên
-    private JTextField txtCustomerPhone;
-    private JTextField txtCustomerName;
-    private JLabel lblCustomerInfo;
-    private JButton btnCheckCustomer;
-    private JButton btnRegisterCustomer; 
-    private JButton btnClearCustomer;    
-    private JPanel nameActionPanel;      
 
     // Các biến UI cho Tùy chọn đơn hàng
     private JRadioButton rbDineIn;
     private JRadioButton rbTakeaway;
     private JRadioButton rbHoliday;
-    
-    private JLabel lblSubTotal;
-    private JLabel lblVat;
-    private JLabel lblDiscount; // [MỚI] Hiển thị tiền giảm giá do dùng điểm
-    private JLabel lblTotal;
-    private JLabel lblEarnedPoints; 
     private JButton btnClearCart;
-    private JButton btnUsePoints; // [MỚI] Nút bật Popup dùng điểm
     private JButton btnCreateOrder;
     
     // Listeners
@@ -171,112 +156,6 @@ public class PosPanel extends JPanel {
     }
 
     // ==========================================================
-    // KHU VỰC KHÁCH HÀNG THÀNH VIÊN
-    // ==========================================================
-    private JPanel createCustomerPanel() {
-        JPanel panel = new JPanel(new BorderLayout(5, 5));
-        panel.setOpaque(false);
-        panel.setBorder(BorderFactory.createTitledBorder(
-            new LineBorder(new Color(230, 230, 230)), "Khách Hàng Thành Viên",
-            TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 13), PRIMARY_COLOR
-        ));
-
-        JPanel phonePanel = new JPanel(new BorderLayout(5, 0));
-        phonePanel.setOpaque(false);
-        txtCustomerPhone = new JTextField();
-        txtCustomerPhone.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtCustomerPhone.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(220, 220, 220), 1, true),
-                new EmptyBorder(5, 10, 5, 10)));
-        txtCustomerPhone.setText("Nhập SĐT...");
-        txtCustomerPhone.setForeground(Color.GRAY);
-        
-        btnCheckCustomer = createModernButton("Tìm", PRIMARY_COLOR, Color.WHITE);
-        btnCheckCustomer.setPreferredSize(new Dimension(60, 30));
-        btnCheckCustomer.setBorder(new EmptyBorder(5, 10, 5, 10));
-        
-        txtCustomerPhone.addActionListener(e -> btnCheckCustomer.doClick());
-
-        txtCustomerPhone.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusGained(java.awt.event.FocusEvent evt) {
-                if (txtCustomerPhone.getText().equals("Nhập SĐT...")) {
-                    txtCustomerPhone.setText("");
-                    txtCustomerPhone.setForeground(TEXT_DARK);
-                }
-            }
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                if (txtCustomerPhone.getText().isEmpty()) {
-                    txtCustomerPhone.setForeground(Color.GRAY);
-                    txtCustomerPhone.setText("Nhập SĐT...");
-                }
-            }
-        });
-
-        phonePanel.add(txtCustomerPhone, BorderLayout.CENTER);
-        phonePanel.add(btnCheckCustomer, BorderLayout.EAST);
-
-        JPanel infoPanel = new JPanel(new BorderLayout(5, 0));
-        infoPanel.setOpaque(false);
-        
-        JPanel activeCustomerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        activeCustomerPanel.setOpaque(false);
-        
-        lblCustomerInfo = new JLabel("Khách vãng lai");
-        lblCustomerInfo.setFont(new Font("Segoe UI", Font.ITALIC, 12));
-        lblCustomerInfo.setForeground(TEXT_MUTED);
-
-        btnClearCustomer = createModernButton("X", new Color(231, 76, 60), Color.WHITE);
-        btnClearCustomer.setPreferredSize(new Dimension(38, 22));
-        btnClearCustomer.setBorder(new EmptyBorder(0, 0, 0, 0));
-        btnClearCustomer.setVisible(false);
-        
-        activeCustomerPanel.add(lblCustomerInfo);
-        activeCustomerPanel.add(btnClearCustomer);
-
-        nameActionPanel = new JPanel(new BorderLayout(5, 0));
-        nameActionPanel.setOpaque(false);
-
-        txtCustomerName = new JTextField();
-        txtCustomerName.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtCustomerName.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(220, 220, 220), 1, true),
-                new EmptyBorder(5, 10, 5, 10)));
-        txtCustomerName.setText("Nhập tên khách...");
-        txtCustomerName.setForeground(Color.GRAY);
-        
-        txtCustomerName.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusGained(java.awt.event.FocusEvent evt) {
-                if (txtCustomerName.getText().equals("Nhập tên khách...")) {
-                    txtCustomerName.setText("");
-                    txtCustomerName.setForeground(TEXT_DARK);
-                }
-            }
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                if (txtCustomerName.getText().isEmpty()) {
-                    txtCustomerName.setForeground(Color.GRAY);
-                    txtCustomerName.setText("Nhập tên khách...");
-                }
-            }
-        });
-
-        btnRegisterCustomer = createModernButton("Đăng ký", new Color(41, 128, 185), Color.WHITE);
-        btnRegisterCustomer.setPreferredSize(new Dimension(80, 30));
-        btnRegisterCustomer.setBorder(new EmptyBorder(5, 10, 5, 10));
-
-        nameActionPanel.add(txtCustomerName, BorderLayout.CENTER);
-        nameActionPanel.add(btnRegisterCustomer, BorderLayout.EAST);
-        nameActionPanel.setVisible(false);
-
-        infoPanel.add(activeCustomerPanel, BorderLayout.NORTH); 
-        infoPanel.add(nameActionPanel, BorderLayout.CENTER);
-
-        panel.add(phonePanel, BorderLayout.NORTH);
-        panel.add(infoPanel, BorderLayout.CENTER);
-
-        return panel;
-    }
-
-    // ==========================================================
     // KHU VỰC BÊN PHẢI: GIỎ HÀNG & THANH TOÁN
     // ==========================================================
     private JPanel createRightPanel(int width) {
@@ -301,7 +180,7 @@ public class PosPanel extends JPanel {
             }
         };
         cartTable = new JTable(cartTableModel);
-        cartTable.setRowHeight(70);
+        cartTable.setRowHeight(95);
         cartTable.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         cartTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
         cartTable.getTableHeader().setBackground(new Color(245, 245, 245));
@@ -309,8 +188,8 @@ public class PosPanel extends JPanel {
         cartTable.setSelectionBackground(new Color(PRIMARY_COLOR.getRed(), PRIMARY_COLOR.getGreen(), PRIMARY_COLOR.getBlue(), 30));
 
         TableColumnModel tcm = cartTable.getColumnModel();
-        tcm.getColumn(0).setPreferredWidth(135); 
-        tcm.getColumn(1).setPreferredWidth(85);  
+        tcm.getColumn(0).setPreferredWidth(140); 
+        tcm.getColumn(1).setPreferredWidth(80);  
         tcm.getColumn(2).setPreferredWidth(60);  
         tcm.getColumn(3).setPreferredWidth(55);  
         
@@ -380,78 +259,25 @@ public class PosPanel extends JPanel {
         typePanel.add(rbHoliday);
 
         optionsPanel.add(typePanel);
-        
-        JPanel topBottomWrapper = new JPanel(new BorderLayout(0, 10));
-        topBottomWrapper.setOpaque(false);
-        topBottomWrapper.add(createCustomerPanel(), BorderLayout.NORTH);
-        topBottomWrapper.add(optionsPanel, BorderLayout.CENTER);         
+        bottomContainer.add(optionsPanel, BorderLayout.NORTH);
 
-        bottomContainer.add(topBottomWrapper, BorderLayout.NORTH);
 
-        JPanel summaryPanel = new JPanel(new GridBagLayout());
-        summaryPanel.setOpaque(false);
-        summaryPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(5, 0, 5, 0);
-        gbc.weightx = 1.0;
-
-        lblSubTotal = createSummaryLabel("Tạm tính:");
-        lblVat = createSummaryLabel("VAT:");
-        
-        lblDiscount = new JLabel("-0 đ", SwingConstants.RIGHT); // Dòng mới
-        lblDiscount.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblDiscount.setForeground(new Color(39, 174, 96)); // Xanh lá
-
-        lblTotal = new JLabel("0 đ", SwingConstants.RIGHT);
-        lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        lblTotal.setForeground(new Color(231, 76, 60)); 
-        
-        lblEarnedPoints = new JLabel(" ", SwingConstants.RIGHT);
-        lblEarnedPoints.setFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 13));
-        lblEarnedPoints.setForeground(new Color(39, 174, 96));
-
-        gbc.gridx = 0; gbc.gridy = 0; summaryPanel.add(new JLabel("Tạm tính:", SwingConstants.LEFT), gbc);
-        gbc.gridx = 1; gbc.gridy = 0; summaryPanel.add(lblSubTotal, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 1; summaryPanel.add(new JLabel("VAT:", SwingConstants.LEFT), gbc);
-        gbc.gridx = 1; gbc.gridy = 1; summaryPanel.add(lblVat, gbc);
-
-        // Chèn Chiết khấu vào hàng 2
-        gbc.gridx = 0; gbc.gridy = 2; summaryPanel.add(new JLabel("Chiết khấu (Điểm):", SwingConstants.LEFT), gbc);
-        gbc.gridx = 1; gbc.gridy = 2; summaryPanel.add(lblDiscount, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 3; 
-        JLabel lblTotalText = new JLabel("THÀNH TIỀN:", SwingConstants.LEFT);
-        lblTotalText.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        summaryPanel.add(lblTotalText, gbc);
-        
-        gbc.gridx = 1; gbc.gridy = 3; summaryPanel.add(lblTotal, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 4; summaryPanel.add(new JLabel(""), gbc);
-        gbc.gridx = 1; gbc.gridy = 4; summaryPanel.add(lblEarnedPoints, gbc);
 
         // Panel 3 nút bấm
-        JPanel actionPanel = new JPanel(new GridLayout(1, 3, 8, 0));
+        JPanel actionPanel = new JPanel(new GridLayout(1, 2, 10, 0));
         actionPanel.setOpaque(false);
         actionPanel.setBorder(new EmptyBorder(15, 0, 0, 0));
 
         btnClearCart = createModernButton("Hủy đơn", new Color(241, 243, 245), TEXT_DARK);
-        btnUsePoints = createModernButton("Dùng điểm", new Color(230, 126, 34), Color.WHITE);
         btnCreateOrder = createModernButton("TẠO ĐƠN", PRIMARY_COLOR, Color.WHITE);
         
-        btnClearCart.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnUsePoints.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnClearCart.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnCreateOrder.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
         actionPanel.add(btnClearCart);
-        actionPanel.add(btnUsePoints);
         actionPanel.add(btnCreateOrder);
 
-        gbc.gridx = 0; gbc.gridy = 5; gbc.gridwidth = 2;
-        summaryPanel.add(actionPanel, gbc);
-
-        bottomContainer.add(summaryPanel, BorderLayout.CENTER);
+        bottomContainer.add(actionPanel, BorderLayout.CENTER);
         panel.add(bottomContainer, BorderLayout.SOUTH);
 
         return panel;
@@ -653,19 +479,7 @@ public class PosPanel extends JPanel {
         }
     }
 
-    // [CẬP NHẬT] Thêm tham số discount vào Summary
-    public void updateSummary(long subTotal, double vat, long discount, long total, int earnedPoints) {
-        lblSubTotal.setText(String.format("%,d đ", subTotal));
-        lblVat.setText(String.format("%,.0f đ", vat));
-        lblDiscount.setText(String.format("-%,d đ", discount)); 
-        lblTotal.setText(String.format("%,d đ", total));
-        
-        if (earnedPoints > 0) {
-            lblEarnedPoints.setText(String.format("Dự kiến cộng: +%d điểm", earnedPoints));
-        } else {
-            lblEarnedPoints.setText(" ");
-        }
-    }
+
 
     public boolean isTakeaway() { return rbTakeaway.isSelected(); }
     public boolean isHoliday() { return rbHoliday.isSelected(); }
@@ -679,72 +493,8 @@ public class PosPanel extends JPanel {
     public void addSearchListener(java.awt.event.KeyListener listener) { txtSearch.addKeyListener(listener); }
     public String getSearchText() { return txtSearch.getText().trim(); }
     public void addClearCartListener(ActionListener listener) { btnClearCart.addActionListener(listener); }
-    public void addUsePointsListener(ActionListener listener) { btnUsePoints.addActionListener(listener); } // [MỚI] Listener nút dùng điểm
     public void addCreateOrderListener(ActionListener listener) { btnCreateOrder.addActionListener(listener); }
 
-    // ==========================================================
-    // API KHÁCH HÀNG THÀNH VIÊN
-    // ==========================================================
-    public void addCheckCustomerListener(ActionListener listener) {
-        btnCheckCustomer.addActionListener(listener);
-    }
-
-    public void addRegisterCustomerListener(ActionListener listener) {
-        btnRegisterCustomer.addActionListener(listener);
-    }
-
-    public void addClearCustomerListener(ActionListener listener) {
-        btnClearCustomer.addActionListener(listener);
-    }
-
-    public String getCustomerPhone() {
-        String phone = txtCustomerPhone.getText().trim();
-        return phone.equals("Nhập SĐT...") ? "" : phone;
-    }
-
-    public String getCustomerName() {
-        String name = txtCustomerName.getText().trim();
-        return name.equals("Nhập tên khách...") ? "" : name;
-    }
-
-    public void setCustomerStatus(String info, boolean isNewCustomer) {
-        lblCustomerInfo.setText(info);
-        
-        if (isNewCustomer) {
-            lblCustomerInfo.setForeground(new Color(231, 76, 60)); 
-            nameActionPanel.setVisible(true); 
-            btnClearCustomer.setVisible(false); 
-            txtCustomerName.requestFocus(); 
-            
-            if (txtCustomerName.getText().equals("Nhập tên khách...")) {
-                txtCustomerName.setText("");
-                txtCustomerName.setForeground(TEXT_DARK);
-            }
-        } else {
-            lblCustomerInfo.setForeground(PRIMARY_COLOR); 
-            nameActionPanel.setVisible(false); 
-            btnClearCustomer.setVisible(true); 
-            txtCustomerName.setText("");
-        }
-        this.revalidate();
-        this.repaint();
-    }
-
-    public void clearCustomerInfo() {
-        txtCustomerPhone.setText("Nhập SĐT...");
-        txtCustomerPhone.setForeground(Color.GRAY);
-        txtCustomerName.setText("Nhập tên khách...");
-        txtCustomerName.setForeground(Color.GRAY);
-        
-        nameActionPanel.setVisible(false); 
-        btnClearCustomer.setVisible(false); 
-        
-        lblCustomerInfo.setText("Khách vãng lai");
-        lblCustomerInfo.setForeground(TEXT_MUTED);
-        
-        this.revalidate();
-        this.repaint();
-    }
 
     // ==========================================================
     // INNER CLASSES (GIAO DIỆN NÚT VÀ CÁC THÀNH PHẦN)
@@ -782,7 +532,7 @@ public class PosPanel extends JPanel {
         URL deleteIconUrl = getClass().getResource("/images/delete-icon.png");
         protected JButton btnDelete = new JButton("<html><img src='" + deleteIconUrl + "' width='10' height='10'> Xóa</html>");
         public DeleteActionPanel() {
-            setLayout(new FlowLayout(FlowLayout.CENTER, 0, 4)); setOpaque(true);
+            setLayout(new GridBagLayout()); setOpaque(true);
             btnDelete.setFont(new Font("Segoe UI", Font.BOLD, 11)); 
             btnDelete.setForeground(new Color(255, 59, 48));
             btnDelete.setBackground(Color.WHITE);
@@ -930,8 +680,5 @@ public class PosPanel extends JPanel {
     }
     
     public JButton getBtnClearCart() { return btnClearCart; }
-    public JButton getBtnUsePoints() { return btnUsePoints; }
     public JButton getBtnCreateOrder() { return btnCreateOrder; }
-    public JButton getBtnCheckCustomer() { return btnCheckCustomer; }
-    public JButton getBtnRegisterCustomer() { return btnRegisterCustomer; }
 }

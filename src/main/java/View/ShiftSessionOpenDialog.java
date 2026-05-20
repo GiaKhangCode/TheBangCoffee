@@ -98,7 +98,7 @@ public class ShiftSessionOpenDialog extends JDialog {
         cbCaLamViec.setMaximumSize(new Dimension(Short.MAX_VALUE, 40));
         contentPanel.add(cbCaLamViec);
         
-        lblThoiGian = new JLabel("🕒 Từ: --:--   -   🕒 Đến: --:--");
+        lblThoiGian = new JLabel("Từ: --:--   -  Đến: --:--");
         lblThoiGian.setFont(new Font("Segoe UI", Font.ITALIC, 13));
         lblThoiGian.setForeground(Color.GRAY);
         contentPanel.add(Box.createVerticalStrut(5));

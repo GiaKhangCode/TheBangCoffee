@@ -329,10 +329,19 @@ public class AccountController {
                         return;
                     }
 
+                    // Thực hiện cập nhật Database đóng ca
                     boolean isSuccess = shiftSessionDAO.dongCaToanDien(maPhienCa, maNhanBanGiao, ghiChu, tienHeThong, tienThucTe);
 
                     if (isSuccess) {
                         JOptionPane.showMessageDialog(mainFrame, "Chốt ca thành công!");
+                        
+                        // [MỚI] Kiểm tra cờ in từ Dialog
+                        if (dialog.isPrintRequested()) {
+                            Service.InvoiceService invoiceService = new Service.InvoiceService();
+                            // Gọi hàm in biên bản mà bạn đã tạo ở bước trước
+                            invoiceService.printShiftHandoverReport(maPhienCa);
+                        }
+
                         SessionManager.setCurrentMaPhienCa(-1); 
                         mainFrame.setShiftButtonState(false); 
                         try { mainFrame.setPageActive("Stats"); } catch (SQLException ex) { ex.printStackTrace(); }

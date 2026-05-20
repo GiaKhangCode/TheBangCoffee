@@ -72,9 +72,6 @@ public class DashboardPanel extends JPanel {
     private DefaultCategoryDataset shiftRevenueDataset;
     private JFreeChart shiftRevenueBarChart;
     
-    private DefaultCategoryDataset workingHoursDataset;
-    private JFreeChart workingHoursLineChart;
-    
     private StatCard cardTotalNewCustomers;
     private StatCard cardRetentionRate;
     private StatCard cardARPU;
@@ -287,11 +284,11 @@ public class DashboardPanel extends JPanel {
         filterPanel.add(cbFilterShift);
         filterPanel.add(btnFilterShift);
 
-        // Khung chứa 2 biểu đồ (GridLayout chia đôi)
-        JPanel chartsPanel = new JPanel(new GridLayout(1, 2, 20, 0));
+        // Khung chứa biểu đồ (Chỉ chứa 1 biểu đồ doanh thu theo mẫu Ca)
+        JPanel chartsPanel = new JPanel(new GridLayout(1, 1));
         chartsPanel.setOpaque(false);
 
-        // --- BIỂU ĐỒ 1: BAR CHART (Doanh thu theo Loại Ca) ---
+        // --- BIỂU ĐỒ BAR CHART (Doanh thu theo Loại Ca) ---
         shiftRevenueDataset = new DefaultCategoryDataset();
         shiftRevenueBarChart = ChartFactory.createBarChart(
                 "Doanh Thu Theo Mẫu Ca", 
@@ -320,38 +317,8 @@ public class DashboardPanel extends JPanel {
         barChartPanel.setBackground(Color.WHITE);
         barChartPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // --- BIỂU ĐỒ 2: LINE CHART (Xu hướng giờ làm việc) ---
-        workingHoursDataset = new DefaultCategoryDataset();
-        workingHoursLineChart = ChartFactory.createLineChart(
-                "Xu Hướng Giờ Làm Việc", 
-                "Thời gian",                        
-                "Tổng số giờ",           
-                workingHoursDataset,              
-                PlotOrientation.VERTICAL,
-                false, true, false
-        );
-
-        CategoryPlot linePlot = workingHoursLineChart.getCategoryPlot();
-        linePlot.setBackgroundPaint(Color.WHITE); 
-        linePlot.setRangeGridlinePaint(new Color(220, 220, 220)); 
-        linePlot.setOutlineVisible(false); 
-
-        LineAndShapeRenderer lineRenderer = (LineAndShapeRenderer) linePlot.getRenderer();
-        lineRenderer.setSeriesPaint(0, new Color(41, 128, 185)); // Màu xanh dương nhạt hơn cho đa dạng
-        lineRenderer.setSeriesStroke(0, new BasicStroke(3.0f)); 
-        lineRenderer.setSeriesShapesVisible(0, true); 
-
-        workingHoursLineChart.getTitle().setFont(new Font("Segoe UI", Font.BOLD, 16));
-        linePlot.getDomainAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 12));
-        linePlot.getRangeAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 12));
-
-        ChartPanel lineChartPanel = new ChartPanel(workingHoursLineChart);
-        lineChartPanel.setBackground(Color.WHITE);
-        lineChartPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
         // Gắn vào khung
         chartsPanel.add(barChartPanel);
-        chartsPanel.add(lineChartPanel);
 
         centerPanel.add(filterPanel, BorderLayout.NORTH);
         centerPanel.add(chartsPanel, BorderLayout.CENTER);
@@ -391,15 +358,6 @@ public class DashboardPanel extends JPanel {
         }
     }
 
-    public void updateWorkingHoursChart(java.util.List<Object[]> dataList, String chartTitle) {
-        workingHoursLineChart.setTitle(new org.jfree.chart.title.TextTitle(chartTitle, new Font("Segoe UI", Font.BOLD, 16)));
-        workingHoursDataset.clear();
-        for (Object[] row : dataList) {
-            String dateStr = (String) row[0]; // Ngày (DD/MM)
-            Double hours = (Double) row[1];   // Số giờ
-            workingHoursDataset.addValue(hours, "Giờ làm", dateStr);
-        }
-    }
 
     // ==========================================================
     // TAB 4: BÁO CÁO KHO 

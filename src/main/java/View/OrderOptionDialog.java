@@ -340,18 +340,13 @@ public class OrderOptionDialog extends JDialog {
         String sugar = sugarGroup.getSelection().getActionCommand();
         String ice = iceGroup.getSelection().getActionCommand();
         
-        if (!sugar.contains("100%")) {
-            noteBuilder.append("Đường: ").append(sugar.split(" ")[0]).append(" ");
-        }
-        if (!ice.contains("100%")) {
-            if (noteBuilder.length() > 0) noteBuilder.append(" | ");
-            noteBuilder.append("Đá: ").append(ice.split(" ")[0]).append(" ");
-        }
+        noteBuilder.append("Đường: ").append(sugar.split(" ")[0]);
+        noteBuilder.append(" | ");
+        noteBuilder.append("Đá: ").append(ice.split(" ")[0]);
         
         String custom = txtCustomNote.getText().trim();
         if (!custom.isEmpty()) {
-            if (noteBuilder.length() > 0) noteBuilder.append(" | ");
-            noteBuilder.append("Ghi chú: ").append(custom);
+            noteBuilder.append(" | Ghi chú: ").append(custom);
         }
         
         finalNote = noteBuilder.toString().trim();

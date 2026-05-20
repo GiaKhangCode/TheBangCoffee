@@ -253,10 +253,6 @@ public class DashboardController {
         // 2. Biểu đồ cột (Doanh thu theo mẫu Ca)
         List<Object[]> barData = reportService.getShiftRevenueChartData(filterType);
         dashboardPanel.updateShiftRevenueChart(barData, "Doanh Thu Theo Mẫu Ca - " + filterType);
-
-        // 3. Biểu đồ đường (Giờ làm việc)
-        List<Object[]> lineData = reportService.getWorkingHoursChartData(filterType);
-        dashboardPanel.updateWorkingHoursChart(lineData, "Xu Hướng Giờ Làm Việc - " + filterType);
     }
 
     private void loadCustomShiftStats(java.util.Date startDate, java.util.Date endDate) {
@@ -273,9 +269,6 @@ public class DashboardController {
 
         List<Object[]> barData = reportService.getCustomShiftRevenueChartData(startDate, endDate);
         dashboardPanel.updateShiftRevenueChart(barData, "Doanh Thu Theo Mẫu Ca " + dateSuffix);
-
-        List<Object[]> lineData = reportService.getCustomWorkingHoursChartData(startDate, endDate);
-        dashboardPanel.updateWorkingHoursChart(lineData, "Xu Hướng Giờ Làm Việc " + dateSuffix);
     }
 
     public void hiddenButton() throws SQLException {
