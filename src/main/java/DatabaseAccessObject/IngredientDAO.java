@@ -17,8 +17,9 @@ public class IngredientDAO {
     public List<IngredientModel> getIngredient() throws SQLException {
         ArrayList<IngredientModel> ingredientList = new ArrayList<>();
         // Lấy trực tiếp vì NGUYEN_LIEU giờ là bảng danh mục chuẩn
-        String query = "SELECT MaNguyenLieu, TenNguyenLieu, DonViTinh, SoLuongTon, NguongCanhBao, NhaCungCap, Thue_GTGT, DonGiaBinhQuan "
+        String query = "SELECT MaNguyenLieu, TenNguyenLieu, DonViTinh, SoLuongTon, NguongCanhBao, Thue_GTGT, DonGiaBinhQuan "
                      + "FROM NGUYEN_LIEU "
+                     + "WHERE DaXoa = 0 "
                      + "ORDER BY MaNguyenLieu";
         
         try (Connection conn = getMyConnection();
@@ -32,7 +33,6 @@ public class IngredientDAO {
                         rs.getString("DonViTinh"),
                         rs.getInt("SoLuongTon"),
                         rs.getInt("NguongCanhBao"),
-                        rs.getString("NhaCungCap"),
                         rs.getDouble("Thue_GTGT"),
                         rs.getDouble("DonGiaBinhQuan")
                 );
@@ -150,7 +150,7 @@ public class IngredientDAO {
     }
     
     public ArrayList<String> getIngredientNames() {
-        String sql = "SELECT DISTINCT TenNguyenLieu FROM NGUYEN_LIEU";
+        String sql = "SELECT DISTINCT TenNguyenLieu FROM NGUYEN_LIEU WHERE DaXoa = 0";
         ArrayList<String> ingredientNames = new ArrayList<>();
         try (Connection conn = getMyConnection();
              Statement stmt = conn.createStatement();
@@ -218,7 +218,7 @@ public class IngredientDAO {
     
     // Lấy thông tin 1 nguyên liệu cụ thể để đối chiếu tồn kho
     public IngredientModel getIngredientById(int id) {
-        String query = "SELECT MaNguyenLieu, TenNguyenLieu, DonViTinh, SoLuongTon, NguongCanhBao, NhaCungCap, Thue_GTGT, DonGiaBinhQuan FROM NGUYEN_LIEU WHERE MaNguyenLieu = ?";
+        String query = "SELECT MaNguyenLieu, TenNguyenLieu, DonViTinh, SoLuongTon, NguongCanhBao, Thue_GTGT, DonGiaBinhQuan FROM NGUYEN_LIEU WHERE MaNguyenLieu = ?";
         try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             
@@ -231,7 +231,6 @@ public class IngredientDAO {
                         rs.getString("DonViTinh"),
                         rs.getInt("SoLuongTon"), 
                         rs.getInt("NguongCanhBao"), 
-                        rs.getString("NhaCungCap"), 
                         rs.getDouble("Thue_GTGT"),
                         rs.getDouble("DonGiaBinhQuan")
                     );
@@ -269,7 +268,7 @@ public class IngredientDAO {
     // Lấy danh sách các lô còn hàng của 1 nguyên liệu
     public List<Object[]> getIngredientBatches(int maNL) {
         List<Object[]> list = new ArrayList<>();
-        String sql = "SELECT l.MaLo, p.NgayNhap, l.SoLuongConLai, l.HanSuDung " +
+        String sql = "SELECT l.MaLo, l.NhaCungCap, p.NgayNhap, l.SoLuongConLai, l.HanSuDung " +
                      "FROM LO_NGUYEN_LIEU l " +
                      "JOIN PHIEU_NHAP_KHO p ON l.MaPhieuNhap = p.MaPhieuNhap " +
                      "WHERE l.MaNguyenLieu = ? AND l.SoLuongConLai > 0 " +
@@ -281,6 +280,7 @@ public class IngredientDAO {
             while (rs.next()) {
                 list.add(new Object[]{
                     rs.getInt("MaLo"),
+                    rs.getString("NhaCungCap"),
                     rs.getDate("NgayNhap"),
                     rs.getDouble("SoLuongConLai"),
                     rs.getDate("HanSuDung")
@@ -302,4 +302,21 @@ public class IngredientDAO {
             return cs.getString(4);
         } catch (Exception e) { return e.getMessage(); }
     }
+        public boolean updateProvider(int maNguyenLieu, String nhaCungCap) {
+    String sql = "UPDATE NGUYEN_LIEU SET NhaCungCap = ? WHERE MaNguyenLieu = ?";
+
+    try (Connection conn = getMyConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setString(1, nhaCungCap);
+        ps.setInt(2, maNguyenLieu);
+
+        return ps.executeUpdate() > 0;
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+    }
+}
+    
 }

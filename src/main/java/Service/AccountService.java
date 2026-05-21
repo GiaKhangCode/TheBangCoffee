@@ -56,6 +56,16 @@ public class AccountService {
         return dao.getAccountList();
     }
     
+    public AccountModel getAccountById(int accountId) {
+        List<AccountModel> list = dao.getAccountList();
+        for (AccountModel acc : list) {
+            if (acc.getAccountID() == accountId) {
+                return acc;
+            }
+        }
+        return null;
+    }
+    
     public boolean assignRoleGroupToAccount(int accountId, int roleGroupId){
         return dao.assignRoleGroupToAccount(accountId, roleGroupId);
     }
@@ -124,6 +134,10 @@ public class AccountService {
      */
     public List<AccountModel> getAllAccountsForManagement() {
         return dao.getAllAccountsForManagement();
+    }
+    
+    public String updateEmployeeAccount(int maTaiKhoan, String hoTen, String email, String soDienThoai) {
+        return dao.updateEmployeeAccount(maTaiKhoan, hoTen, email, soDienThoai);
     }
     
 }

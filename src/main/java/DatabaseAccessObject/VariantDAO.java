@@ -43,22 +43,25 @@ public class VariantDAO {
     public List<VariantModel> getVariantsByProductId(int productID){
         ArrayList<VariantModel> list = new ArrayList<>();
         // [SỬA] Đổi GiaBan thành 3 cột giá mới
-        String sql = "SELECT MaBienThe, TenSize, GiaTaiQuan, GiaMangVe, GiaNgayLe "
-                   + "FROM BIEN_THE "
-                   + "WHERE MaSanPham = ?";
+        String sql = "SELECT B.MaBienThe, B.TenSize, B.GiaTaiQuan, B.GiaMangVe, B.GiaNgayLe, "
+                   + "(CASE WHEN EXISTS (SELECT 1 FROM CONG_THUC C WHERE C.MaBienThe = B.MaBienThe) THEN 1 ELSE 0 END) AS HasRecipe "
+                   + "FROM BIEN_THE B "
+                   + "WHERE B.MaSanPham = ?";
         try (Connection conn = getMyConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setInt(1, productID);
             try(ResultSet rs = ps.executeQuery()){
                 while(rs.next()){
+                    boolean hasRecipe = rs.getInt("HasRecipe") == 1;
                     list.add(new VariantModel(
                         rs.getInt("MaBienThe"), 
                         productID, 
                         rs.getString("TenSize"), 
                         rs.getLong("GiaTaiQuan"),
                         rs.getLong("GiaMangVe"),
-                        rs.getLong("GiaNgayLe")
+                        rs.getLong("GiaNgayLe"),
+                        hasRecipe
                     ));
                 }
             }

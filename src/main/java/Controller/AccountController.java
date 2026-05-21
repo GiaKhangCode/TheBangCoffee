@@ -60,7 +60,7 @@ public class AccountController {
             
             if(accountModel != null) {
                 // Kiểm tra tài khoản có bị vô hiệu hoá không
-                if ("Đang bị khóa".equals(accountModel.getStatus())) {
+                if ("Bị khóa".equals(accountModel.getStatus())) {
                     JOptionPane.showMessageDialog(loginFrame,
                         "Tài khoản của bạn đã bị vô hiệu hoá. Vui lòng liên hệ quản lý!",
                         "Tài khoản bị khóa", JOptionPane.ERROR_MESSAGE);
@@ -256,17 +256,11 @@ public class AccountController {
         }
 
         ShiftSessionDAO shiftSessionDAO = new ShiftSessionDAO();
-        ShiftSession caDangMo = shiftSessionDAO.getPhienCaDangMo();
+        ShiftSession caDangMo = shiftSessionDAO.getOpenShiftByAccount(SessionManager.getAccountId());
 
         if (caDangMo != null) {
             SessionManager.setCurrentMaPhienCa(caDangMo.getMaPhienCa());
             mainFrame.setShiftButtonState(true); 
-            
-            if (caDangMo.getMaTaiKhoanMo() != SessionManager.getAccountId()) {
-                JOptionPane.showMessageDialog(mainFrame, 
-                    "Hệ thống đang sử dụng két tiền của ca trước do chưa được đóng.\nBạn đang dùng chung ca.", 
-                    "Thông báo Ca làm việc", JOptionPane.WARNING_MESSAGE);
-            }
         } else {
             mainFrame.setShiftButtonState(false); 
         }
@@ -281,10 +275,12 @@ public class AccountController {
                 Object[] handoverInfo = shiftSessionDAO.getLastShiftHandoverInfo();
                 int unpaidCount = shiftSessionDAO.countUnpaidOrders();
                 List<Object[]> inventory = shiftSessionDAO.getCurrentInventory();
+                
+                Integer maLich = shiftSessionDAO.getCurrentScheduleId(SessionManager.getAccountId());
 
                 ShiftSessionOpenDialog dialog = new ShiftSessionOpenDialog(
                         mainFrame, 
-                        new ShiftSession(SessionManager.getAccountId(), null),
+                        new ShiftSession(SessionManager.getAccountId(), maLich),
                         activeShifts, handoverInfo, unpaidCount, inventory
                 );
                 dialog.setVisible(true); 
@@ -294,6 +290,9 @@ public class AccountController {
                     if (newShiftId != -1) {
                         SessionManager.setCurrentMaPhienCa(newShiftId);
                         mainFrame.setShiftButtonState(true); 
+                        if (mainFrame.getShiftPanel() != null && mainFrame.getShiftPanel().getShiftMonitorPanel() != null) {
+                            mainFrame.getShiftPanel().getShiftMonitorPanel().loadData();
+                        }
                         JOptionPane.showMessageDialog(mainFrame, "Mở ca thành công! Đã có thể bắt đầu bán hàng.", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     } else {
                         JOptionPane.showMessageDialog(mainFrame, "Lỗi hệ thống: Không thể khởi tạo ca làm việc!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -344,6 +343,9 @@ public class AccountController {
 
                         SessionManager.setCurrentMaPhienCa(-1); 
                         mainFrame.setShiftButtonState(false); 
+                        if (mainFrame.getShiftPanel() != null && mainFrame.getShiftPanel().getShiftMonitorPanel() != null) {
+                            mainFrame.getShiftPanel().getShiftMonitorPanel().loadData();
+                        }
                         try { mainFrame.setPageActive("Stats"); } catch (SQLException ex) { ex.printStackTrace(); }
                     } else {
                         JOptionPane.showMessageDialog(mainFrame, "Lỗi khi chốt ca!", "Lỗi", JOptionPane.ERROR_MESSAGE);

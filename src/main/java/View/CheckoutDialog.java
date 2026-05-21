@@ -31,6 +31,7 @@ public class CheckoutDialog extends JDialog {
     private boolean isConfirmed = false;
     private int pointsUsed = 0;
     private long discountAmount = 0;
+    private long tierDiscountAmount = 0;
 
     // UI Components
     private JTextField txtPhone;
@@ -51,6 +52,7 @@ public class CheckoutDialog extends JDialog {
     private JLabel lblVat;
     private JLabel lblTotalBill;
     private JLabel lblDiscount;
+    private JLabel lblTierDiscount;
     private JLabel lblFinalTotal;
     private JLabel lblEarnedPoints;
     
@@ -257,7 +259,7 @@ public class CheckoutDialog extends JDialog {
         pointsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
 
         // 4. Summary Panel
-        JPanel summaryPanel = new JPanel(new GridLayout(6, 2, 0, 10));
+        JPanel summaryPanel = new JPanel(new GridLayout(7, 2, 0, 10));
         summaryPanel.setBackground(new Color(248, 249, 250));
         summaryPanel.setBorder(BorderFactory.createCompoundBorder(
             new LineBorder(new Color(230, 230, 230)), 
@@ -276,6 +278,9 @@ public class CheckoutDialog extends JDialog {
         JLabel l2 = new JLabel("Giảm giá (từ điểm):"); l2.setFont(new Font("Segoe UI", Font.PLAIN, 15)); l2.setForeground(new Color(39, 174, 96));
         lblDiscount = new JLabel("-0 đ", SwingConstants.RIGHT); lblDiscount.setFont(new Font("Segoe UI", Font.BOLD, 15)); lblDiscount.setForeground(new Color(39, 174, 96));
 
+        JLabel l_tier = new JLabel("Giảm giá (hạng thẻ):"); l_tier.setFont(new Font("Segoe UI", Font.PLAIN, 15)); l_tier.setForeground(new Color(39, 174, 96));
+        lblTierDiscount = new JLabel("-0 đ", SwingConstants.RIGHT); lblTierDiscount.setFont(new Font("Segoe UI", Font.BOLD, 15)); lblTierDiscount.setForeground(new Color(39, 174, 96));
+
         JLabel l3 = new JLabel("Khách phải trả:"); l3.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblFinalTotal = new JLabel("0 đ", SwingConstants.RIGHT); lblFinalTotal.setFont(new Font("Segoe UI", Font.BOLD, 22)); lblFinalTotal.setForeground(new Color(231, 76, 60));
 
@@ -286,6 +291,7 @@ public class CheckoutDialog extends JDialog {
         summaryPanel.add(l0_2); summaryPanel.add(lblVat);
         summaryPanel.add(l1); summaryPanel.add(lblTotalBill);
         summaryPanel.add(l2); summaryPanel.add(lblDiscount);
+        summaryPanel.add(l_tier); summaryPanel.add(lblTierDiscount);
         summaryPanel.add(l3); summaryPanel.add(lblFinalTotal);
         summaryPanel.add(l4); summaryPanel.add(lblEarnedPoints);
         summaryPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 220));
@@ -499,13 +505,20 @@ public class CheckoutDialog extends JDialog {
         lblTotalBill.setText(String.format("%,d đ", totalBill));
         lblDiscount.setText(String.format("-%,d đ", discountAmount));
         
-        long finalAmt = totalBill - discountAmount;
+        tierDiscountAmount = 0;
+        long remainingForTier = totalBill - discountAmount;
+        if (remainingForTier > 0 && currentCustomer != null && currentCustomer.getPhanTramChietKhau() > 0) {
+            tierDiscountAmount = (long) (remainingForTier * (currentCustomer.getPhanTramChietKhau() / 100.0));
+        }
+        lblTierDiscount.setText(String.format("-%,d đ", tierDiscountAmount));
+        
+        long finalAmt = remainingForTier - tierDiscountAmount;
         if (finalAmt < 0) finalAmt = 0;
         lblFinalTotal.setText(String.format("%,d đ", finalAmt));
         
         int earned = 0;
         if (currentCustomer != null && tienTichMotDiem > 0) {
-            long paid = nonRewardTotal - discountAmount;
+            long paid = nonRewardTotal - discountAmount - tierDiscountAmount;
             if (paid > 0) {
                 earned = (int) (paid / tienTichMotDiem);
             }
@@ -516,5 +529,5 @@ public class CheckoutDialog extends JDialog {
     public boolean isConfirmed() { return isConfirmed; }
     public int getCustomerId() { return currentCustomer != null ? currentCustomer.getMaKH() : -1; }
     public int getPointsUsed() { return pointsUsed; }
-    public long getDiscountAmount() { return discountAmount; }
+    public long getDiscountAmount() { return discountAmount + tierDiscountAmount; }
 }

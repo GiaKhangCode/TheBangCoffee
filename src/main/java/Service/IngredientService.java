@@ -60,4 +60,8 @@ public class IngredientService {
     public String disposeBatch(int maLo, double soLuong, String lyDo) {
         return ingredientDAO.disposeBatch(maLo, soLuong, lyDo);
     }
+    
+    public boolean updateProvider(int maNguyenLieu, String nhaCungCap) {
+    return ingredientDAO.updateProvider(maNguyenLieu, nhaCungCap);
+}
 }

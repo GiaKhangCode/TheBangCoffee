@@ -191,14 +191,51 @@ public class MenuPanel extends JPanel {
     }
 
     private JPanel createProductCard(ProductModel product) {
+        boolean isStopped = product.getProductStatus() != null && product.getProductStatus().equalsIgnoreCase("Ngừng bán");
+        
         JPanel card = new JPanel(new BorderLayout(0, 15)) {
+            @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
                 g2.setColor(Color.WHITE);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
                 g2.setColor(new Color(220, 220, 220));
-                g2.drawRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 15, 15);
                 g2.dispose();
+            }
+            
+            @Override
+            public void paint(Graphics g) {
+                super.paint(g);
+                
+                if (isStopped) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    
+                    g2.setColor(new Color(245, 245, 245, 180)); 
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+
+                    int rectHeight = 35;
+                    int rectY = (getHeight() - rectHeight) / 2;
+                    g2.setColor(new Color(200, 200, 200, 220)); // Gạch ngang xám
+                    g2.fillRect(0, rectY, getWidth(), rectHeight);
+
+                    g2.setColor(Color.DARK_GRAY); // Chữ màu xám
+                    g2.setFont(new Font("Segoe UI", Font.BOLD, 16));
+                    
+                    String text = "NGỪNG BÁN";
+                    FontMetrics fm = g2.getFontMetrics();
+                    int textWidth = fm.stringWidth(text);
+                    int textAscent = fm.getAscent();
+                    
+                    int textX = (getWidth() - textWidth) / 2;
+                    int textY = rectY + ((rectHeight - fm.getHeight()) / 2) + textAscent;
+                    
+                    g2.drawString(text, textX, textY);
+                    g2.dispose();
+                }
             }
         };
 
@@ -208,7 +245,9 @@ public class MenuPanel extends JPanel {
         card.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         card.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) { card.setBorder(BorderFactory.createLineBorder(PRIMARY_COLOR, 2, true)); }
+            public void mouseEntered(MouseEvent e) { 
+                if (!isStopped) card.setBorder(BorderFactory.createLineBorder(PRIMARY_COLOR, 2, true)); 
+            }
             public void mouseExited(MouseEvent e) { card.setBorder(new EmptyBorder(10, 10, 10, 10)); }
             public void mouseClicked(MouseEvent e) {
                 if (productClickListener != null) {
@@ -232,6 +271,10 @@ public class MenuPanel extends JPanel {
 
         JLabel lblName = new JLabel(product.getProductName());
         lblName.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        
+        if (isStopped) {
+            lblName.setForeground(Color.GRAY);
+        }
 
         JLabel lblCategory = new JLabel(product.getCategoryName());
         lblCategory.setForeground(TEXT_MUTED);

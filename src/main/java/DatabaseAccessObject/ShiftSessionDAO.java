@@ -10,19 +10,81 @@ import java.util.List;
 
 public class ShiftSessionDAO {
 
-    public ShiftSession getPhienCaDangMo() {
-        String sql = "SELECT * FROM PHIEN_CA_LAM WHERE TrangThai = N'Đang mở' FETCH FIRST 1 ROWS ONLY";
+    public List<ShiftSession> getActiveShifts() {
+        List<ShiftSession> list = new ArrayList<>();
+        String sql = "SELECT * FROM PHIEN_CA_LAM WHERE TrangThai = N'Đang mở'";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
+            while (rs.next()) {
                 ShiftSession ca = new ShiftSession();
                 ca.setMaPhienCa(rs.getInt("MaPhienCa"));
                 ca.setMaLich(rs.getObject("MaLich") != null ? rs.getInt("MaLich") : null);
                 ca.setMaTaiKhoanMo(rs.getInt("MaTaiKhoanMo"));
                 ca.setThoiGianMo(rs.getTimestamp("ThoiGianMo"));
                 ca.setTrangThai(rs.getString("TrangThai"));
-                return ca;
+                list.add(ca);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    public List<ShiftSession> getTodayShifts() {
+        List<ShiftSession> list = new ArrayList<>();
+        // Lấy tất cả các ca trong ngày hôm nay
+        String sql = "SELECT * FROM PHIEN_CA_LAM WHERE TRUNC(ThoiGianMo) = TRUNC(SYSDATE) ORDER BY ThoiGianMo DESC";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                ShiftSession ca = new ShiftSession();
+                ca.setMaPhienCa(rs.getInt("MaPhienCa"));
+                ca.setMaLich(rs.getObject("MaLich") != null ? rs.getInt("MaLich") : null);
+                ca.setMaTaiKhoanMo(rs.getInt("MaTaiKhoanMo"));
+                ca.setThoiGianMo(rs.getTimestamp("ThoiGianMo"));
+                ca.setTrangThai(rs.getString("TrangThai"));
+                list.add(ca);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    public ShiftSession getOpenShiftByAccount(int accountId) {
+        String sql = "SELECT * FROM PHIEN_CA_LAM WHERE TrangThai = N'Đang mở' AND MaTaiKhoanMo = ? FETCH FIRST 1 ROWS ONLY";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    ShiftSession ca = new ShiftSession();
+                    ca.setMaPhienCa(rs.getInt("MaPhienCa"));
+                    ca.setMaLich(rs.getObject("MaLich") != null ? rs.getInt("MaLich") : null);
+                    ca.setMaTaiKhoanMo(rs.getInt("MaTaiKhoanMo"));
+                    ca.setThoiGianMo(rs.getTimestamp("ThoiGianMo"));
+                    ca.setTrangThai(rs.getString("TrangThai"));
+                    return ca;
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return null;
+    }
+
+    public Integer getCurrentScheduleId(int accountId) {
+        // Tìm lịch làm việc của nhân viên trong ngày hôm nay, và thời điểm hiện tại nằm trong (GioBatDau, GioKetThuc)
+        // Lưu ý: Oracle có thể cần chuyển đổi cẩn thận.
+        String sql = "SELECT l.MaLich " +
+                     "FROM LICH_LAM_VIEC l " +
+                     "JOIN CA_LAM_VIEC c ON l.MaCa = c.MaCa " +
+                     "WHERE l.MaTaiKhoan = ? " +
+                     "  AND TRUNC(l.NgayLamViec) = TRUNC(SYSDATE) " +
+                     "  AND TO_TIMESTAMP(TO_CHAR(SYSDATE, 'HH24:MI'), 'HH24:MI') BETWEEN c.GioBatDau AND c.GioKetThuc " +
+                     "  AND c.TrangThai = N'Đang sử dụng' " +
+                     "FETCH FIRST 1 ROWS ONLY";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
             }
         } catch (Exception e) { e.printStackTrace(); }
         return null;
@@ -87,6 +149,17 @@ public class ShiftSessionDAO {
 
     public double getDoanhThuTienMat(int maPhienCa) {
         String sql = "SELECT NVL(SUM(ThanhTien), 0) FROM DON_HANG WHERE MaPhienCa = ? AND PhuongThucThanhToan = N'Tiền mặt' AND TrangThaiThanhToan = N'Đã thanh toán'";
+        try (Connection con = ConnectionUtils.getMyConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, maPhienCa);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getDouble(1);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return 0;
+    }
+
+    public double getTongDoanhThu(int maPhienCa) {
+        String sql = "SELECT NVL(SUM(ThanhTien), 0) FROM DON_HANG WHERE MaPhienCa = ? AND TrangThaiThanhToan = N'Đã thanh toán'";
         try (Connection con = ConnectionUtils.getMyConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, maPhienCa);
             try (ResultSet rs = ps.executeQuery()) {

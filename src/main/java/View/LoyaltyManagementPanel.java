@@ -41,13 +41,19 @@ public class LoyaltyManagementPanel extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(Color.WHITE);
 
-        TitledBorder title = BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(new Color(172, 197, 219), 1), 
-            "1. Danh sách Hạng thẻ"
-        );
-        title.setTitleFont(new Font("Segoe UI", Font.BOLD, 14));
-        title.setTitleColor(new Color(0, 0, 0));
-        panel.setBorder(BorderFactory.createCompoundBorder(title, new EmptyBorder(10, 10, 10, 10)));
+        // Bỏ TitledBorder cũ, thay bằng Border nhẹ và Label tiêu đề
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(230, 230, 230), 1),
+            new EmptyBorder(15, 15, 15, 15)
+        ));
+
+        JLabel lblTitle = new JLabel("Danh sách Hạng thẻ");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblTitle.setForeground(new Color(50, 50, 50));
+        
+        JPanel headerWrap = new JPanel(new BorderLayout());
+        headerWrap.setBackground(Color.WHITE);
+        headerWrap.add(lblTitle, BorderLayout.WEST);
 
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actionPanel.setBackground(Color.WHITE);
@@ -56,11 +62,11 @@ public class LoyaltyManagementPanel extends JPanel {
 
         actionPanel.add(btnAddTier);
 
-        String[] columns = {"Mã Hạng", "Tên Hạng", "Điểm Yêu Cầu", "Mặc Định", "Hành động"};
+        String[] columns = {"Mã Hạng", "Tên Hạng", "Điểm Yêu Cầu", "Chiết Khấu (%)", "Mặc Định", "Hành động"};
         tierTableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 4; 
+                return column == 5; 
             }
         };
 
@@ -69,7 +75,7 @@ public class LoyaltyManagementPanel extends JPanel {
             public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
                 Component c = super.prepareRenderer(renderer, row, column);
                 if (!isRowSelected(row)) {
-                    String isDefault = (String) getModel().getValueAt(convertRowIndexToModel(row), 3);
+                    String isDefault = (String) getModel().getValueAt(convertRowIndexToModel(row), 4);
                     if ("Có".equals(isDefault)) {
                         c.setBackground(new Color(240, 240, 240)); 
                         c.setForeground(Color.GRAY);
@@ -90,51 +96,85 @@ public class LoyaltyManagementPanel extends JPanel {
         header.setFont(new Font("Segoe UI", Font.BOLD, 14));
         header.setBackground(new Color(245, 245, 245));
 
-        tierTable.getColumnModel().getColumn(3).setMinWidth(0);
-        tierTable.getColumnModel().getColumn(3).setMaxWidth(0);
-        tierTable.getColumnModel().getColumn(3).setWidth(0);
+        tierTable.getColumnModel().getColumn(4).setMinWidth(0);
+        tierTable.getColumnModel().getColumn(4).setMaxWidth(0);
+        tierTable.getColumnModel().getColumn(4).setWidth(0);
 
-        TableColumn actionCol = tierTable.getColumnModel().getColumn(4);
+        TableColumn actionCol = tierTable.getColumnModel().getColumn(5);
         actionCol.setCellRenderer(new ActionButtonRenderer());
         actionCol.setCellEditor(new ActionButtonEditor(new JCheckBox()));
 
-        panel.add(actionPanel, BorderLayout.NORTH);
-        panel.add(new JScrollPane(tierTable), BorderLayout.CENTER);
+        headerWrap.add(actionPanel, BorderLayout.EAST);
+        panel.add(headerWrap, BorderLayout.NORTH);
+        
+        JScrollPane scroll = new JScrollPane(tierTable);
+        scroll.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230)));
+        scroll.getViewport().setBackground(Color.WHITE);
+        panel.add(scroll, BorderLayout.CENTER);
 
         return panel;
     }
 
     private JPanel createPointRulePanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 15));
-        panel.setBackground(Color.WHITE);
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(new Color(250, 252, 255)); // Nền màu sáng nhạt
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(220, 230, 240), 1),
+            new EmptyBorder(20, 20, 20, 20)
+        ));
 
-        TitledBorder title = BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(new Color(172, 197, 219), 1), 
-            "2. Tỷ lệ Quy đổi Điểm"
-        );
-        title.setTitleFont(new Font("Segoe UI", Font.BOLD, 14));
-        title.setTitleColor(new Color(0, 0, 0));
-        panel.setBorder(title);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 15, 10, 15);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+
+        JLabel lblTitle = new JLabel("Tỷ lệ Quy đổi Điểm");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblTitle.setForeground(new Color(50, 50, 50));
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 4;
+        panel.add(lblTitle, gbc);
 
         txtTienTichMotDiem = new JTextField("10000", 8);
         txtGiaTriMotDiem = new JTextField("100", 8);
-        txtDiemDoiMotLy = new JTextField("50", 5); // [MỚI]
+        txtDiemDoiMotLy = new JTextField("50", 5);
         
         styleTextField(txtTienTichMotDiem);
         styleTextField(txtGiaTriMotDiem);
         styleTextField(txtDiemDoiMotLy);
 
-        btnSaveRule = createButton("Lưu Tỷ Lệ", PRIMARY_COLOR);
+        gbc.gridwidth = 1;
+        gbc.gridy = 1;
+        
+        // Cột 1
+        gbc.gridx = 0; 
+        JLabel l1 = new JLabel("Chi tiêu (VNĐ):"); l1.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        panel.add(l1, gbc);
+        gbc.gridx = 1; 
+        panel.add(txtTienTichMotDiem, gbc);
+        gbc.gridx = 2; 
+        JLabel l1_2 = new JLabel("= 1 Điểm tích lũy"); l1_2.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        panel.add(l1_2, gbc);
 
-        panel.add(new JLabel("Chi tiêu:"));
-        panel.add(txtTienTichMotDiem);
-        panel.add(new JLabel("VNĐ = 1 Điểm  |  1 Điểm ="));
-        panel.add(txtGiaTriMotDiem);
-        panel.add(new JLabel("VNĐ  |  Đổi 1 ly cần:"));
-        panel.add(txtDiemDoiMotLy);
-        panel.add(new JLabel("Điểm"));
-        panel.add(new JLabel("   ")); 
-        panel.add(btnSaveRule);
+        // Cột 2
+        gbc.gridy = 2;
+        gbc.gridx = 0; 
+        JLabel l2 = new JLabel("1 Điểm giá trị (VNĐ):"); l2.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        panel.add(l2, gbc);
+        gbc.gridx = 1; 
+        panel.add(txtGiaTriMotDiem, gbc);
+
+        // Cột 3
+        gbc.gridy = 3;
+        gbc.gridx = 0; 
+        JLabel l3 = new JLabel("Đổi 1 ly nước (Điểm):"); l3.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        panel.add(l3, gbc);
+        gbc.gridx = 1; 
+        panel.add(txtDiemDoiMotLy, gbc);
+        
+        // Button
+        btnSaveRule = createButton("Lưu Thiết Lập", PRIMARY_COLOR);
+        gbc.gridy = 4; gbc.gridx = 0; gbc.gridwidth = 3; gbc.insets = new Insets(20, 15, 0, 15);
+        panel.add(btnSaveRule, gbc);
 
         return panel;
     }
@@ -146,8 +186,13 @@ public class LoyaltyManagementPanel extends JPanel {
     }
 
     private void styleTextField(JTextField txt) {
-        txt.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        txt.setFont(new Font("Segoe UI", Font.BOLD, 15));
         txt.setHorizontalAlignment(JTextField.RIGHT);
+        txt.setPreferredSize(new Dimension(150, 35));
+        txt.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200)),
+            new EmptyBorder(5, 5, 5, 5)
+        ));
     }
 
     public interface ActionButtonListener { 
@@ -197,7 +242,7 @@ public class LoyaltyManagementPanel extends JPanel {
         ActionPanel panel = new ActionPanel();
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            String isDefault = (String) table.getModel().getValueAt(table.convertRowIndexToModel(row), 3);
+            String isDefault = (String) table.getModel().getValueAt(table.convertRowIndexToModel(row), 4);
             if ("Có".equals(isDefault)) {
                 panel.setBackground(new Color(240, 240, 240));
                 panel.btnEdit.setEnabled(false);
@@ -221,7 +266,7 @@ public class LoyaltyManagementPanel extends JPanel {
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
             currentRow = row; 
-            String isDefault = (String) table.getModel().getValueAt(table.convertRowIndexToModel(row), 3);
+            String isDefault = (String) table.getModel().getValueAt(table.convertRowIndexToModel(row), 4);
             if ("Có".equals(isDefault)) {
                 panel.setBackground(new Color(240, 240, 240));
                 panel.btnEdit.setEnabled(false);

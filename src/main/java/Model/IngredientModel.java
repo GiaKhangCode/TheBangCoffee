@@ -8,17 +8,15 @@ public class IngredientModel {
     private int threshold;
     private double averagePrice;
     
-    // [MỚI] Thêm Nhà cung cấp và Thuế theo DB mới
-    private String provider;
+    // [MỚI] Thêm Thuế theo DB mới
     private double vat; 
 
-    public IngredientModel(int ingredientID, String ingredientName, String unit, int inStock, int threshold, String provider, double vat, double averagePrice) {
+    public IngredientModel(int ingredientID, String ingredientName, String unit, int inStock, int threshold, double vat, double averagePrice) {
         this.ingredientID = ingredientID;
         this.ingredientName = ingredientName;
         this.unit = unit;
         this.inStock = inStock;
         this.threshold = threshold;
-        this.provider = provider;
         this.vat = vat;
         this.averagePrice = averagePrice;
     }
@@ -28,7 +26,6 @@ public class IngredientModel {
     public String getUnit() { return unit; }
     public int getInStock() { return inStock; }
     public int getThreshold() { return threshold; }
-    public String getProvider() { return provider; }
     public double getVat() { return vat; }
     public double getAveragePrice() { return averagePrice; }
     

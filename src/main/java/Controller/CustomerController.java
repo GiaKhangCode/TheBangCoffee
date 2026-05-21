@@ -101,7 +101,7 @@ public class CustomerController {
                 String isDefault = rs.getInt("LaMacDinh") == 1 ? "Có" : "Không";
                 
                 model.addRow(new Object[]{
-                    rs.getInt("MaHang"), tenHang, rs.getInt("DiemYeuCau"), isDefault, ""
+                    rs.getInt("MaHang"), tenHang, rs.getInt("DiemYeuCau"), rs.getDouble("PhanTramChietKhau"), isDefault, ""
                 });
                 
                 cbFilter.addItem(tenHang); 
@@ -201,11 +201,99 @@ public class CustomerController {
                 }
             }
         });
+        
+        customerView.setActionListener(new View.CustomerManagementPanel.ActionButtonListener() {
+            @Override
+public void onEdit(int row) {
+
+    // Lấy mã KH dạng KH21
+    String maKH = customerView.getCustomerTable()
+            .getValueAt(row, 0)
+            .toString();
+
+    // Chuyển KH21 -> 21
+    if (maKH.startsWith("KH")) {
+        maKH = maKH.substring(2);
+    }
+
+    int id = Integer.parseInt(maKH);
+
+    String oldPhone = customerView.getCustomerTable()
+            .getValueAt(row, 1)
+            .toString();
+
+    String oldName = customerView.getCustomerTable()
+            .getValueAt(row, 2)
+            .toString();
+
+    JTextField txtPhone = new JTextField(oldPhone);
+    JTextField txtName = new JTextField(oldName);
+
+    Object[] message = {
+        "Số điện thoại (*):", txtPhone,
+        "Họ và Tên:", txtName
+    };
+
+    int option = JOptionPane.showConfirmDialog(
+            customerView,
+            message,
+            "Sửa Khách Hàng",
+            JOptionPane.OK_CANCEL_OPTION,
+            JOptionPane.PLAIN_MESSAGE
+    );
+
+    if (option == JOptionPane.OK_OPTION) {
+        try {
+
+            String phone = txtPhone.getText().trim();
+            String name = txtName.getText().trim();
+
+            if (phone.isEmpty()) {
+                JOptionPane.showMessageDialog(
+                        customerView,
+                        "Số điện thoại không được để trống!",
+                        "Lỗi",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+            boolean success = customerService.updateCustomer(id, phone, name);
+
+            if (success) {
+                JOptionPane.showMessageDialog(
+                        customerView,
+                        "Cập nhật thành công!"
+                );
+
+                loadCustomers();
+
+            } else {
+                JOptionPane.showMessageDialog(
+                        customerView,
+                        "Cập nhật thất bại. Số điện thoại có thể đã tồn tại hoặc không hợp lệ!",
+                        "Lỗi",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            }
+
+        } catch (Exception ex) {
+
+            JOptionPane.showMessageDialog(
+                    customerView,
+                    "Lỗi hệ thống: " + ex.getMessage(),
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+}
+        });
     }
 
     private void initLoyaltyListeners() {
         loyaltyView.getBtnAddTier().addActionListener(e -> {
-            showTierDialog(0, "", 0); 
+            showTierDialog(0, "", 0, 0.0); 
         });
 
         loyaltyView.setActionListener(new LoyaltyManagementPanel.ActionButtonListener() {
@@ -214,7 +302,8 @@ public class CustomerController {
                 int id = Integer.parseInt(loyaltyView.getTierTable().getValueAt(row, 0).toString());
                 String name = loyaltyView.getTierTable().getValueAt(row, 1).toString();
                 int points = Integer.parseInt(loyaltyView.getTierTable().getValueAt(row, 2).toString());
-                showTierDialog(id, name, points); 
+                double discount = Double.parseDouble(loyaltyView.getTierTable().getValueAt(row, 3).toString());
+                showTierDialog(id, name, points, discount); 
             }
 
             @Override
@@ -264,13 +353,15 @@ public class CustomerController {
         });
     }
 
-    private void showTierDialog(int id, String currentName, int currentPoints) {
+    private void showTierDialog(int id, String currentName, int currentPoints, double currentDiscount) {
         JTextField txtName = new JTextField(currentName);
         JTextField txtPoints = new JTextField(id == 0 ? "" : String.valueOf(currentPoints));
+        JTextField txtDiscount = new JTextField(id == 0 ? "0.0" : String.valueOf(currentDiscount));
         
         Object[] message = {
             "Tên hạng thẻ:", txtName,
-            "Số điểm yêu cầu để lên hạng:", txtPoints
+            "Số điểm yêu cầu để lên hạng:", txtPoints,
+            "Chiết khấu (0 - 100%):", txtDiscount
         };
         
         int option = JOptionPane.showConfirmDialog(loyaltyView, message, 
@@ -281,12 +372,13 @@ public class CustomerController {
             try {
                 String name = txtName.getText().trim();
                 int points = Integer.parseInt(txtPoints.getText().trim());
+                double discount = Double.parseDouble(txtDiscount.getText().trim());
                 
-                if (name.isEmpty() || points < 0) {
+                if (name.isEmpty() || points < 0 || discount < 0 || discount > 100) {
                     throw new IllegalArgumentException("Dữ liệu không hợp lệ!");
                 }
                 
-                customerService.saveTier(id, name, points);
+                customerService.saveTier(id, name, points, discount);
                 customerService.syncTiers(); // Tự động quét đồng bộ lại hạng cho toàn bộ khách hàng khi thêm/sửa hạng
                 JOptionPane.showMessageDialog(loyaltyView, id == 0 ? "Thêm hạng thẻ thành công!" : "Cập nhật thành công!");
                 loadTiers(); 

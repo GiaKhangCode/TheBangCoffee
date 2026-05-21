@@ -377,7 +377,7 @@ public class PosController {
 
                 boolean matchCategory = currentCategoryFilter.equals("Tất cả") || p.getCategoryName().equals(currentCategoryFilter);
                 boolean matchName = p.getProductName().toLowerCase().contains(keyword);
-                if (matchCategory && matchName) filteredList.add(p);
+                if (matchCategory && matchName && p.hasAnyRecipe()) filteredList.add(p);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -390,7 +390,12 @@ public class PosController {
         posPanel.clearProducts();
         for (ProductModel p : products) {
             posPanel.addProductCard(p, e -> {
-                List<VariantModel> variants = variantService.getVariantsByProductId(p.getProductID());
+                List<VariantModel> allVariants = variantService.getVariantsByProductId(p.getProductID());
+                List<VariantModel> validVariants = new ArrayList<>();
+                for (VariantModel v : allVariants) {
+                    if (v.isHasRecipe()) validVariants.add(v);
+                }
+                
                 List<ToppingModel> toppings = toppingService.getToppingsByProductID(p.getProductID());
                 
                 boolean isTakeaway = posPanel.isTakeaway();
@@ -401,7 +406,7 @@ public class PosController {
                 Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(posPanel);
                 
                 // [SỬA BUG] Truyền đúng diemDoiMotLy (số điểm cần để đổi 1 ly), không phải giaTriMotDiem (giá trị tiền của 1 điểm)
-                OrderOptionDialog dialog = new OrderOptionDialog(parentFrame, p, variants, toppings, isTakeaway, isHoliday, currentPoints, diemDoiMotLy);
+                OrderOptionDialog dialog = new OrderOptionDialog(parentFrame, p, validVariants, toppings, isTakeaway, isHoliday, currentPoints, diemDoiMotLy);
 
                 dialog.setInventoryValidator((newQty, variant, selToppings) -> {
                     List<CartItemModel> testCart = new ArrayList<>();

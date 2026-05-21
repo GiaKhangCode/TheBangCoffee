@@ -825,26 +825,31 @@ public class StockPanel extends JPanel {
     public void showBatchDetailDialog(String tenNL, List<Object[]> batches, BatchDisposeListener listener) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Chi tiết các lô hàng: " + tenNL, true);
         dialog.setLayout(new BorderLayout(10, 10));
-        dialog.setSize(700, 400);
+        dialog.setSize(700, 450);
         dialog.setLocationRelativeTo(this);
-
-        String[] cols = {"Mã Lô", "Ngày Nhập", "Tồn Lô", "Hạn Sử Dụng", "Hành động"};
+        
+        String[] cols = {"Mã Lô", "Nhà Cung Cấp", "Ngày Nhập", "Tồn Lô", "Hạn Sử Dụng", "Hành động"};
         DefaultTableModel model = new DefaultTableModel(null, cols) {
-            @Override public boolean isCellEditable(int r, int c) { return c == 4; }
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 5; 
+            }
         };
 
-        for (Object[] b : batches) { model.addRow(new Object[]{ b[0], b[1], b[2], b[3], "Xuất hủy" }); }
+        for (Object[] b : batches) {
+            model.addRow(new Object[]{b[0], b[1], b[2], b[3], b[4], "Xuất Hủy"});
+        }
 
         JTable table = new JTable(model);
         ComponentUI.styleTable(table, TEXT_DARK, TEXT_DARK, PRIMARY_COLOR);
         
-        TableColumn actionCol = table.getColumnModel().getColumn(4);
+        TableColumn actionCol = table.getColumnModel().getColumn(5);
         actionCol.setCellRenderer(new ActionButtonRenderer(false, false, true)); 
         
         actionCol.setCellEditor(new ActionButtonEditor(new ActionButtonListener() {
             @Override public void onDelete(int row) {
                 int maLo = (int) table.getValueAt(row, 0);
-                double tonHienTai = (double) table.getValueAt(row, 2);
+                double tonHienTai = (double) table.getValueAt(row, 3);
                 
                 JTextField txtQty = new JTextField();
                 JTextField txtReason = new JTextField();

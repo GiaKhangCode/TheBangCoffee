@@ -50,7 +50,7 @@ public class ProductEditDialog extends JDialog {
     private JButton btnSaveRecipe;
     private JLabel lblTotalCost; 
 
-    private JButton btnUpload, btnUpdate, btnDelete;
+    private JButton btnUpload, btnUpdate;
     private JLabel lblTitle;
     
     private boolean isCreateMode; // Biến xác định chế độ: True = Thêm mới, False = Sửa
@@ -110,14 +110,12 @@ public class ProductEditDialog extends JDialog {
         if (isCreateMode) {
             lblTitle.setText("  THÊM MỚI SẢN PHẨM");
             btnUpdate.setText("Tạo Sản Phẩm");
-            btnDelete.setVisible(false); // Ẩn nút xóa khi tạo mới
             
             // Xóa rỗng form
             clearForm();
         } else {
             lblTitle.setText("  THÔNG TIN CHI TIẾT & CẬP NHẬT MÓN");
             btnUpdate.setText("Cập nhật toàn bộ SP");
-            btnDelete.setVisible(true);
         }
     }
 
@@ -232,7 +230,7 @@ public class ProductEditDialog extends JDialog {
         JPanel tabFooter = new JPanel(new BorderLayout()); tabFooter.setOpaque(false);
         tabFooter.setBorder(new CompoundBorder(new MatteBorder(1, 0, 0, 0, new Color(230, 230, 230)), new EmptyBorder(10, 0, 0, 0)));
         JPanel leftFooter = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0)); leftFooter.setOpaque(false);
-        btnDelete = createModernButton("Xóa sản phẩm", DANGER_COLOR, Color.WHITE); leftFooter.add(btnDelete);
+        
         JPanel rightFooter = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0)); rightFooter.setOpaque(false);
         
         btnUpdate = createModernButton("Cập nhật toàn bộ SP", PRIMARY_COLOR, Color.WHITE); 
@@ -530,7 +528,6 @@ public class ProductEditDialog extends JDialog {
 
     public void addChooseImageListener(ActionListener listener) { btnUpload.addActionListener(listener); }
     public void addUpdateListener(ActionListener listener) { btnUpdate.addActionListener(listener); }
-    public void addDeleteListener(ActionListener listener) { btnDelete.addActionListener(listener); }
     
     public void addAddRecipeToTableListener(ActionListener listener) { btnAddRecipeToTable.addActionListener(listener); }
     public void addVariantSelectionListener(ItemListener listener) { cbVariantRecipe.addItemListener(listener); }
@@ -584,8 +581,8 @@ public class ProductEditDialog extends JDialog {
         btnUpload.setVisible(canEdit);
         btnAddVariant.setVisible(canEdit);
         
-        // Ẩn/Hiện nút Xóa sản phẩm và Cập nhật sản phẩm
-        btnDelete.setVisible(canDelete && !isCreateMode);
+        // Ẩn/Hiện nút Cập nhật sản phẩm
+        
         btnUpdate.setVisible(canEdit);
         
         // Khóa/Mở khóa các ô cấu hình công thức (Tab 2)

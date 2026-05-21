@@ -531,6 +531,26 @@ public class AccountDAO {
     }
     
     /**
+     * Sửa thông tin tài khoản nhân viên
+     */
+    public String updateEmployeeAccount(int maTaiKhoan, String hoTen, String email, String soDienThoai) {
+        String sql = "{call SP_SUA_TAI_KHOAN_NV(?, ?, ?, ?, ?)}";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             CallableStatement cs = con.prepareCall(sql)) {
+            cs.setInt(1, maTaiKhoan);
+            cs.setString(2, hoTen);
+            cs.setString(3, email);
+            cs.setString(4, soDienThoai);
+            cs.registerOutParameter(5, Types.NVARCHAR);
+            cs.execute();
+            return cs.getString(5);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return "Lỗi hệ thống: " + ex.getMessage();
+        }
+    }
+    
+    /**
      * Cập nhật cờ DangNhapLanDau = 1 sau khi nhân viên đổi mật khẩu lần đầu thành công.
      */
     public boolean updateFirstLoginFlag(int accountId) {
@@ -547,7 +567,7 @@ public class AccountDAO {
     
     /**
      * Vô hiệu hoá hoặc kích hoạt lại tài khoản.
-     * status: "Đang hoạt động" hoặc "Đang bị khóa"
+     * status: "Đang hoạt động" hoặc "Bị khóa"
      */
     public boolean updateAccountStatus(int accountId, String status) {
         String sql = "UPDATE TAI_KHOAN SET TrangThai = ? WHERE MaTaiKhoan = ?";

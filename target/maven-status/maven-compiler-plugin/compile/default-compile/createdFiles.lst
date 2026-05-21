@@ -17,6 +17,7 @@ View\HeaderPanel.class
 View\MenuPanel$2.class
 Controller\RoleController$8.class
 View\StockPanel$CenterRenderer.class
+Controller\CustomerController$3.class
 View\StockPanel.class
 View\CategoryManagementPanel$3.class
 View\ToppingManagementPanel$ActionButtonEditor.class
@@ -36,6 +37,7 @@ View\EmployeeSchedulePanel.class
 View\StockPanel$8.class
 Controller\StockPanelController$4.class
 View\StockPanel$ActionPanel.class
+View\CustomerManagementPanel$ActionPanel.class
 Controller\ProductController.class
 Controller\ProductController$2.class
 View\ToppingManagementPanel$2.class
@@ -43,6 +45,7 @@ View\PosPanel$DeleteActionButtonEditor.class
 View\ProductEditDialog$1.class
 View\ToppingManagementPanel$ActionPanel.class
 DatabaseAccessObject\SessionDAO.class
+View\ShiftMonitorPanel$2.class
 View\ToppingManagementPanel$1.class
 View\ShiftSessionCloseDialog.class
 View\RolePanel$6.class
@@ -65,6 +68,7 @@ View\CheckoutDialog$1.class
 Common\ValidationUtil.class
 Service\ReportService.class
 View\RolePanel$AccountActionPanel.class
+View\RolePanel$10.class
 View\ShiftSessionCloseDialog$3.class
 View\PosPanel$QuantityActionListener.class
 View\ToppingManagementPanel$ActionButtonRenderer.class
@@ -77,6 +81,7 @@ View\CategoryManagementPanel$2.class
 View\EmployeeSchedulePanel$DayPanel$1.class
 View\LoginFrame.class
 Service\IngredientService.class
+View\ShiftMonitorPanel$3.class
 DatabaseAccessObject\CustomerDAO.class
 Controller\ToppingController.class
 Model\OrderDetailModel.class
@@ -100,6 +105,7 @@ Controller\StockPanelController$5.class
 Service\ProductService.class
 Controller\CategoryController.class
 View\RolePanel$4.class
+View\CustomerManagementPanel$ActionButtonListener.class
 Model\ShiftSession.class
 View\StockPanel$PrintReceiptListener.class
 Model\RecipeModel.class
@@ -134,6 +140,7 @@ Service\VariantService.class
 DatabaseAccessObject\IngredientDAO.class
 View\MenuPanel$ScrollablePanel.class
 View\CheckoutDialog.class
+View\CustomerManagementPanel$ActionButtonRenderer.class
 Common\ComponentUI$1.class
 View\SidebarPanel.class
 View\StockPanel$Receipt.class
@@ -185,6 +192,7 @@ View\StockPanel$5.class
 View\ProductEditDialog$ProductActionListener.class
 View\RolePanel$8.class
 View\PosPanel$QuantityButtonRenderer.class
+View\ShiftMonitorPanel.class
 Controller\CategoryController$1.class
 Controller\PosController$2.class
 View\RolePanel$AccountManagementActionListener.class
@@ -205,6 +213,7 @@ View\ForgotPasswordFrame$1.class
 View\ProductEditDialog$DeleteActionListener.class
 Model\IngredientListModel.class
 View\ProductEditDialog$DeleteActionButtonRenderer.class
+Controller\RoleController$11.class
 Model\WarehouseReceiptModel.class
 View\ShiftSessionOpenDialog$1.class
 Common\EmailUtil$1.class
@@ -239,9 +248,11 @@ View\AppColor.class
 Service\OrderService.class
 com\is216\thebangcf\TheBangCF$1.class
 View\ToppingManagementPanel.class
+View\ShiftMonitorPanel$1.class
 DatabaseAccessObject\RoleDAO.class
 Model\WarehouseReceiptDetailModel.class
 View\RolePanel$DeleteActionListener.class
+View\CustomerManagementPanel$ActionButtonEditor.class
 Service\OtpService$OtpType.class
 Service\WarehouseReceiptService.class
 View\PosPanel$DeleteActionListener.class
@@ -268,6 +279,7 @@ View\StatCard.class
 View\ProductEditDialog$ProductActionPanel.class
 View\RolePanel$AddEmployeeAccountDialog$3.class
 View\EmployeeSchedulePanel$ShiftCard.class
+View\RolePanel$9.class
 View\CategoryManagementPanel.class
 View\RolePanel$DeleteActionPanel.class
 DatabaseAccessObject\ShiftSessionDAO.class

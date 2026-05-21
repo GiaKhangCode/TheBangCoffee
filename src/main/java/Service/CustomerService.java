@@ -58,6 +58,18 @@ public class CustomerService {
         return null;
     }
 
+    public boolean updateCustomer(int id, String phone, String name) {
+        if (phone == null || phone.trim().isEmpty() || name == null || name.trim().isEmpty()) {
+            return false;
+        }
+        CustomerModel existingCustomer = customerDAO.findCustomerByPhone(phone);
+        if (existingCustomer != null && existingCustomer.getMaKH() != id) {
+            // Số điện thoại đã thuộc về người khác
+            return false;
+        }
+        return customerDAO.updateCustomer(id, phone, name);
+    }
+
     public void addPointsToCustomerByOrderId(int orderId, int pointsToAdd) {
         customerDAO.addPointsToCustomerByOrderId(orderId, pointsToAdd);
     }
@@ -70,8 +82,8 @@ public class CustomerService {
         return customerDAO.getAllTiers();
     }
 
-    public void saveTier(int maHang, String tenHang, int diemYeuCau) throws SQLException, ClassNotFoundException {
-        customerDAO.saveTier(maHang, tenHang, diemYeuCau);
+    public void saveTier(int maHang, String tenHang, int diemYeuCau, double phanTramChietKhau) throws SQLException, ClassNotFoundException {
+        customerDAO.saveTier(maHang, tenHang, diemYeuCau, phanTramChietKhau);
     }
 
     public String deleteTier(int maHang) throws SQLException, ClassNotFoundException {

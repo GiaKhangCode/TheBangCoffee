@@ -10,13 +10,20 @@ public class VariantModel {
     private long takeawayPrice;
     private long holidayPrice;
 
+    private boolean hasRecipe; // [MỚI] Đánh dấu size này đã có công thức chưa
+
     public VariantModel(int variantID, int productID, String sizeName, long dineInPrice, long takeawayPrice, long holidayPrice) {
+        this(variantID, productID, sizeName, dineInPrice, takeawayPrice, holidayPrice, false);
+    }
+    
+    public VariantModel(int variantID, int productID, String sizeName, long dineInPrice, long takeawayPrice, long holidayPrice, boolean hasRecipe) {
         this.variantID = variantID;
         this.productID = productID;
         this.sizeName = sizeName;
         this.dineInPrice = dineInPrice;
         this.takeawayPrice = takeawayPrice;
         this.holidayPrice = holidayPrice;
+        this.hasRecipe = hasRecipe;
     }
 
     public int getVariantID() { return variantID; }
@@ -45,4 +52,7 @@ public class VariantModel {
     public long getHolidayPrice() { return holidayPrice; }
     public void setHolidayPrice(long holidayPrice) { this.holidayPrice = holidayPrice; }
     // --------------------------------------
+
+    public boolean isHasRecipe() { return hasRecipe; }
+    public void setHasRecipe(boolean hasRecipe) { this.hasRecipe = hasRecipe; }
 }

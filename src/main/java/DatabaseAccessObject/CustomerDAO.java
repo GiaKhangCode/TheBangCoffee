@@ -7,7 +7,7 @@ import java.sql.*;
 public class CustomerDAO {
     
     public CustomerModel findCustomerByPhone(String phone) {
-        String sql = "SELECT k.MaKhachHang, k.SoDienThoai, k.HoTen, k.DiemHienTai, k.DiemTichLuy, h.TenHang AS HangThanhVien " +
+        String sql = "SELECT k.MaKhachHang, k.SoDienThoai, k.HoTen, k.DiemHienTai, k.DiemTichLuy, h.TenHang AS HangThanhVien, h.PhanTramChietKhau " +
                      "FROM KHACH_HANG k " +
                      "LEFT JOIN HANG_THANH_VIEN h ON k.MaHang = h.MaHang " +
                      "WHERE k.SoDienThoai = ?";
@@ -19,12 +19,26 @@ public class CustomerDAO {
                     return new CustomerModel(
                         rs.getInt("MaKhachHang"), rs.getString("SoDienThoai"),
                         rs.getString("HoTen"), rs.getInt("DiemHienTai"), rs.getInt("DiemTichLuy"),
-                        rs.getString("HangThanhVien")
+                        rs.getString("HangThanhVien"), rs.getDouble("PhanTramChietKhau")
                     );
                 }
             }
         } catch (Exception e) { e.printStackTrace(); }
         return null;
+    }
+
+    public boolean updateCustomer(int id, String phone, String name) {
+        String sql = "UPDATE KHACH_HANG SET SoDienThoai = ?, HoTen = ? WHERE MaKhachHang = ?";
+        try (Connection conn = getMyConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, phone);
+            ps.setString(2, name);
+            ps.setInt(3, id);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+            return false;
+        }
     }
 
     public int insertAndGetId(CustomerModel customer) throws SQLException, ClassNotFoundException {
@@ -88,21 +102,23 @@ public class CustomerDAO {
         return conn.createStatement().executeQuery(sql);
     }
 
-    public void saveTier(int maHang, String tenHang, int diemYeuCau) throws SQLException, ClassNotFoundException {
+    public void saveTier(int maHang, String tenHang, int diemYeuCau, double phanTramChietKhau) throws SQLException, ClassNotFoundException {
         try (Connection conn = getMyConnection()) {
             if (maHang == 0) { 
-                String sql = "INSERT INTO HANG_THANH_VIEN (TenHang, DiemYeuCau) VALUES (?, ?)";
+                String sql = "INSERT INTO HANG_THANH_VIEN (TenHang, DiemYeuCau, PhanTramChietKhau) VALUES (?, ?, ?)";
                 try(PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setString(1, tenHang);
                     ps.setInt(2, diemYeuCau);
+                    ps.setDouble(3, phanTramChietKhau);
                     ps.executeUpdate();
                 }
             } else { 
-                String sql = "UPDATE HANG_THANH_VIEN SET TenHang = ?, DiemYeuCau = ? WHERE MaHang = ?";
+                String sql = "UPDATE HANG_THANH_VIEN SET TenHang = ?, DiemYeuCau = ?, PhanTramChietKhau = ? WHERE MaHang = ?";
                 try(PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setString(1, tenHang);
                     ps.setInt(2, diemYeuCau);
-                    ps.setInt(3, maHang);
+                    ps.setDouble(3, phanTramChietKhau);
+                    ps.setInt(4, maHang);
                     ps.executeUpdate();
                 }
             }

@@ -25,6 +25,9 @@ import java.text.SimpleDateFormat;
 
 public class EmployeeSchedulePanel extends JPanel {
     private JTabbedPane tabbedPane;
+    private ShiftMonitorPanel shiftMonitorPanel;
+    
+    public ShiftMonitorPanel getShiftMonitorPanel() { return shiftMonitorPanel; }
     
     // Components Tab 1
     private JPanel cardsContainer;
@@ -82,6 +85,10 @@ public class EmployeeSchedulePanel extends JPanel {
         
         tabbedPane.addTab("Thiết lập ca làm việc", createShiftSetupPanel());
         tabbedPane.addTab("Xếp lịch làm việc", createScheduleWrapperPanel());
+        
+        // [MỚI] Thêm Tab Giám sát ca trực
+        shiftMonitorPanel = new ShiftMonitorPanel();
+        tabbedPane.addTab("Giám sát ca trực", shiftMonitorPanel);
         
         add(tabbedPane, BorderLayout.CENTER);
         

@@ -54,15 +54,20 @@ public class ProductDAO {
                         rs.getDouble("Thue_GTGT"), imageIcon, rs.getString("MoTa")
                 );
                 
-                // Tải các biến thể (Size) cùng 3 loại giá từ bảng BIEN_THE
-                try (PreparedStatement psVariant = conn.prepareStatement("SELECT MaBienThe, TenSize, GiaTaiQuan, GiaMangVe, GiaNgayLe FROM BIEN_THE WHERE MaSanPham = ?")) {
+                // Tải các biến thể (Size) cùng 3 loại giá từ bảng BIEN_THE và kiểm tra có công thức không
+                String sqlVar = "SELECT B.MaBienThe, B.TenSize, B.GiaTaiQuan, B.GiaMangVe, B.GiaNgayLe, " +
+                                "(CASE WHEN EXISTS (SELECT 1 FROM CONG_THUC C WHERE C.MaBienThe = B.MaBienThe) THEN 1 ELSE 0 END) AS HasRecipe " +
+                                "FROM BIEN_THE B WHERE B.MaSanPham = ?";
+                try (PreparedStatement psVariant = conn.prepareStatement(sqlVar)) {
                     psVariant.setInt(1, product.getProductID());
                     try (ResultSet rsVar = psVariant.executeQuery()) {
                         while (rsVar.next()) {
+                            boolean hasRecipe = rsVar.getInt("HasRecipe") == 1;
                             product.addVariant(new VariantModel(
                                 rsVar.getInt("MaBienThe"), product.getProductID(),
                                 rsVar.getString("TenSize"), 
-                                rsVar.getLong("GiaTaiQuan"), rsVar.getLong("GiaMangVe"), rsVar.getLong("GiaNgayLe")
+                                rsVar.getLong("GiaTaiQuan"), rsVar.getLong("GiaMangVe"), rsVar.getLong("GiaNgayLe"),
+                                hasRecipe
                             ));
                         }
                     }

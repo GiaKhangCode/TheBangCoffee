@@ -70,4 +70,12 @@ public class ProductModel {
     public void setVariants(List<VariantModel> variants) { this.variants = variants; }
     
     public void addVariant(VariantModel variant) { this.variants.add(variant); }
+    
+    public boolean hasAnyRecipe() {
+        if (variants == null || variants.isEmpty()) return false;
+        for (VariantModel v : variants) {
+            if (v.isHasRecipe()) return true;
+        }
+        return false;
+    }
 }

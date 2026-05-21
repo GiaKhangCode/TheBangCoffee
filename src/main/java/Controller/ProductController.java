@@ -278,24 +278,6 @@ public class ProductController {
                 }
             });
 
-            editDialog.addDeleteListener(ev -> {
-                int confirm = JOptionPane.showConfirmDialog(editDialog, "Xóa sản phẩm [" + product.getProductName() + "]?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-                if (confirm == JOptionPane.YES_OPTION) {
-                    try {
-                        productService.deleteProduct(product.getProductID());
-                        JOptionPane.showMessageDialog(editDialog, "Xóa sản phẩm thành công!");
-                        editDialog.dispose();
-                        loadMainMenuData();
-                        
-                        // [MỚI] Báo cho bên POS biết vừa có thay đổi để reload
-                        if (mainFrame.getPosController() != null) {
-                            mainFrame.getPosController().reloadPosData();
-                        }
-                    } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(editDialog, "Không thể xóa do sản phẩm đang có trong hóa đơn/phiếu nhập!", "Lỗi FK", JOptionPane.ERROR_MESSAGE);
-                    }
-                }
-            });
 
             editDialog.setVariantDeleteListener(row -> {
                 int variantId = editDialog.getVariantIdAt(row);

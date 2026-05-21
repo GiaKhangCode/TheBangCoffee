@@ -661,27 +661,55 @@ public class RoleController {
         });
         
         // 2. Nút "Vô hiệu hoá / Kích hoạt lại" trong bảng Tab 6
-        this.rolePanelView.setAccountManagementActionListener(row -> {
-            if (currentAccountManagementList == null || row >= currentAccountManagementList.size()) return;
-            
-            AccountModel target = currentAccountManagementList.get(row);
-            String currentStatus = target.getStatus();
-            String newStatus = "Đang hoạt động".equals(currentStatus) ? "Đang bị khóa" : "Đang hoạt động";
-            String action = "Đang hoạt động".equals(currentStatus) ? "vô hiệu hoá" : "kích hoạt lại";
-            
-            int confirm = JOptionPane.showConfirmDialog(null,
-                "Bạn có chắc muốn " + action + " tài khoản [" + target.getUsername() + "]?",
-                "Xác nhận", JOptionPane.YES_NO_OPTION);
-            
-            if (confirm == JOptionPane.YES_OPTION) {
-                boolean success = accountService.updateAccountStatus(target.getAccountID(), newStatus);
-                if (success) {
-                    reloadAccountManagementTable();
-                    JOptionPane.showMessageDialog(null, 
-                        "" + ("vô hiệu hoá".equals(action) ? "Vô hiệu hoá" : "Kích hoạt lại") + " tài khoản thành công!",
-                        "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(null, "Thao tác thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        this.rolePanelView.setAccountManagementActionListener(new RolePanel.AccountManagementActionListener() {
+            @Override
+            public void onToggleStatus(int row) {
+                if (currentAccountManagementList == null || row >= currentAccountManagementList.size()) return;
+                
+                AccountModel target = currentAccountManagementList.get(row);
+                String currentStatus = target.getStatus();
+                String newStatus = "Đang hoạt động".equals(currentStatus) ? "Bị khóa" : "Đang hoạt động";
+                String action = "Đang hoạt động".equals(currentStatus) ? "vô hiệu hoá" : "kích hoạt lại";
+                
+                int confirm = JOptionPane.showConfirmDialog(null,
+                    "Bạn có chắc muốn " + action + " tài khoản [" + target.getUsername() + "]?",
+                    "Xác nhận", JOptionPane.YES_NO_OPTION);
+                
+                if (confirm == JOptionPane.YES_OPTION) {
+                    boolean success = accountService.updateAccountStatus(target.getAccountID(), newStatus);
+                    if (success) {
+                        if ("Bị khóa".equals(newStatus)) {
+                            accountService.revokeAllTokens(target.getEmail());
+                        }
+                        reloadAccountManagementTable();
+                        JOptionPane.showMessageDialog(null, 
+                            "" + ("vô hiệu hoá".equals(action) ? "Vô hiệu hoá" : "Kích hoạt lại") + " tài khoản thành công!",
+                            "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Thao tác thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+
+            @Override
+            public void onEdit(int row) {
+                if (currentAccountManagementList == null || row >= currentAccountManagementList.size()) return;
+                AccountModel target = currentAccountManagementList.get(row);
+                
+                String[] inputData = rolePanelView.showEditEmployeeAccountDialog(target);
+                if (inputData != null) {
+                    String hoTen = inputData[0];
+                    String email = inputData[1];
+                    String phone = inputData[2];
+                    
+                    String result = accountService.updateEmployeeAccount(target.getAccountID(), hoTen, email, phone);
+                    if ("Thành công".equals(result)) {
+                        reloadAccountManagementTable();
+                        refreshAccountList();
+                        JOptionPane.showMessageDialog(rolePanelView, "Cập nhật thông tin thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(rolePanelView, "Cập nhật thất bại!\n" + result, "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             }
         });

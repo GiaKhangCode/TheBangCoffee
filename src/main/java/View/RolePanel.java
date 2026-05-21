@@ -607,13 +607,42 @@ public class RolePanel extends JPanel {
         this.accountManagementTable.getColumnModel().getColumn(4).setPreferredWidth(130); // TĐN
         this.accountManagementTable.getColumnModel().getColumn(5).setPreferredWidth(140); // Trạng thái
         this.accountManagementTable.getColumnModel().getColumn(6).setPreferredWidth(150); // Đăng nhập lần đầu
-        this.accountManagementTable.getColumnModel().getColumn(7).setPreferredWidth(130); // Hành động
+        this.accountManagementTable.getColumnModel().getColumn(7).setPreferredWidth(190); // Hành động
+
+        // --- Custom Renderer tô màu cho cột "Trạng thái" và "Đăng nhập lần đầu" ---
+        DefaultTableCellRenderer statusRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (value != null) {
+                    String str = value.toString();
+                    if (str.equals("Đang hoạt động") || str.equals("Chưa đổi mật khẩu")) {
+                        c.setForeground(new Color(40, 167, 69)); // Xanh lá
+                    } else if (str.equals("Đã vô hiệu hóa")) {
+                        c.setForeground(Color.GRAY); // Xám
+                    } else {
+                        c.setForeground(isSelected ? table.getSelectionForeground() : TEXT_DARK);
+                    }
+                }
+                setHorizontalAlignment(JLabel.CENTER);
+                return c;
+            }
+        };
+        this.accountManagementTable.getColumnModel().getColumn(5).setCellRenderer(statusRenderer);
+        this.accountManagementTable.getColumnModel().getColumn(6).setCellRenderer(statusRenderer);
 
         // Gắn renderer/editor cho cột Hành động
         TableColumn actionCol = this.accountManagementTable.getColumnModel().getColumn(7);
         actionCol.setCellRenderer(new AccountActionButtonRenderer(new AccountActionPanel()));
-        actionCol.setCellEditor(new AccountActionButtonEditor(row -> {
-            if (accountManagementListener != null) accountManagementListener.onToggleStatus(row);
+        actionCol.setCellEditor(new AccountActionButtonEditor(new AccountManagementActionListener() {
+            @Override
+            public void onToggleStatus(int row) {
+                if (accountManagementListener != null) accountManagementListener.onToggleStatus(row);
+            }
+            @Override
+            public void onEdit(int row) {
+                if (accountManagementListener != null) accountManagementListener.onEdit(row);
+            }
         }, new AccountActionPanel()));
 
         centerPanel.add(lblTitle, BorderLayout.NORTH);
@@ -868,6 +897,31 @@ public class RolePanel extends JPanel {
         }
         
         AddEmployeeAccountDialog dialog = new AddEmployeeAccountDialog(parentFrame);
+        dialog.setVisible(true);
+        return dialog.getResultData();
+    }
+
+    public String[] showEditEmployeeAccountDialog(Model.AccountModel acc) {
+        java.awt.Window parentWindow = javax.swing.SwingUtilities.getWindowAncestor(this);
+        Frame parentFrame = null;
+        if (parentWindow instanceof Frame) {
+            parentFrame = (Frame) parentWindow;
+        }
+        AddEmployeeAccountDialog dialog = new AddEmployeeAccountDialog(parentFrame);
+        // Thay đổi tiêu đề
+        ((JLabel)((JPanel)((JPanel)dialog.getContentPane()).getComponent(0)).getComponent(0)).setText("SỬA THÔNG TIN");
+        ((JLabel)((JPanel)((JPanel)dialog.getContentPane()).getComponent(0)).getComponent(1)).setText("Chỉnh sửa thông tin nhân viên");
+        
+        // Điền dữ liệu
+        dialog.txtFullName.setText(acc.getFullName());
+        dialog.txtEmail.setText(acc.getEmail());
+        dialog.txtPhone.setText(acc.getPhoneNumber());
+        dialog.txtUsername.setText(acc.getUsername());
+        
+        // Disable Tên đăng nhập
+        dialog.txtUsername.setEnabled(false);
+        dialog.btnConfirm.setText("LƯU THAY ĐỔI");
+
         dialog.setVisible(true);
         return dialog.getResultData();
     }
@@ -1588,21 +1642,34 @@ public class RolePanel extends JPanel {
     // ==========================================================
     public interface AccountManagementActionListener {
         void onToggleStatus(int row);
+        void onEdit(int row);
     }
 
     class AccountActionPanel extends JPanel {
         protected JButton btnToggle = new JButton("Vô hiệu hoá");
+        protected JButton btnEdit = new JButton("Sửa");
 
         public AccountActionPanel() {
-            setLayout(new FlowLayout(FlowLayout.CENTER, 0, 4));
+            setLayout(new FlowLayout(FlowLayout.CENTER, 5, 4));
             setOpaque(true);
+
+            btnEdit.setFont(new Font("Segoe UI", Font.BOLD, 11));
+            btnEdit.setForeground(new Color(0, 122, 255));
+            btnEdit.setBackground(Color.WHITE);
+            btnEdit.setBorder(BorderFactory.createLineBorder(new Color(0, 122, 255), 1));
+            btnEdit.setFocusPainted(false);
+            btnEdit.setPreferredSize(new Dimension(50, 22));
+            btnEdit.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
             btnToggle.setFont(new Font("Segoe UI", Font.BOLD, 11));
             btnToggle.setForeground(new Color(255, 140, 0));
             btnToggle.setBackground(Color.WHITE);
             btnToggle.setBorder(BorderFactory.createLineBorder(new Color(255, 140, 0), 1));
             btnToggle.setFocusPainted(false);
-            btnToggle.setPreferredSize(new Dimension(110, 22));
+            btnToggle.setPreferredSize(new Dimension(100, 22));
             btnToggle.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            
+            add(btnEdit);
             add(btnToggle);
         }
 
@@ -1649,6 +1716,10 @@ public class RolePanel extends JPanel {
             this.panel.btnToggle.addActionListener(e -> {
                 stopCellEditing();
                 listener.onToggleStatus(currentRow);
+            });
+            this.panel.btnEdit.addActionListener(e -> {
+                stopCellEditing();
+                listener.onEdit(currentRow);
             });
         }
 

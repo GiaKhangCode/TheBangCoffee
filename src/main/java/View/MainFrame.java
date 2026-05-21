@@ -105,7 +105,7 @@ public class MainFrame extends JFrame {
         addMenuButton("<html><img src='" + staffIcon + "' width='25' height='25'>    Quản lý ca làm việc</html>", "STAFF", "Staff");
         addMenuButton("<html><img src='" + settingIcon + "' width='25' height='25'>    Tài khoản và phân quyền</html>", "ROLE", "Role");
         addMenuButton("<html><img src='" + statisticIcon + "' width='25' height='25'>    Báo cáo & Thống kê</html>", "CHART", "Stats");
-        
+
         sidebar.add(Box.createVerticalGlue());
         
         // Khởi tạo nút Mở/Đóng ca. Mặc định là Mở ca. Controller sẽ đổi tên sau.
