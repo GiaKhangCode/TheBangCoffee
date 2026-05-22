@@ -25,7 +25,7 @@ public class MainFrame extends JFrame {
     private StockPanel stockPanel;
     private MenuPanel menuPanel;
     private RolePanel rolePanel;
-    private EmployeeSchedulePanel shiftPanel;
+
     private PosPanel posPanel; 
     private DashboardPanel dashboardPanel;
     private OrderPanel orderPanel; 
@@ -33,6 +33,9 @@ public class MainFrame extends JFrame {
     // [MỚI] Khai báo 2 Panel Khách hàng và Tích điểm
     private CustomerManagementPanel customerPanel;
     private LoyaltyManagementPanel loyaltyPanel;
+    
+    // Employee Schedule Panel
+    private EmployeeSchedulePanel employeeSchedulePanel;
     
     private Map<String, NavButton> navButtons;
     private NavButton activeButton;
@@ -100,16 +103,16 @@ public class MainFrame extends JFrame {
         addMenuButton("<html><img src='" + customerIcon + "' width='25' height='25'>    Khách hàng</html>", "USER", "Customer");
         addMenuButton("<html><img src='" + promotionIcon + "' width='25' height='25'>    Cấu hình Tích điểm</html>", "GIFT", "Loyalty");
         
+        addMenuButton("<html><img src='" + staffIcon + "' width='25' height='25'>    Xếp lịch nhân viên</html>", "SCHEDULE", "Schedule");
         
         addMenuButton("<html><img src='" + warehouseIcon + "' width='25' height='25'>    Nhập kho</html>", "STOCK", "Stock");
-        addMenuButton("<html><img src='" + staffIcon + "' width='25' height='25'>    Quản lý ca làm việc</html>", "STAFF", "Staff");
+
         addMenuButton("<html><img src='" + settingIcon + "' width='25' height='25'>    Tài khoản và phân quyền</html>", "ROLE", "Role");
         addMenuButton("<html><img src='" + statisticIcon + "' width='25' height='25'>    Báo cáo & Thống kê</html>", "CHART", "Stats");
 
         sidebar.add(Box.createVerticalGlue());
         
-        // Khởi tạo nút Mở/Đóng ca. Mặc định là Mở ca. Controller sẽ đổi tên sau.
-        addMenuButton("Mở ca", "LOCK", "ShiftToggle"); 
+
         addMenuButton("Đăng xuất", "EXIT", "Logout");
         
         int bottomGap = (int) (screenHeight * 0.029); 
@@ -148,6 +151,9 @@ public class MainFrame extends JFrame {
         this.loyaltyPanel = new LoyaltyManagementPanel();
         contentArea.add(this.loyaltyPanel, "Loyalty");
         
+        this.employeeSchedulePanel = new EmployeeSchedulePanel();
+        contentArea.add(this.employeeSchedulePanel, "Schedule");
+        
         new CustomerController(this);
         
         this.stockPanel = new StockPanel(); 
@@ -156,8 +162,7 @@ public class MainFrame extends JFrame {
         this.rolePanel = new RolePanel();
         contentArea.add(this.rolePanel, "Role"); 
         
-        this.shiftPanel = new EmployeeSchedulePanel();
-        contentArea.add(this.shiftPanel, "Staff");
+
         
         contentArea.add(new ContentBasePanel("Cài đặt Hệ thống", "Tùy chỉnh các tham số vận hành."), "Settings");
 
@@ -178,7 +183,7 @@ public class MainFrame extends JFrame {
         int gapSmall = (int) (Toolkit.getDefaultToolkit().getScreenSize().height * 0.006); 
         sidebar.add(Box.createRigidArea(new Dimension(0, gapSmall)));
         
-        if (!cardName.equals("Logout") && !cardName.equals("ShiftToggle")) {
+        if (!cardName.equals("Logout")) {
             btn.addActionListener(e -> {
                 try {
                     setPageActive(cardName);
@@ -197,11 +202,7 @@ public class MainFrame extends JFrame {
             return;
         }
         
-        // KHÓA TAB POS KHI CHƯA MỞ CA
-        if (cardName.equals("Order") && !SessionManager.hasOpenShift()) {
-            JOptionPane.showMessageDialog(this, "Bạn chưa mở ca! Vui lòng Mở ca làm việc trước khi vào chức năng Bán hàng.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+
         
         if (activeButton != null) {
             activeButton.setActive(false);
@@ -220,20 +221,7 @@ public class MainFrame extends JFrame {
         }
     }
     
-    // Hàm cập nhật chữ của nút (Mở ca / Đóng ca)
-    public void setShiftButtonState(boolean hasOpenShift) {
-        if (navButtons != null && navButtons.containsKey("ShiftToggle")) {
-            URL finishIcon = getClass().getResource("/images/finish_icon.png");
-            navButtons.get("ShiftToggle").setText(hasOpenShift ? "<html><img src='" + finishIcon + "' width='25' height='25'>    Đóng ca</html>" : "<html><img src='" + finishIcon + "' width='25' height='25'>    Mở ca</html>");
-        }
-    }
 
-    // Lắng nghe sự kiện của nút Mở/Đóng ca
-    public void addShiftToggleListener(ActionListener listener) {
-        if (navButtons != null && navButtons.containsKey("ShiftToggle")) {
-            navButtons.get("ShiftToggle").addActionListener(listener);
-        }
-    }
 
     public static void main(String[] args) {}
     
@@ -242,13 +230,14 @@ public class MainFrame extends JFrame {
     public MenuPanel getMenuPanel(){ return menuPanel; }
     public RolePanel getRolePanel(){ return rolePanel; }
     public PosPanel getPosPanel(){ return posPanel; }
-    public EmployeeSchedulePanel getShiftPanel(){ return shiftPanel; }
+
     public OrderPanel getOrderPanel() { return orderPanel; }
     public DashboardPanel getDashboardPanel(){ return dashboardPanel; }
     
     // [MỚI] Getter cho 2 Panel mới để Controller gọi tới
     public CustomerManagementPanel getCustomerPanel() { return customerPanel; }
     public LoyaltyManagementPanel getLoyaltyPanel() { return loyaltyPanel; }
+    public EmployeeSchedulePanel getEmployeeSchedulePanel() { return employeeSchedulePanel; }
 
     // Getter & Setter cho PosController để reload data từ xa
     public PosController getPosController() { return posController; }

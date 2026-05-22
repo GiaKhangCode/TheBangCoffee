@@ -15,7 +15,7 @@ import java.util.List;
 public class OrderDAO {
 
     public int createOrder(int accountId, Integer maKhachHang, List<CartItemModel> cart, long finalTotal, double totalVat, String prepStatus, String payStatus, boolean isTakeaway, boolean isHoliday, int pointsEarned, int pointsUsed, long discountAmount) {
-        String insertOrderSQL = "INSERT INTO DON_HANG (MaTaiKhoan, MaKhachHang, TongTien, TongTienThue, ThanhTien, TrangThaiPhaChe, TrangThaiThanhToan, GhiChu, MaPhienCa, DiemDaDung, TienGiamGia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String insertOrderSQL = "INSERT INTO DON_HANG (MaTaiKhoan, MaKhachHang, TongTien, TongTienThue, ThanhTien, TrangThaiPhaChe, TrangThaiThanhToan, GhiChu, DiemDaDung, TienGiamGia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         String insertOrderDetailSQL = "INSERT INTO CHI_TIET_DON_HANG (MaDonHang, MaBienThe, SoLuong, GiaTruocThue, TienThue, ThanhTien, GhiChuMon) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String insertToppingSQL = "INSERT INTO CHI_TIET_TOPPING (MaCTHD, MaTopping, SoLuong, GiaTruocThue, TienThue) VALUES (?, ?, ?, ?, ?)";
         
@@ -64,15 +64,10 @@ public class OrderDAO {
                     psOrder.setNString(7, payStatus);
                     psOrder.setNString(8, overallNote.length() > 0 ? overallNote.toString() : ""); 
                     
-                    if (SessionManager.hasOpenShift()) {
-                        psOrder.setInt(9, SessionManager.getCurrentMaPhienCa());
-                    } else {
-                        psOrder.setNull(9, java.sql.Types.INTEGER);
-                    }
                     
                     // [MỚI] Gán giá trị điểm đã sử dụng và số tiền được giảm giá
-                    psOrder.setInt(10, pointsUsed);
-                    psOrder.setLong(11, discountAmount);
+                    psOrder.setInt(9, pointsUsed);
+                    psOrder.setLong(10, discountAmount);
                     
                     psOrder.executeUpdate();
 

@@ -46,29 +46,7 @@ public class ReportService {
         return reportDAO.getEmployeePerformance();
     }
     
-    public Object[] getShiftOverviewStats(String filterType) {
-        return reportDAO.getShiftOverviewStats(filterType);
-    }
 
-    public Object[] getCustomShiftOverviewStats(java.util.Date startDate, java.util.Date endDate) {
-        return reportDAO.getCustomShiftOverviewStats(startDate, endDate);
-    }
-
-    public List<Object[]> getShiftRevenueChartData(String filterType) {
-        return reportDAO.getShiftRevenueChartData(filterType);
-    }
-
-    public List<Object[]> getCustomShiftRevenueChartData(java.util.Date startDate, java.util.Date endDate) {
-        return reportDAO.getCustomShiftRevenueChartData(startDate, endDate);
-    }
-
-    public List<Object[]> getWorkingHoursChartData(String filterType) {
-        return reportDAO.getWorkingHoursChartData(filterType);
-    }
-
-    public List<Object[]> getCustomWorkingHoursChartData(java.util.Date startDate, java.util.Date endDate) {
-        return reportDAO.getCustomWorkingHoursChartData(startDate, endDate);
-    }
 
     // ==========================================
     // TAB 4: KHO

@@ -49,19 +49,7 @@ public class DashboardController {
             }
         });
         
-        // --- SỰ KIỆN LỌC CA LÀM VIỆC ---
-        this.dashboardPanel.addShiftFilterListener(e -> {
-            String selectedFilter = dashboardPanel.getSelectedShiftFilter();
-            
-            if(selectedFilter.contains("Tùy chỉnh")) {
-                java.util.Date[] dates = dashboardPanel.showCustomDateDialog();
-                if (dates != null) {
-                    loadCustomShiftStats(dates[0], dates[1]);
-                }
-            } else {
-                loadShiftStats(selectedFilter);
-            }
-        });
+
         
         // --- SỰ KIỆN LỌC KHÁCH HÀNG (MỚI) ---
         this.dashboardPanel.addCustomerFilterListener(e -> {
@@ -102,13 +90,7 @@ public class DashboardController {
         // Tab 4: Báo cáo Kho
         loadInventoryStats();
         
-        // Tab 3: Báo cáo Ca làm việc
-        String shiftFilter = dashboardPanel.getSelectedShiftFilter();
-        if (shiftFilter.contains("Tùy chỉnh")) {
-            shiftFilter = "Tuần này";
-            dashboardPanel.setSelectedShiftFilter("Tuần này");
-        }
-        loadShiftStats(shiftFilter);
+
         
         // Tab 5: Báo cáo Khách hàng
         String customerFilter = dashboardPanel.getSelectedCustomerFilter();
@@ -237,39 +219,7 @@ public class DashboardController {
         dashboardPanel.updateCustomerGrowthChart(chartData, chartTitle);
     }
     
-    // =========================================================================
-    // XỬ LÝ DỮ LIỆU TAB CA LÀM VIỆC
-    // =========================================================================
-    private void loadShiftStats(String filterType) {
-        // 1. Thẻ thống kê
-        Object[] stats = reportService.getShiftOverviewStats(filterType);
-        String strShifts = String.format("%,d", (Integer) stats[0]);
-        String strHours = String.format("%.1f", (Double) stats[1]);
-        String strAvgRev = String.format("%,d đ", (Long) stats[2]);
-        String strCanceled = String.format("%,d", (Integer) stats[3]);
 
-        dashboardPanel.updateShiftCards(strShifts, strHours, strAvgRev, strCanceled);
-
-        // 2. Biểu đồ cột (Doanh thu theo mẫu Ca)
-        List<Object[]> barData = reportService.getShiftRevenueChartData(filterType);
-        dashboardPanel.updateShiftRevenueChart(barData, "Doanh Thu Theo Mẫu Ca - " + filterType);
-    }
-
-    private void loadCustomShiftStats(java.util.Date startDate, java.util.Date endDate) {
-        Object[] stats = reportService.getCustomShiftOverviewStats(startDate, endDate);
-        String strShifts = String.format("%,d", (Integer) stats[0]);
-        String strHours = String.format("%.1f", (Double) stats[1]);
-        String strAvgRev = String.format("%,d đ", (Long) stats[2]);
-        String strCanceled = String.format("%,d", (Integer) stats[3]);
-
-        dashboardPanel.updateShiftCards(strShifts, strHours, strAvgRev, strCanceled);
-
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
-        String dateSuffix = "Từ " + sdf.format(startDate) + " Đến " + sdf.format(endDate);
-
-        List<Object[]> barData = reportService.getCustomShiftRevenueChartData(startDate, endDate);
-        dashboardPanel.updateShiftRevenueChart(barData, "Doanh Thu Theo Mẫu Ca " + dateSuffix);
-    }
 
     public void hiddenButton() throws SQLException {
         int currentAccountId = SessionManager.getAccountId();

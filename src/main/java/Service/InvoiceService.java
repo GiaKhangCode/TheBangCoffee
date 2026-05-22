@@ -110,29 +110,5 @@ public class InvoiceService {
         }
     }
     
-    public void printShiftHandoverReport(int maPhienCa) {
-        try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection()) {
-            
-            java.io.InputStream reportStream = getClass().getResourceAsStream("/reports/ShiftClosingReport.jrxml");
-            if (reportStream == null) {
-                javax.swing.JOptionPane.showMessageDialog(null, "Không tìm thấy mẫu ShiftClosingReport.jrxml!");
-                return;
-            }
 
-            net.sf.jasperreports.engine.JasperReport jasperReport = net.sf.jasperreports.engine.JasperCompileManager.compileReport(reportStream);
-
-            // Gắn tham số p_MaPhienCa để SQL lọc đúng ca
-            java.util.Map<String, Object> parameters = new java.util.HashMap<>();
-            parameters.put("p_MaPhienCa", maPhienCa);
-
-            net.sf.jasperreports.engine.JasperPrint jasperPrint = net.sf.jasperreports.engine.JasperFillManager.fillReport(jasperReport, parameters, conn);
-
-            // Mở cửa sổ Preview
-            net.sf.jasperreports.view.JasperViewer.viewReport(jasperPrint, false);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            javax.swing.JOptionPane.showMessageDialog(null, "Lỗi khi in Biên Bản Giao Ca: " + e.getMessage());
-        }
-    }
 }

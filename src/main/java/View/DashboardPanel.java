@@ -60,18 +60,7 @@ public class DashboardPanel extends JPanel {
     private DefaultTableModel expiringTableModel; 
     private DefaultTableModel mostUsedTableModel; 
     
-    
-    private StatCard cardTotalShifts;
-    private StatCard cardTotalHours;
-    private StatCard cardAvgShiftRevenue;
-    private StatCard cardCanceledOrders;
-    
-    private JComboBox<String> cbFilterShift;
-    private JButton btnFilterShift;
-    
-    private DefaultCategoryDataset shiftRevenueDataset;
-    private JFreeChart shiftRevenueBarChart;
-    
+
     private StatCard cardTotalNewCustomers;
     private StatCard cardRetentionRate;
     private StatCard cardARPU;
@@ -114,7 +103,7 @@ public class DashboardPanel extends JPanel {
         
         tabbedPane.addTab("Báo cáo Doanh thu", createRevenueTab());
         tabbedPane.addTab("Báo cáo Bán hàng", createSalesTab());
-        tabbedPane.addTab("Báo cáo Ca làm việc", createShiftTab());
+
         tabbedPane.addTab("Báo cáo Kho", createInventoryTab());
         tabbedPane.addTab("Báo cáo Khách hàng", createCustomerTab()); // Gọi hàm tạo Tab mới
 
@@ -245,118 +234,6 @@ public class DashboardPanel extends JPanel {
         return panel;
     }
 
-    // ==========================================================
-    // TAB 3: BÁO CÁO CA LÀM VIỆC [ĐÃ ĐƯỢC VIẾT LẠI HOÀN TOÀN]
-    // ==========================================================
-    private JPanel createShiftTab() {
-        JPanel panel = new JPanel(new BorderLayout(0, 20));
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
-
-        // 1. Stats Layer (4 thẻ thống kê nằm ngang)
-        JPanel statsPanel = new JPanel(new GridLayout(1, 4, 15, 0));
-        statsPanel.setOpaque(false);
-        
-        cardTotalShifts = new StatCard("Ca Đã Hoàn Thành", "0", "Ca làm việc");
-        cardTotalHours = new StatCard("Tổng Giờ Làm Việc", "0", "Giờ thực tế");
-        cardAvgShiftRevenue = new StatCard("Doanh Thu / Ca", "0 đ", "Trung bình");
-        cardCanceledOrders = new StatCard("Đơn Hủy / Lỗi", "0", "Hóa đơn");
-
-        statsPanel.add(cardTotalShifts);
-        statsPanel.add(cardTotalHours);
-        statsPanel.add(cardAvgShiftRevenue);
-        statsPanel.add(cardCanceledOrders);
-
-        // 2. Center Layer (Bộ lọc + 2 Biểu đồ)
-        JPanel centerPanel = new JPanel(new BorderLayout(0, 20));
-        centerPanel.setOpaque(false);
-
-        // Filter Bar 
-        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
-        filterPanel.setOpaque(false);
-        cbFilterShift = new JComboBox<>(new String[]{"Tuần này", "Tháng này", "Tùy chỉnh"});
-        btnFilterShift = ComponentUI.createModernButton("Lọc dữ liệu", PRIMARY_COLOR, Color.WHITE);
-
-        JLabel lblFilter = new JLabel("Lọc theo:");
-        lblFilter.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        
-        filterPanel.add(lblFilter);
-        filterPanel.add(cbFilterShift);
-        filterPanel.add(btnFilterShift);
-
-        // Khung chứa biểu đồ (Chỉ chứa 1 biểu đồ doanh thu theo mẫu Ca)
-        JPanel chartsPanel = new JPanel(new GridLayout(1, 1));
-        chartsPanel.setOpaque(false);
-
-        // --- BIỂU ĐỒ BAR CHART (Doanh thu theo Loại Ca) ---
-        shiftRevenueDataset = new DefaultCategoryDataset();
-        shiftRevenueBarChart = ChartFactory.createBarChart(
-                "Doanh Thu Theo Mẫu Ca", 
-                "Loại Ca",                     
-                "Doanh thu (VNĐ)",            
-                shiftRevenueDataset,              
-                PlotOrientation.VERTICAL,
-                false, true, false
-        );
-
-        CategoryPlot barPlot = shiftRevenueBarChart.getCategoryPlot();
-        barPlot.setBackgroundPaint(Color.WHITE); 
-        barPlot.setRangeGridlinePaint(new Color(220, 220, 220)); 
-        barPlot.setOutlineVisible(false); 
-
-        BarRenderer barRenderer = (BarRenderer) barPlot.getRenderer();
-        barRenderer.setSeriesPaint(0, PRIMARY_COLOR); 
-        barRenderer.setBarPainter(new StandardBarPainter()); 
-        barRenderer.setMaximumBarWidth(0.15); 
-        
-        shiftRevenueBarChart.getTitle().setFont(new Font("Segoe UI", Font.BOLD, 16));
-        barPlot.getDomainAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 12));
-        barPlot.getRangeAxis().setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 12));
-
-        ChartPanel barChartPanel = new ChartPanel(shiftRevenueBarChart);
-        barChartPanel.setBackground(Color.WHITE);
-        barChartPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        // Gắn vào khung
-        chartsPanel.add(barChartPanel);
-
-        centerPanel.add(filterPanel, BorderLayout.NORTH);
-        centerPanel.add(chartsPanel, BorderLayout.CENTER);
-
-        panel.add(statsPanel, BorderLayout.NORTH);
-        panel.add(centerPanel, BorderLayout.CENTER);
-
-        return panel;
-    }
-
-    // ==========================================================
-    // API CUNG CẤP CHO BÁO CÁO CA LÀM VIỆC
-    // ==========================================================
-    public String getSelectedShiftFilter() {
-        return cbFilterShift.getSelectedItem().toString();
-    }
-
-    public void addShiftFilterListener(ActionListener listener) {
-        btnFilterShift.addActionListener(listener);
-    }
-
-    public void updateShiftCards(String totalShifts, String totalHours, String avgRevenue, String canceledOrders) {
-        cardTotalShifts.setValue(totalShifts);
-        cardTotalHours.setValue(totalHours);
-        cardAvgShiftRevenue.setValue(avgRevenue);
-        cardCanceledOrders.setValue(canceledOrders);
-        if (!canceledOrders.equals("0")) cardCanceledOrders.setForeground(new Color(231, 76, 60)); // Báo đỏ nếu có đơn hủy
-    }
-
-    public void updateShiftRevenueChart(java.util.List<Object[]> dataList, String chartTitle) {
-        shiftRevenueBarChart.setTitle(new org.jfree.chart.title.TextTitle(chartTitle, new Font("Segoe UI", Font.BOLD, 16)));
-        shiftRevenueDataset.clear();
-        for (Object[] row : dataList) {
-            String shiftName = (String) row[0]; // Tên Ca (Ca Sáng, Ca Chiều...)
-            Long revenue = (Long) row[1];
-            shiftRevenueDataset.addValue(revenue, "Doanh Thu", shiftName);
-        }
-    }
 
 
     // ==========================================================
@@ -607,7 +484,7 @@ public class DashboardPanel extends JPanel {
     }
 
     public void setSelectedRevenueFilter(String filter) { cbFilterRevenue.setSelectedItem(filter); }
-    public void setSelectedShiftFilter(String filter) { cbFilterShift.setSelectedItem(filter); }
+
     public void setSelectedCustomerFilter(String filter) { cbFilterCustomer.setSelectedItem(filter); }
 
     // ==========================================================

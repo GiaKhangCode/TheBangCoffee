@@ -1,21 +1,16 @@
 package Controller;
 
-import Common.EmailUtil;
-import DatabaseAccessObject.ShiftSessionDAO;
-import DatabaseAccessObject.ShiftDAO;
 import Service.OtpService;
+import Common.EmailUtil;
 import Model.AccountModel;
 import Model.SessionManager;
-import Model.ShiftModel;
-import Model.ShiftSession;
 import Service.AccountService;
 import Service.SessionService;
 import View.ForgotPasswordFrame;
 import View.LoginFrame;
+import View.LoginFrame;
 import View.MainFrame;
 import View.FirstLoginDialog;
-import View.ShiftSessionOpenDialog;
-import View.ShiftSessionCloseDialog;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,14 +25,8 @@ public class AccountController {
     private AccountService accountService;
     private SessionService sessionService;
     private RoleController roleController;
-    private ShiftController shiftController; 
-    
     public void setRoleController(RoleController roleController) {
         this.roleController = roleController;
-    }
-
-    public void setShiftController(ShiftController shiftController) {
-        this.shiftController = shiftController;
     }
     
     public AccountController() throws SQLException{
@@ -248,111 +237,12 @@ public class AccountController {
             new PosController(mainFrame);
             new DashboardController(mainFrame);
             
-            ShiftController newShiftCtrl = new ShiftController(mainFrame);
-            this.setShiftController(newShiftCtrl);
             this.setRoleController(roleController);
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
 
-        ShiftSessionDAO shiftSessionDAO = new ShiftSessionDAO();
-        ShiftSession caDangMo = shiftSessionDAO.getOpenShiftByAccount(SessionManager.getAccountId());
 
-        if (caDangMo != null) {
-            SessionManager.setCurrentMaPhienCa(caDangMo.getMaPhienCa());
-            mainFrame.setShiftButtonState(true); 
-        } else {
-            mainFrame.setShiftButtonState(false); 
-        }
-
-        this.mainFrame.addShiftToggleListener(e -> {
-            if (!SessionManager.hasOpenShift()) {
-                // LẤY DỮ LIỆU ĐỔ LÊN POPUP
-                ShiftDAO shiftDAO = new ShiftDAO();
-                List<ShiftModel> activeShifts = new ArrayList<>();
-                try { activeShifts = shiftDAO.getActiveShift(); } catch (Exception ex) {}
-                
-                Object[] handoverInfo = shiftSessionDAO.getLastShiftHandoverInfo();
-                int unpaidCount = shiftSessionDAO.countUnpaidOrders();
-                List<Object[]> inventory = shiftSessionDAO.getCurrentInventory();
-                
-                Integer maLich = shiftSessionDAO.getCurrentScheduleId(SessionManager.getAccountId());
-
-                ShiftSessionOpenDialog dialog = new ShiftSessionOpenDialog(
-                        mainFrame, 
-                        new ShiftSession(SessionManager.getAccountId(), maLich),
-                        activeShifts, handoverInfo, unpaidCount, inventory
-                );
-                dialog.setVisible(true); 
-
-                if (dialog.isConfirmed()) {
-                    int newShiftId = shiftSessionDAO.moCa(dialog.getShiftSessionModel(), dialog.getTienMatDauCa());
-                    if (newShiftId != -1) {
-                        SessionManager.setCurrentMaPhienCa(newShiftId);
-                        mainFrame.setShiftButtonState(true); 
-                        if (mainFrame.getShiftPanel() != null && mainFrame.getShiftPanel().getShiftMonitorPanel() != null) {
-                            mainFrame.getShiftPanel().getShiftMonitorPanel().loadData();
-                        }
-                        JOptionPane.showMessageDialog(mainFrame, "Mở ca thành công! Đã có thể bắt đầu bán hàng.", "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                    } else {
-                        JOptionPane.showMessageDialog(mainFrame, "Lỗi hệ thống: Không thể khởi tạo ca làm việc!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    }
-                }
-            } 
-            // Tìm đến phần logic addShiftToggleListener trong hàm openMainFrame và cập nhật đoạn này:
-            else {
-                // TẬP HỢP DỮ LIỆU ĐỔ VÀO FORM ĐÓNG CA
-                int maPhienCa = SessionManager.getCurrentMaPhienCa();
-                double tienDauCa = shiftSessionDAO.getTienMatDauCa(maPhienCa);
-                double doanhThu = shiftSessionDAO.getDoanhThuTienMat(maPhienCa);
-                int unpaidCount = shiftSessionDAO.countUnpaidOrders();
-
-                // Lấy danh sách nhân viên thực tế từ DB để bàn giao
-                List<AccountModel> allAccounts = accountService.getAccountList();
-
-                ShiftSessionCloseDialog dialog = new ShiftSessionCloseDialog(
-                        mainFrame, tienDauCa, doanhThu, 0, unpaidCount, allAccounts
-                );
-                dialog.setVisible(true);
-
-                if (dialog.isConfirmed()) {
-                    double tienThucTe = dialog.getTienMatThucTe();
-                    String ghiChu = dialog.getGhiChu();
-                    Integer maNhanBanGiao = dialog.getMaTaiKhoanNhan();
-
-                    double tienHeThong = tienDauCa + doanhThu;
-                    double chenhLech = tienThucTe - tienHeThong;
-
-                    if (chenhLech != 0 && ghiChu.isEmpty()) {
-                        JOptionPane.showMessageDialog(mainFrame, "Tiền đang bị lệch! Bạn phải nhập Ghi chú để giải trình.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                        return;
-                    }
-
-                    // Thực hiện cập nhật Database đóng ca
-                    boolean isSuccess = shiftSessionDAO.dongCaToanDien(maPhienCa, maNhanBanGiao, ghiChu, tienHeThong, tienThucTe);
-
-                    if (isSuccess) {
-                        JOptionPane.showMessageDialog(mainFrame, "Chốt ca thành công!");
-                        
-                        // [MỚI] Kiểm tra cờ in từ Dialog
-                        if (dialog.isPrintRequested()) {
-                            Service.InvoiceService invoiceService = new Service.InvoiceService();
-                            // Gọi hàm in biên bản mà bạn đã tạo ở bước trước
-                            invoiceService.printShiftHandoverReport(maPhienCa);
-                        }
-
-                        SessionManager.setCurrentMaPhienCa(-1); 
-                        mainFrame.setShiftButtonState(false); 
-                        if (mainFrame.getShiftPanel() != null && mainFrame.getShiftPanel().getShiftMonitorPanel() != null) {
-                            mainFrame.getShiftPanel().getShiftMonitorPanel().loadData();
-                        }
-                        try { mainFrame.setPageActive("Stats"); } catch (SQLException ex) { ex.printStackTrace(); }
-                    } else {
-                        JOptionPane.showMessageDialog(mainFrame, "Lỗi khi chốt ca!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    }
-                }
-            }
-        });
 
         this.mainFrame.setVisible(true);
     }
