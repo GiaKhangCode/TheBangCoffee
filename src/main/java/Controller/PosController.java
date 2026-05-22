@@ -123,6 +123,28 @@ public class PosController {
             }
         });
         
+        posPanel.getCartTableModel().addTableModelListener(e -> {
+            if (e.getType() == javax.swing.event.TableModelEvent.UPDATE && e.getColumn() == 2) {
+                int row = e.getFirstRow();
+                try {
+                    String newValueStr = posPanel.getCartTableModel().getValueAt(row, 2).toString().replaceAll("[^0-9-]", "");
+                    long newValue = Long.parseLong(newValueStr);
+                    if (newValue < 0) {
+                        JOptionPane.showMessageDialog(posPanel, "Giá không được nhỏ hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        updateCartView(); // revert
+                        return;
+                    }
+                    if (currentCart != null && row < currentCart.size()) {
+                        currentCart.get(row).setCustomRowPrice(newValue);
+                        updateCartView();
+                    }
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(posPanel, "Giá trị không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    updateCartView();
+                }
+            }
+        });
+        
         
         posPanel.addClearCartListener(e -> {
             if (currentCart.isEmpty()) return;
@@ -285,8 +307,9 @@ public class PosController {
                 );
 
                 if (newOrderId > 0) {
-                    // Tự động in hoá đơn
-                    invoiceService.printInvoice(newOrderId, false);
+                    // Tự động in tem pha chế và tem dán ly
+                    invoiceService.printPreparationStamp(newOrderId, false);
+                    invoiceService.printStickerStamp(newOrderId, false);
 
                     // Tự động đồng bộ hạng khách hàng khi điểm thay đổi (do dùng điểm)
                     if (selectedCustomerId > 0 && totalPointsToDeduct > 0) {
@@ -542,7 +565,49 @@ public class PosController {
                 return;
             }
             if (currentSelectedOrderId > 0) {
-                invoiceService.printInvoice(currentSelectedOrderId, false); 
+                OrderModel order = orderService.getOrderById(currentSelectedOrderId);
+                java.awt.image.BufferedImage qrImage = null;
+                long orderCode = -1L;
+                Service.PayOSService payOSService = new Service.PayOSService();
+
+                if (order != null && "Chưa thanh toán".equals(order.getPaymentStatus()) && order.getFinalTotal() > 0) {
+                    int amount = (int) order.getFinalTotal();
+                    Service.PayOSService.PaymentResult paymentData = payOSService.createPaymentLink(currentSelectedOrderId, amount, "Thanh toan don " + currentSelectedOrderId);
+                    
+                    if (paymentData != null) {
+                        qrImage = payOSService.generateQRCodeImage(paymentData.qrCode);
+                        orderCode = paymentData.orderCode;
+                    }
+                }
+                boolean isPaid = order != null && "Đã thanh toán".equals(order.getPaymentStatus());
+                invoiceService.printInvoice(currentSelectedOrderId, false, qrImage, isPaid); 
+
+                if (orderCode > 0) {
+                    final long finalOrderCode = orderCode;
+                    final int finalOrderId = currentSelectedOrderId;
+                    javax.swing.Timer timer = new javax.swing.Timer(3000, null);
+                    timer.addActionListener(new java.awt.event.ActionListener() {
+                        int count = 0;
+                        @Override
+                        public void actionPerformed(java.awt.event.ActionEvent evt) {
+                            count++;
+                            String status = payOSService.getPaymentStatus(finalOrderCode);
+                            if ("PAID".equals(status)) {
+                                ((javax.swing.Timer)evt.getSource()).stop();
+                                boolean isSuccess = orderService.updatePaymentStatus(finalOrderId, "Đã thanh toán", "Chuyển khoản");
+                                if (isSuccess) {
+                                    checkAndRewardPoints(finalOrderId, null, "Đã thanh toán");
+                                    loadOrderList(); 
+                                    loadOrderDetails(finalOrderId); 
+                                    JOptionPane.showMessageDialog(orderPanel, "Khách hàng đã chuyển khoản thành công đơn #" + finalOrderId + "!");
+                                }
+                            } else if (count > 200) { // Timeout sau 10 phút (200 * 3s)
+                                ((javax.swing.Timer)evt.getSource()).stop();
+                            }
+                        }
+                    });
+                    timer.start();
+                }
             }
         });
     }
@@ -627,14 +692,10 @@ public class PosController {
     private void changeOrderPaymentStatus(String newStatus) {
         if (currentSelectedOrderId <= 0) return;
         
-        Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(orderPanel);
-        View.PaymentMethodDialog dialog = new View.PaymentMethodDialog(parentFrame, currentSelectedOrderId);
-        dialog.setVisible(true); 
+        int confirm = JOptionPane.showConfirmDialog(orderPanel, "Xác nhận thu tiền mặt cho đơn hàng này?", "Xác nhận thu tiền mặt", JOptionPane.YES_NO_OPTION);
             
-        int choice = dialog.getSelectedOption();
-
-        if (choice == 0 || choice == 1) {
-            String phuongThucThanhToan = (choice == 0) ? "Tiền mặt" : "Chuyển khoản";
+        if (confirm == JOptionPane.YES_OPTION) {
+            String phuongThucThanhToan = "Tiền mặt";
             
             boolean isSuccess = orderService.updatePaymentStatus(currentSelectedOrderId, newStatus, phuongThucThanhToan);
             

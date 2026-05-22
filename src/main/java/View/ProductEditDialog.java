@@ -193,7 +193,8 @@ public class ProductEditDialog extends JDialog {
                 return c == 1 || c == 2 || c == 3 || c == 4 || c == 5; 
             } 
         };
-        variantTable = new JTable(variantModel); 
+        variantTable = new JTable(variantModel);
+        Common.ComponentUI.applyTableAlignment(variantTable);
         variantTable.setRowHeight(30);
 
         variantTable.removeColumn(variantTable.getColumnModel().getColumn(0));
@@ -288,7 +289,8 @@ public class ProductEditDialog extends JDialog {
             @Override public boolean isCellEditable(int r, int c) { return c == 5; } 
         };
         recipeTable = new JTable(recipeModel);
-        recipeTable.setRowHeight(40); recipeTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        Common.ComponentUI.applyTableAlignment(recipeTable);
+        recipeTable.setRowHeight(30); recipeTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         recipeTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         recipeTable.getTableHeader().setBackground(new Color(242, 242, 242));
         

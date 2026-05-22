@@ -113,7 +113,7 @@ public class CategoryManagementPanel extends JPanel {
         table.getColumnModel().getColumn(1).setPreferredWidth(250);
         table.getColumnModel().getColumn(4).setPreferredWidth(180); 
 
-        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+        DefaultTableCellRenderer customRenderer = new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 String dbStatus = (String) table.getModel().getValueAt(row, 3);
@@ -131,9 +131,46 @@ public class CategoryManagementPanel extends JPanel {
                     c.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
                     c.setForeground(isSelected ? table.getSelectionForeground() : Color.BLACK);
                 }
+                
+                Common.ComponentUI.applyAlignment(table, column, (JLabel) c, value);
                 return c;
             }
-        });
+        };
+        
+        table.setDefaultRenderer(Object.class, customRenderer);
+        table.setDefaultRenderer(String.class, customRenderer);
+        table.setDefaultRenderer(Number.class, customRenderer);
+        table.setDefaultRenderer(Integer.class, customRenderer);
+        table.setDefaultRenderer(Double.class, customRenderer);
+        table.setDefaultRenderer(Float.class, customRenderer);
+        
+        Common.ComponentUI.applyTableAlignment(table);
+        // Sau khi applyTableAlignment (để canh giữa Header), ta set lại custom renderer cho các cột data để giữ màu
+        table.setDefaultRenderer(Object.class, customRenderer);
+        table.setDefaultRenderer(String.class, customRenderer);
+        table.setDefaultRenderer(Number.class, customRenderer);
+        table.setDefaultRenderer(Integer.class, customRenderer);
+        table.setDefaultRenderer(Double.class, customRenderer);
+        table.setDefaultRenderer(Float.class, customRenderer);
+
+        // Gắn BadgeRenderer cho cột Trạng thái (cột 3)
+        Common.BadgeRenderer badgeRenderer = new Common.BadgeRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                if ("Đã ẩn".equals(value)) {
+                    value = "Tạm ngừng sử dụng";
+                }
+                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                String dbStatus = (String) table.getModel().getValueAt(row, 3);
+                if (!isSelected && "Đã ẩn".equals(dbStatus)) {
+                    setBackground(DISABLED_BG);
+                }
+                return this;
+            }
+        };
+        badgeRenderer.addBadgeStyle("Hiển thị", new Color(39, 174, 96));
+        badgeRenderer.addBadgeStyle("Tạm ngừng sử dụng", new Color(108, 117, 125));
+        table.getColumnModel().getColumn(3).setCellRenderer(badgeRenderer);
 
         table.getColumnModel().getColumn(4).setCellRenderer(new ActionButtonsRenderer());
         table.getColumnModel().getColumn(4).setCellEditor(new ActionButtonsEditor());

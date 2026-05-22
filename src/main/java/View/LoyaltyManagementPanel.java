@@ -95,7 +95,9 @@ public class LoyaltyManagementPanel extends JPanel {
         JTableHeader header = tierTable.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 14));
         header.setBackground(new Color(245, 245, 245));
-
+        
+        Common.ComponentUI.applyTableAlignment(tierTable);
+        
         tierTable.getColumnModel().getColumn(4).setMinWidth(0);
         tierTable.getColumnModel().getColumn(4).setMaxWidth(0);
         tierTable.getColumnModel().getColumn(4).setWidth(0);

@@ -97,7 +97,7 @@ public class PosPanel extends JPanel {
         topFilterPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
 
         categoryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        categoryPanel.setBackground(Color.WHITE); 
+        categoryPanel.setBackground(BG_LIGHT); 
         categoryPanel.setOpaque(false);
 
         JScrollPane scrollCategory = new JScrollPane(categoryPanel, JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED) {
@@ -106,8 +106,8 @@ public class PosPanel extends JPanel {
         };
         scrollCategory.setPreferredSize(new Dimension(0, 60)); 
         scrollCategory.getHorizontalScrollBar().setUnitIncrement(16);
-        scrollCategory.setBackground(Color.WHITE); 
-        scrollCategory.getViewport().setBackground(Color.WHITE); 
+        scrollCategory.setBackground(BG_LIGHT); 
+        scrollCategory.getViewport().setBackground(BG_LIGHT); 
 
         txtSearch = new JTextField();
         txtSearch.setPreferredSize(new Dimension(400, 40)); 
@@ -176,10 +176,12 @@ public class PosPanel extends JPanel {
         cartTableModel = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 1 || column == 3; 
+                // Cho phép cột SL (1), Giá (2) và nút Xóa (3) click
+                return column == 1 || column == 2 || column == 3;
             }
         };
         cartTable = new JTable(cartTableModel);
+        Common.ComponentUI.applyTableAlignment(cartTable);
         cartTable.setRowHeight(95);
         cartTable.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         cartTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -681,4 +683,5 @@ public class PosPanel extends JPanel {
     
     public JButton getBtnClearCart() { return btnClearCart; }
     public JButton getBtnCreateOrder() { return btnCreateOrder; }
+    public DefaultTableModel getCartTableModel() { return cartTableModel; }
 }

@@ -164,20 +164,37 @@ public class StockPanelController {
 
                 List<Object[]> batches = ingredientService.getIngredientBatches(maNL);
 
-                stockPanelView.showBatchDetailDialog(tenNL, batches, (maLo, qty, reason) -> {
+                stockPanelView.showBatchDetailDialog(tenNL, batches, (disposes) -> {
                     if (!hasDeletePermission) {
                         JOptionPane.showMessageDialog(mainFrame, "Bạn không có quyền thực hiện xuất hủy lô nguyên liệu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                         return;
                     }
-                    String result = ingredientService.disposeBatch(maLo, qty, reason);
-                    if (result.equals("Thành công")) {
-                        JOptionPane.showMessageDialog(null, "Xuất hủy lô thành công!");
-                        try {
-                            loadIngredientToView(); 
-                        } catch (SQLException ex) { ex.printStackTrace(); }
-                    } else {
-                        JOptionPane.showMessageDialog(null, result, "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    int successCount = 0;
+                    StringBuilder errors = new StringBuilder();
+                    for (java.util.Map<String, Object> dispose : disposes) {
+                        int maLo = (int) dispose.get("maLo");
+                        double qty = (double) dispose.get("qty");
+                        String reason = (String) dispose.get("reason");
+                        
+                        String result = ingredientService.disposeBatch(maLo, qty, reason);
+                        if (result.equals("Thành công")) {
+                            successCount++;
+                        } else {
+                            errors.append("Lô #").append(maLo).append(": ").append(result).append("\n");
+                        }
                     }
+                    
+                    if (errors.length() == 0 && successCount > 0) {
+                        JOptionPane.showMessageDialog(null, "Đã lập phiếu xuất hủy thành công cho " + successCount + " lô!");
+                    } else if (successCount > 0) {
+                        JOptionPane.showMessageDialog(null, "Xuất hủy một số lô thành công.\nCác lỗi xảy ra:\n" + errors.toString(), "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Tất cả các lô đều thất bại:\n" + errors.toString(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                    
+                    try {
+                        loadIngredientToView(); 
+                    } catch (SQLException ex) { ex.printStackTrace(); }
                 });
             }
             

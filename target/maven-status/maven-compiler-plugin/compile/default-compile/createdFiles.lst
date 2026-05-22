@@ -5,6 +5,7 @@ View\StockPanel$ActionButtonEditor.class
 View\RolePanel$AddEmployeeAccountDialog$1.class
 View\ProductEditDialog$DeleteActionPanel.class
 View\PosPanel$WrapLayout.class
+Controller\PosController$4.class
 View\LoyaltyManagementPanel$ActionPanel.class
 View\StockPanel$3.class
 View\EmployeeSchedulePanel$1.class
@@ -14,7 +15,6 @@ View\HeaderPanel.class
 View\MenuPanel$2.class
 Controller\RoleController$8.class
 View\AssignShiftDialog$2.class
-View\StockPanel$CenterRenderer.class
 Controller\CustomerController$3.class
 View\StockPanel.class
 View\CategoryManagementPanel$3.class
@@ -40,6 +40,7 @@ View\CustomerManagementPanel$ActionPanel.class
 Controller\ProductController.class
 Controller\ProductController$2.class
 View\ToppingManagementPanel$2.class
+Common\BadgeRenderer.class
 View\PosPanel$DeleteActionButtonEditor.class
 View\ProductEditDialog$1.class
 View\ToppingManagementPanel$ActionPanel.class
@@ -64,11 +65,9 @@ View\CheckoutDialog$1.class
 Common\ValidationUtil.class
 Service\ReportService.class
 View\RolePanel$AccountActionPanel.class
-View\RolePanel$10.class
 Controller\EmployeeScheduleController.class
 View\PosPanel$QuantityActionListener.class
 View\ToppingManagementPanel$ActionButtonRenderer.class
-View\OrderPanel$StatusCellRenderer.class
 Controller\CustomerController.class
 Service\RecipeService.class
 View\PosPanel$6.class
@@ -84,9 +83,11 @@ View\ProductDetailDialog.class
 View\ProductDetailDialog$DeleteActionButtonRenderer.class
 View\RolePanel$RoleActionListener.class
 View\StockPanel$ActionButtonListener.class
+Service\PayOSService$PaymentResult.class
 View\RolePanel$1.class
 Model\RoleGroupModel.class
 Model\SessionManager.class
+Service\PayOSService.class
 View\EmployeeSchedulePanel$2.class
 View\OrderOptionDialog.class
 View\RolePanel$AccountActionButtonRenderer.class
@@ -117,6 +118,7 @@ View\CategoryManagementPanel$ActionButtonsRenderer.class
 View\MenuPanel$3.class
 DatabaseAccessObject\CategoryDAO.class
 View\PaymentMethodDialog.class
+Common\ComponentUI$2.class
 View\AssignShiftDialog$1.class
 View\LoyaltyManagementPanel$2.class
 View\DashboardPanel$3.class
@@ -160,6 +162,7 @@ View\LoginFrame$1.class
 View\OrderPanel$3.class
 DatabaseAccessObject\IngredientTypeDAO.class
 View\EmployeeSchedulePanel$1ScrollableCalendarPanel.class
+Common\ComponentUI$3.class
 Controller\RoleController$5.class
 View\ProductEditDialog$DeleteActionButtonEditor.class
 View\LoyaltyManagementPanel.class
@@ -221,7 +224,6 @@ View\EmployeeSchedulePanel$5.class
 View\ForgotPasswordFrame$2.class
 View\StockPanel$7.class
 Common\HashUtil.class
-View\StockPanel$InventoryStatusRenderer.class
 View\DashboardPanel.class
 DatabaseAccessObject\WarehouseReceiptDAO.class
 Controller\ProductController$1.class
@@ -244,6 +246,7 @@ View\CustomerManagementPanel$ActionButtonEditor.class
 Service\OtpService$OtpType.class
 Service\WarehouseReceiptService.class
 View\PosPanel$DeleteActionListener.class
+View\CategoryManagementPanel$4.class
 View\ProductDetailDialog$DeleteActionListener.class
 View\OrderPanel$4.class
 View\DashboardPanel$RoundedChartPlaceholder.class

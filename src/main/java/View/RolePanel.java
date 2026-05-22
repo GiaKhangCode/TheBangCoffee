@@ -609,27 +609,16 @@ public class RolePanel extends JPanel {
         this.accountManagementTable.getColumnModel().getColumn(6).setPreferredWidth(150); // Đăng nhập lần đầu
         this.accountManagementTable.getColumnModel().getColumn(7).setPreferredWidth(190); // Hành động
 
-        // --- Custom Renderer tô màu cho cột "Trạng thái" và "Đăng nhập lần đầu" ---
-        DefaultTableCellRenderer statusRenderer = new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                if (value != null) {
-                    String str = value.toString();
-                    if (str.equals("Đang hoạt động") || str.equals("Chưa đổi mật khẩu")) {
-                        c.setForeground(new Color(40, 167, 69)); // Xanh lá
-                    } else if (str.equals("Đã vô hiệu hóa")) {
-                        c.setForeground(Color.GRAY); // Xám
-                    } else {
-                        c.setForeground(isSelected ? table.getSelectionForeground() : TEXT_DARK);
-                    }
-                }
-                setHorizontalAlignment(JLabel.CENTER);
-                return c;
-            }
-        };
-        this.accountManagementTable.getColumnModel().getColumn(5).setCellRenderer(statusRenderer);
-        this.accountManagementTable.getColumnModel().getColumn(6).setCellRenderer(statusRenderer);
+        // --- Custom Renderer tô màu cho cột "Trạng thái" và "Đăng nhập lần đầu" dạng Badge ---
+        Common.BadgeRenderer badgeRenderer = new Common.BadgeRenderer();
+        badgeRenderer.addBadgeStyle("Đang hoạt động", new Color(40, 167, 69)); // Xanh lá
+        badgeRenderer.addBadgeStyle("Đã đổi mật khẩu", new Color(40, 167, 69)); // Xanh lá
+        badgeRenderer.addBadgeStyle("Chưa đổi mật khẩu", new Color(243, 156, 18)); // Cam cảnh báo
+        badgeRenderer.addBadgeStyle("Đã vô hiệu hóa", new Color(108, 117, 125)); // Xám
+        badgeRenderer.addBadgeStyle("Bị khoá", new Color(231, 76, 60)); // Đỏ
+
+        this.accountManagementTable.getColumnModel().getColumn(5).setCellRenderer(badgeRenderer);
+        this.accountManagementTable.getColumnModel().getColumn(6).setCellRenderer(badgeRenderer);
 
         // Gắn renderer/editor cho cột Hành động
         TableColumn actionCol = this.accountManagementTable.getColumnModel().getColumn(7);
@@ -1734,4 +1723,4 @@ public class RolePanel extends JPanel {
 
         @Override public Object getCellEditorValue() { return ""; }
     }
-}
+}

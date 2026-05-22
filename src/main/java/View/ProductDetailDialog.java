@@ -165,7 +165,8 @@ public class ProductDetailDialog extends JDialog {
                 return c == 1 || c == 2 || c == 3 || c == 4 || c == 5; 
             } 
         };
-        variantTable = new JTable(variantModel); 
+        variantTable = new JTable(variantModel);
+        Common.ComponentUI.applyTableAlignment(variantTable);
         variantTable.setRowHeight(30);
 
         // Ẩn cột ID đi

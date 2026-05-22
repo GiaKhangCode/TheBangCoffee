@@ -14,6 +14,7 @@ public class CartItemModel {
     private boolean isHoliday = false;
     // [MỚI] Biến xác định đây có phải là hàng quy đổi điểm không
     private boolean isReward = false;
+    private Long customRowPrice = null;
  
     public CartItemModel(ProductModel product, VariantModel selectedVariant, List<ToppingModel> selectedToppings, int quantity, String note) {
         this.cartItemId = java.util.UUID.randomUUID().toString(); 
@@ -30,6 +31,8 @@ public class CartItemModel {
     // [MỚI] Getter/Setter cho isReward
     public boolean isReward() { return isReward; }
     public void setReward(boolean reward) { this.isReward = reward; }
+    
+    public void setCustomRowPrice(Long price) { this.customRowPrice = price; }
  
     public long getMainSellingPrice() {
         if (isReward) return 0; // Hàng đổi điểm giá 0đ
@@ -76,6 +79,7 @@ public class CartItemModel {
     }
  
     public long getTotalPrice() {
+        if (customRowPrice != null) return customRowPrice;
         return getUnitPrice() * quantity;
     }
     public double getTotalVatAmount() {

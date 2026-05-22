@@ -46,7 +46,7 @@ public class OrderDAO {
                 StringBuilder overallNote = new StringBuilder(orderTypeNote);
                 for (CartItemModel item : cart) {
                     if (item.getNote() != null && !item.getNote().isEmpty()) {
-                        overallNote.append(" | ").append(item.getNote());
+                        overallNote.append("\n").append(item.getNote());
                     }
                 }
 
@@ -99,7 +99,8 @@ public class OrderDAO {
                             }
                         }
 
-                        long totalRowPrice = (mainSellingPrice + totalToppingPrice) * item.getQuantity();
+                        // Cập nhật: Sử dụng getTotalPrice() để bắt được giá trị đã được ghi đè (custom price) từ giỏ hàng.
+                        long totalRowPrice = item.getTotalPrice();
 
                         double vatRate = item.getProduct().getVat();
                         double priceBeforeTax = mainSellingPrice / (1.0 + (vatRate / 100.0));
@@ -369,6 +370,65 @@ public class OrderDAO {
                     throw new SQLException("Nguyên liệu ID " + maNguyenLieu + " không đủ số lượng trong các lô để trừ!");
                 }
             }
+        }
+    }
+    
+    public boolean updateOrderDetailPrice(int detailId, int orderId, long newPrice) {
+        try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection()) {
+            conn.setAutoCommit(false);
+            
+            // 1. Cập nhật giá mới cho chi tiết đơn hàng
+            String sqlUpdateDetail = "UPDATE CHI_TIET_DON_HANG SET ThanhTien = ? WHERE MaChiTietDon = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sqlUpdateDetail)) {
+                ps.setLong(1, newPrice);
+                ps.setInt(2, detailId);
+                ps.executeUpdate();
+            }
+
+            // 2. Tính lại tổng Thành Tiền của tất cả chi tiết đơn hàng
+            long sumThanhTien = 0;
+            String sqlSum = "SELECT SUM(ThanhTien) FROM CHI_TIET_DON_HANG WHERE MaDonHang = ?";
+            try (PreparedStatement psSum = conn.prepareStatement(sqlSum)) {
+                psSum.setInt(1, orderId);
+                try (ResultSet rs = psSum.executeQuery()) {
+                    if (rs.next()) {
+                        sumThanhTien = rs.getLong(1);
+                    }
+                }
+            }
+
+            // 3. Đọc số thuế và giảm giá hiện tại của đơn hàng
+            long tienThue = 0;
+            long giamGia = 0;
+            String sqlGetTaxes = "SELECT TongTienThue, TienGiamGia FROM DON_HANG WHERE MaDonHang = ?";
+            try (PreparedStatement psTaxes = conn.prepareStatement(sqlGetTaxes)) {
+                psTaxes.setInt(1, orderId);
+                try (ResultSet rsTaxes = psTaxes.executeQuery()) {
+                    if (rsTaxes.next()) {
+                        tienThue = rsTaxes.getLong("TongTienThue");
+                        giamGia = rsTaxes.getLong("TienGiamGia");
+                    }
+                }
+            }
+
+            // 4. Tính toán tổng cuối cùng cho hóa đơn
+            long finalTotal = sumThanhTien + tienThue - giamGia;
+            if (finalTotal < 0) finalTotal = 0;
+
+            // Cập nhật lại DON_HANG
+            String sqlUpdateOrder = "UPDATE DON_HANG SET TongTien = ?, ThanhTien = ? WHERE MaDonHang = ?";
+            try (PreparedStatement psUpdate = conn.prepareStatement(sqlUpdateOrder)) {
+                psUpdate.setLong(1, sumThanhTien);
+                psUpdate.setLong(2, finalTotal);
+                psUpdate.setInt(3, orderId);
+                psUpdate.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
     

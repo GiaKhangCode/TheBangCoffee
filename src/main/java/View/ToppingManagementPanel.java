@@ -65,6 +65,7 @@ public class ToppingManagementPanel extends JPanel {
             @Override public boolean isCellEditable(int r, int c) { return c == 6; }
         };
         table = new JTable(tableModel);
+        Common.ComponentUI.applyTableAlignment(table);
         table.setRowHeight(40);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));

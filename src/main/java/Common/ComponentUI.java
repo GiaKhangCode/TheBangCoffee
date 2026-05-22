@@ -10,6 +10,9 @@ import java.awt.RenderingHints;
 import javax.swing.JButton;
 import javax.swing.JTable;
 import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.JLabel;
+import java.awt.Component;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
@@ -107,6 +110,71 @@ public class ComponentUI {
         return new Color(r, g, b, a);
     }
     
+    public static void applyAlignment(JTable table, int column, JLabel label, Object value) {
+        String columnName = "";
+        if (table != null && column >= 0 && column < table.getColumnCount()) {
+            columnName = table.getColumnName(column).toLowerCase();
+        }
+
+        if (columnName.contains("mã") || columnName.contains("id") || columnName.contains("stt") || columnName.contains("hành động") || columnName.contains("chức năng")) {
+            label.setHorizontalAlignment(JLabel.CENTER);
+            return;
+        }
+
+        if (value instanceof Number) {
+            label.setHorizontalAlignment(JLabel.RIGHT);
+        } else if (value instanceof String) {
+            String str = ((String) value).trim();
+            // Cải thiện Regex để bắt tổng tiền, thành tiền (có đ, VND, dấu phẩy, v.v.)
+            if (str.matches("^-?\\d+([.,]\\d+)*\\s*(%|VND|đ|USD|VNĐ)?$") || str.matches("^#\\d+$")) {
+                label.setHorizontalAlignment(JLabel.RIGHT);
+            } else {
+                label.setHorizontalAlignment(JLabel.CENTER);
+            }
+        } else {
+            label.setHorizontalAlignment(JLabel.CENTER);
+        }
+    }
+
+    public static void applyTableAlignment(JTable table) {
+        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+        rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
+        
+        DefaultTableCellRenderer smartRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                applyAlignment(table, column, label, value);
+                return label;
+            }
+        };
+        
+        table.setDefaultRenderer(Object.class, smartRenderer);
+        table.setDefaultRenderer(String.class, smartRenderer);
+        table.setDefaultRenderer(Integer.class, rightRenderer);
+        table.setDefaultRenderer(Double.class, rightRenderer);
+        table.setDefaultRenderer(Long.class, rightRenderer);
+        table.setDefaultRenderer(Float.class, rightRenderer);
+
+        // Center header
+        javax.swing.table.TableCellRenderer headerRenderer = table.getTableHeader().getDefaultRenderer();
+        table.getTableHeader().setDefaultRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel label;
+                if (headerRenderer != null && headerRenderer != this) {
+                    label = (JLabel) headerRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                } else {
+                    label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                }
+                label.setHorizontalAlignment(JLabel.CENTER);
+                return label;
+            }
+        });
+    }
+
     public static void styleTable(JTable table, Color foreground, Color selectionForeground, Color selectionBackground) {
         Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
         int rowHeight = Math.max(30, (int) (screenSize.height * 0.057));
@@ -128,5 +196,7 @@ public class ComponentUI {
         table.setSelectionBackground(new Color(r, g, b));
         
         table.setSelectionForeground(selectionForeground);
+        
+        applyTableAlignment(table);
     }
 }

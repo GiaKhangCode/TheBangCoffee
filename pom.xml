@@ -55,6 +55,24 @@
         <version>5.10.2</version>
         <scope>test</scope>
     </dependency>
+    <!-- PayOS -->
+    <dependency>
+      <groupId>vn.payos</groupId>
+      <artifactId>payos-java</artifactId>
+      <version>1.0.2</version>
+      <type>jar</type>
+    </dependency>
+    <!-- ZXing for QR Code generation -->
+    <dependency>
+        <groupId>com.google.zxing</groupId>
+        <artifactId>core</artifactId>
+        <version>3.5.3</version>
+    </dependency>
+    <dependency>
+        <groupId>com.google.zxing</groupId>
+        <artifactId>javase</artifactId>
+        <version>3.5.3</version>
+    </dependency>
     </dependencies>
 
     <build>

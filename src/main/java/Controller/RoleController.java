@@ -668,7 +668,7 @@ public class RoleController {
                 
                 AccountModel target = currentAccountManagementList.get(row);
                 String currentStatus = target.getStatus();
-                String newStatus = "Đang hoạt động".equals(currentStatus) ? "Bị khóa" : "Đang hoạt động";
+                String newStatus = "Đang hoạt động".equals(currentStatus) ? "Bị khoá" : "Đang hoạt động";
                 String action = "Đang hoạt động".equals(currentStatus) ? "vô hiệu hoá" : "kích hoạt lại";
                 
                 int confirm = JOptionPane.showConfirmDialog(null,
@@ -678,7 +678,7 @@ public class RoleController {
                 if (confirm == JOptionPane.YES_OPTION) {
                     boolean success = accountService.updateAccountStatus(target.getAccountID(), newStatus);
                     if (success) {
-                        if ("Bị khóa".equals(newStatus)) {
+                        if ("Bị khoá".equals(newStatus)) {
                             accountService.revokeAllTokens(target.getEmail());
                         }
                         reloadAccountManagementTable();

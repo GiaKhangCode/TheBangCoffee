@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="TemPhaChe" pageWidth="226" pageHeight="842" columnWidth="206" leftMargin="10" rightMargin="10" topMargin="10" bottomMargin="10" isIgnorePagination="true" uuid="11111111-2222-3333-4444-555555555555">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Oracle_Connection"/>
+	
+	<parameter name="p_MaDonHang" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	
+	<queryString>
+		<![CDATA[SELECT 
+    dh.MaDonHang, 
+    TO_CHAR(dh.NgayDat, 'DD/MM/YYYY HH24:MI') AS NgayDat,
+    NVL(kh.HoTen, N'Khách vãng lai') AS TenKhachHang,
+    sp.TenSanPham, 
+    bt.TenSize, 
+    ctdh.SoLuong, 
+    ctdh.GhiChuMon,
+    (SELECT LISTAGG(tp.TenTopping, ', ') WITHIN GROUP (ORDER BY tp.TenTopping)
+     FROM CHI_TIET_TOPPING ctt
+     JOIN TOPPING tp ON ctt.MaTopping = tp.MaTopping
+     WHERE ctt.MaCTHD = ctdh.MaChiTietDon) AS ToppingDiKem
+FROM DON_HANG dh
+LEFT JOIN KHACH_HANG kh ON dh.MaKhachHang = kh.MaKhachHang
+JOIN CHI_TIET_DON_HANG ctdh ON dh.MaDonHang = ctdh.MaDonHang
+JOIN BIEN_THE bt ON ctdh.MaBienThe = bt.MaBienThe
+JOIN SAN_PHAM sp ON bt.MaSanPham = sp.MaSanPham
+WHERE dh.MaDonHang = $P{p_MaDonHang}]]>
+	</queryString>
+	
+	<field name="MADONHANG" class="java.math.BigDecimal"/>
+	<field name="NGAYDAT" class="java.lang.String"/>
+	<field name="TENKHACHHANG" class="java.lang.String"/>
+	<field name="TENSANPHAM" class="java.lang.String"/>
+	<field name="TENSIZE" class="java.lang.String"/>
+	<field name="SOLUONG" class="java.math.BigDecimal"/>
+	<field name="GHICHUMON" class="java.lang.String"/>
+	<field name="TOPPINGDIKEM" class="java.lang.String"/>
+
+	<title>
+		<band height="70" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="206" height="20" uuid="abcdef01-2345-6789-abcd-ef0123456789"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[TEM PHA CHẾ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="25" width="60" height="15" uuid="11112222-3333-4444-5555-666677778888"/>
+				<textElement verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Đơn hàng:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="60" y="25" width="146" height="15" uuid="99998888-7777-6666-5555-444433332222"/>
+				<textElement verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA["#" + $F{MADONHANG}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="40" width="60" height="15" uuid="aaaabbbb-cccc-dddd-eeee-ffff00001111"/>
+				<textElement verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Thời gian:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="60" y="40" width="146" height="15" uuid="22223333-4444-5555-6666-777788889999"/>
+				<textElement verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{NGAYDAT}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="65" width="206" height="1" uuid="88889999-0000-1111-2222-333344445555"/>
+				<graphicElement>
+					<pen lineStyle="Dashed"/>
+				</graphicElement>
+			</line>
+		</band>
+	</title>
+
+	<detail>
+		<band height="45" splitType="Stretch">
+			<textField textAdjust="StretchHeight">
+				<reportElement x="0" y="5" width="160" height="15" uuid="33334444-5555-6666-7777-888899990000"/>
+				<textElement verticalAlignment="Middle">
+					<font size="11" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{TENSANPHAM} + " (" + ($F{TENSIZE} != null ? $F{TENSIZE} : "") + ")"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="160" y="5" width="46" height="15" uuid="44445555-6666-7777-8888-999900001111"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="11" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["x" + $F{SOLUONG}]]></textFieldExpression>
+			</textField>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="10" y="22" width="196" height="15" isRemoveLineWhenBlank="true" forecolor="#333333" uuid="55556666-7777-8888-9999-000011112222">
+					<printWhenExpression><![CDATA[$F{TOPPINGDIKEM} != null || $F{GHICHUMON} != null]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Top">
+					<font size="9" isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(($F{TOPPINGDIKEM} != null && !$F{TOPPINGDIKEM}.trim().isEmpty()) ? "Topping: " + $F{TOPPINGDIKEM} + "\n" : "") + (($F{GHICHUMON} != null && !$F{GHICHUMON}.trim().isEmpty()) ? $F{GHICHUMON}.replace(" | ", "\n").replace(" - Ghi", "\nGhi").replace(", Ghi", "\nGhi") : "")]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement positionType="Float" x="0" y="40" width="206" height="1" forecolor="#CCCCCC" uuid="66667777-8888-9999-0000-111122223333"/>
+				<graphicElement>
+					<pen lineStyle="Dotted"/>
+				</graphicElement>
+			</line>
+		</band>
+	</detail>
+</jasperReport>

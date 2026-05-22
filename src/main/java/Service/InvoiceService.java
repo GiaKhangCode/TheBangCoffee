@@ -15,8 +15,10 @@ public class InvoiceService {
      * Hàm hiển thị hoặc in hóa đơn
      * @param maDonHang Mã đơn hàng cần in
      * @param isPrintDirectly true: In ra máy in luôn, false: Mở cửa sổ xem trước
+     * @param qrImage Hình ảnh QR Code động (nếu có, null nếu thanh toán tiền mặt)
+     * @param isPaid Xác định đơn hàng đã thanh toán hay chưa (nếu đã thanh toán sẽ không hiển thị QR Code tĩnh dự phòng)
      */
-    public void printInvoice(int maDonHang, boolean isPrintDirectly) {
+    public void printInvoice(int maDonHang, boolean isPrintDirectly, java.awt.image.BufferedImage qrImage, boolean isPaid) {
         try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection()) {
             
             // 1. Đọc file thiết kế XML từ thư mục resources
@@ -29,9 +31,23 @@ public class InvoiceService {
             // 2. Biên dịch file .jrxml thành cấu trúc JasperReport có thể chạy được
             JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
 
-            // 3. Truyền tham số p_MaDonHang vào trong báo cáo
+            // 3. Truyền tham số p_MaDonHang và p_QRCodeImage vào trong báo cáo
             Map<String, Object> parameters = new HashMap<>();
             parameters.put("p_MaDonHang", maDonHang);
+            
+            if (qrImage != null) {
+                parameters.put("p_QRCodeImage", qrImage);
+            } else if (!isPaid) {
+                // Load default static QR if null AND order is not paid
+                try {
+                    java.net.URL defaultQrUrl = getClass().getResource("/images/qr_code.jpg");
+                    if (defaultQrUrl != null) {
+                        parameters.put("p_QRCodeImage", javax.imageio.ImageIO.read(defaultQrUrl));
+                    }
+                } catch (Exception ex) {
+                    // Ignore
+                }
+            }
 
             // 4. Đổ dữ liệu từ Database vào Báo cáo
             JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, conn);
@@ -42,7 +58,6 @@ public class InvoiceService {
                 JasperPrintManager.printReport(jasperPrint, false);
             } else {
                 // Mở cửa sổ JasperViewer để xem trước
-                // Tham số "false" rất quan trọng: Nó giúp khi bấm dấu [X] đóng cửa sổ hóa đơn thì không bị tắt luôn toàn bộ phần mềm
                 JasperViewer.viewReport(jasperPrint, false);
             }
 
@@ -79,6 +94,75 @@ public class InvoiceService {
         }
     }
     
+    /**
+     * Hàm hiển thị hoặc in tem pha chế
+     * @param maDonHang Mã đơn hàng cần in
+     * @param isPrintDirectly true: In ra máy in luôn, false: Mở cửa sổ xem trước
+     */
+    public void printPreparationStamp(int maDonHang, boolean isPrintDirectly) {
+        try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection()) {
+            InputStream reportStream = getClass().getResourceAsStream("/reports/temPhaChe.jrxml");
+            if (reportStream == null) {
+                JOptionPane.showMessageDialog(null, "Không tìm thấy file mẫu (temPhaChe.jrxml)!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
+
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("p_MaDonHang", maDonHang);
+
+            JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, conn);
+
+            if (isPrintDirectly) {
+                JasperPrintManager.printReport(jasperPrint, false);
+            } else {
+                JasperViewer.viewReport(jasperPrint, false);
+            }
+
+        } catch (JRException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Lỗi khi tạo tem pha chế: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Lỗi kết nối CSDL: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Hàm hiển thị hoặc in tem dán ly
+     * @param maDonHang Mã đơn hàng cần in
+     * @param isPrintDirectly true: In ra máy in luôn, false: Mở cửa sổ xem trước
+     */
+    public void printStickerStamp(int maDonHang, boolean isPrintDirectly) {
+        try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection()) {
+            InputStream reportStream = getClass().getResourceAsStream("/reports/temdanly.jrxml");
+            if (reportStream == null) {
+                JOptionPane.showMessageDialog(null, "Không tìm thấy file mẫu (temdanly.jrxml)!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
+
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("p_MaDonHang", maDonHang);
+
+            JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, conn);
+
+            if (isPrintDirectly) {
+                JasperPrintManager.printReport(jasperPrint, false);
+            } else {
+                JasperViewer.viewReport(jasperPrint, false);
+            }
+
+        } catch (JRException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Lỗi khi tạo tem dán: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Lỗi kết nối CSDL: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
     /**
      * Hàm hiển thị/in Phiếu nhập kho
      * @param maPhieuNhap Mã phiếu nhập cần in

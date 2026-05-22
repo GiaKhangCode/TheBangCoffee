@@ -5,6 +5,7 @@
 	<parameter name="p_MaDonHang" class="java.lang.Integer">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
+	<parameter name="p_QRCodeImage" class="java.awt.image.BufferedImage"/>
 	
 	<queryString>
 		<![CDATA[SELECT 
@@ -199,7 +200,7 @@ WHERE dh.MaDonHang = $P{p_MaDonHang}]]>
 				<textFieldExpression><![CDATA[$F{TIENMON}]]></textFieldExpression>
 			</textField>
 			
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement x="15" y="25" width="540" height="15" isRemoveLineWhenBlank="true" forecolor="#666666" uuid="e622b7bf-8f5b-4c5c-9c31-7e8c3a11075d">
 					<printWhenExpression><![CDATA[$F{TOPPINGDIKEM} != null]]></printWhenExpression>
 				</reportElement>
@@ -295,9 +296,9 @@ WHERE dh.MaDonHang = $P{p_MaDonHang}]]>
 				<text><![CDATA[QUÉT MÃ ĐỂ THANH TOÁN]]></text>
 			</staticText>
 			
-			<image scaleImage="RetainShape" hAlign="Center" vAlign="Middle">
+			<image scaleImage="RetainShape" hAlign="Center" vAlign="Middle" isUsingCache="false">
 				<reportElement x="177" y="170" width="200" height="200" uuid="f74f0a56-0ea1-5c3b-9853-2f0c36b40624"/>
-				<imageExpression><![CDATA[this.getClass().getResourceAsStream("/images/qr_code.jpg")]]></imageExpression>
+				<imageExpression><![CDATA[$P{p_QRCodeImage}]]></imageExpression>
 			</image>
 
 			<staticText>

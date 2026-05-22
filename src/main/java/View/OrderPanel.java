@@ -133,10 +133,18 @@ public class OrderPanel extends JPanel {
         tcm.getColumn(4).setPreferredWidth(120); 
         tcm.getColumn(5).setPreferredWidth(110);
 
-        // Gắn Custom Renderer để tô màu 2 cột trạng thái
-        StatusCellRenderer statusRenderer = new StatusCellRenderer();
-        tcm.getColumn(3).setCellRenderer(statusRenderer);
-        tcm.getColumn(4).setCellRenderer(statusRenderer);
+        // Gắn Custom Renderer để tô màu 2 cột trạng thái dạng Badge
+        Common.BadgeRenderer badgeRenderer = new Common.BadgeRenderer();
+        badgeRenderer.addBadgeStyle("Chờ tiếp nhận", WARNING_COLOR);
+        badgeRenderer.addBadgeStyle("Đang pha chế", INFO_COLOR);
+        badgeRenderer.addBadgeStyle("Đã hoàn thành", SUCCESS_COLOR);
+        badgeRenderer.addBadgeStyle("Đã thanh toán", SUCCESS_COLOR);
+        badgeRenderer.addBadgeStyle("Chưa thanh toán", DANGER_COLOR);
+        badgeRenderer.addBadgeStyle("Đã hủy", DANGER_COLOR);
+        badgeRenderer.addBadgeStyle("Đã hoàn tiền", DANGER_COLOR);
+        
+        tcm.getColumn(3).setCellRenderer(badgeRenderer);
+        tcm.getColumn(4).setCellRenderer(badgeRenderer);
 
         JScrollPane scrollPane = new JScrollPane(orderTable);
         scrollPane.setBorder(new LineBorder(new Color(230, 230, 230), 1, true));
@@ -242,7 +250,7 @@ public class OrderPanel extends JPanel {
 
         btnAccept = createModernButton("Tiếp nhận món", INFO_COLOR, Color.WHITE);
         btnComplete = createModernButton("Hoàn thành món", SUCCESS_COLOR, Color.WHITE);
-        btnPay = createModernButton("Xác nhận đã thu tiền", PRIMARY_COLOR, Color.WHITE);
+        btnPay = createModernButton("Xác nhận thu tiền mặt", PRIMARY_COLOR, Color.WHITE);
         btnCancel = createModernButton("Hủy đơn hàng", DANGER_COLOR, Color.WHITE);
         
         // [MỚI] Nút In / Xuất hóa đơn
@@ -265,36 +273,7 @@ public class OrderPanel extends JPanel {
         return panel;
     }
 
-    // ==========================================================
-    // CUSTOM CELL RENDERER ĐỂ TÔ MÀU TRẠNG THÁI
-    // ==========================================================
-    class StatusCellRenderer extends DefaultTableCellRenderer {
-        public StatusCellRenderer() {
-            setHorizontalAlignment(JLabel.CENTER); // [MỚI] Căn giữa văn bản cho cột trạng thái
-        }
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            if (value != null) {
-                String status = value.toString();
-                setFont(new Font("Segoe UI", Font.BOLD, 13));
-                
-                switch (status) {
-                    case "Chờ tiếp nhận": setForeground(WARNING_COLOR); break;
-                    case "Đang pha chế": setForeground(INFO_COLOR); break;
-                    case "Đã hoàn thành": 
-                    case "Đã thanh toán": setForeground(SUCCESS_COLOR); break;
-                    case "Chưa thanh toán": 
-                    case "Đã hủy": 
-                    case "Đã hoàn tiền": setForeground(DANGER_COLOR); break;
-                    default: setForeground(TEXT_DARK);
-                }
-                
-                if (isSelected) setForeground(Color.WHITE); 
-            }
-            return c;
-        }
-    }
+    // StatusCellRenderer removed, replaced by Common.BadgeRenderer
 
     // ==========================================================
     // UTILS & STYLE
@@ -308,12 +287,8 @@ public class OrderPanel extends JPanel {
         table.setShowVerticalLines(false);
         table.setSelectionBackground(new Color(PRIMARY_COLOR.getRed(), PRIMARY_COLOR.getGreen(), PRIMARY_COLOR.getBlue(), 180));
         
-        // [MỚI] Căn giữa nội dung dữ liệu cho toàn bộ các cột trong bảng
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        for (int i = 0; i < table.getColumnCount(); i++) {
-            table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
-        }
+        // Sử dụng applyTableAlignment để canh lề tự động (số canh phải, chữ canh giữa)
+        Common.ComponentUI.applyTableAlignment(table);
     }
 
     private JButton createModernButton(String text, Color bg, Color fg) {

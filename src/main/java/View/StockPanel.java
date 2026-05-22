@@ -193,10 +193,14 @@ public class StockPanel extends JPanel {
         tcm.getColumn(4).setPreferredWidth(120); 
         tcm.getColumn(5).setPreferredWidth(120); 
         
-        InventoryStatusRenderer customRenderer = new InventoryStatusRenderer();
-        for (int i = 0; i < inventoryTable.getColumnCount() - 1; i++) {
-            inventoryTable.getColumnModel().getColumn(i).setCellRenderer(customRenderer);
-        }
+        // Sử dụng BadgeRenderer cho cột trạng thái
+        Common.BadgeRenderer badgeRenderer = new Common.BadgeRenderer();
+        badgeRenderer.addBadgeStyle("Bình thường", new Color(39, 174, 96)); // SUCCESS_COLOR
+        badgeRenderer.addBadgeStyle("Còn hàng", new Color(39, 174, 96)); // SUCCESS_COLOR
+        badgeRenderer.addBadgeStyle("Sắp hết", new Color(243, 156, 18)); // WARNING_COLOR
+        badgeRenderer.addBadgeStyle("Hết hàng", new Color(231, 76, 60)); // DANGER_COLOR
+        
+        inventoryTable.getColumnModel().getColumn(5).setCellRenderer(badgeRenderer);
         
         TableColumn actionCol = inventoryTable.getColumnModel().getColumn(6); 
         actionCol.setCellRenderer(new ActionButtonRenderer(true, true, true));
@@ -254,10 +258,7 @@ public class StockPanel extends JPanel {
         tcmCat.getColumn(0).setPreferredWidth(100); tcmCat.getColumn(0).setMaxWidth(150);
         tcmCat.getColumn(1).setPreferredWidth(300);
         
-        CenterRenderer centerRenderer = new CenterRenderer();
-        for (int i = 0; i < categoryTable.getColumnCount() - 1; i++) {
-            tcmCat.getColumn(i).setCellRenderer(centerRenderer);
-        }
+        // Removed CenterRenderer to let smart alignment take effect
 
         TableColumn actionCol = categoryTable.getColumnModel().getColumn(2);
         actionCol.setCellRenderer(new ActionButtonRenderer(false, true, false)); 
@@ -373,10 +374,7 @@ public class StockPanel extends JPanel {
         tcmItem.getColumn(8).setPreferredWidth(90);  
         tcmItem.getColumn(9).setPreferredWidth(90);  
         
-        CenterRenderer centerRenderer = new CenterRenderer();
-        for (int i = 0; i < itemTable.getColumnCount() - 1; i++) {
-            tcmItem.getColumn(i).setCellRenderer(centerRenderer);
-        }
+        // Removed CenterRenderer to let smart alignment take effect
 
         JScrollPane itemScroll = new JScrollPane(itemTable); itemScroll.setPreferredSize(new Dimension(0, 300));
 
@@ -582,10 +580,7 @@ public class StockPanel extends JPanel {
         tcmHistory.getColumn(2).setPreferredWidth(200);
         tcmHistory.getColumn(3).setPreferredWidth(120);
         
-        CenterRenderer centerRenderer = new CenterRenderer();
-        for (int i = 0; i < historyTable.getColumnCount() - 1; i++) {
-            tcmHistory.getColumn(i).setCellRenderer(centerRenderer);
-        }
+        // Removed CenterRenderer to let smart alignment take effect
 
         TableColumn actionCol = historyTable.getColumnModel().getColumn(4);
         actionCol.setCellRenderer(new ActionButtonRenderer(true, false, true));
@@ -618,32 +613,8 @@ public class StockPanel extends JPanel {
         @Override public void setOpaque(boolean isOpaque) { super.setOpaque(false); }
     }
 
-    class CenterRenderer extends DefaultTableCellRenderer {
-        public CenterRenderer() {
-            setHorizontalAlignment(SwingConstants.CENTER);
-        }
-    }
-
-    class InventoryStatusRenderer extends DefaultTableCellRenderer {
-        private final Color WARNING_COLOR = new Color(255, 230, 230); 
-        private final Color WARNING_TEXT_COLOR = new Color(220, 53, 69); 
-        private final Color NORMAL_BG = Color.WHITE;
-        private final Color NORMAL_TEXT = TEXT_DARK;
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            String status = table.getValueAt(row, 5).toString(); 
-            if (!isSelected) { 
-                if (status.equalsIgnoreCase("Hết hàng") || status.equalsIgnoreCase("Sắp hết")) {
-                    c.setBackground(WARNING_COLOR);
-                    if(column == 5) c.setForeground(WARNING_TEXT_COLOR); else c.setForeground(NORMAL_TEXT);
-                } else { c.setBackground(NORMAL_BG); c.setForeground(NORMAL_TEXT); }
-            }
-            setHorizontalAlignment(SwingConstants.CENTER);
-            setBorder(new EmptyBorder(0, 5, 0, 5)); return c;
-        }
-    }
-
+    // CenterRenderer removed
+    // InventoryStatusRenderer removed, replaced by Common.BadgeRenderer
     public interface ActionButtonListener { void onDetail(int row); void onEdit(int row); void onDelete(int row); }
 
     class ActionPanel extends JPanel {
@@ -825,54 +796,120 @@ public class StockPanel extends JPanel {
     public void showBatchDetailDialog(String tenNL, List<Object[]> batches, BatchDisposeListener listener) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Chi tiết các lô hàng: " + tenNL, true);
         dialog.setLayout(new BorderLayout(10, 10));
-        dialog.setSize(700, 450);
+        dialog.setSize(750, 450);
         dialog.setLocationRelativeTo(this);
         
-        String[] cols = {"Mã Lô", "Nhà Cung Cấp", "Ngày Nhập", "Tồn Lô", "Hạn Sử Dụng", "Hành động"};
+        String[] cols = {"Chọn", "Mã Lô", "Nhà Cung Cấp", "Ngày Nhập", "Tồn Lô", "Hạn Sử Dụng"};
         DefaultTableModel model = new DefaultTableModel(null, cols) {
             @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                return columnIndex == 0 ? Boolean.class : Object.class;
+            }
+            @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 5; 
+                return column == 0; 
             }
         };
 
         for (Object[] b : batches) {
-            model.addRow(new Object[]{b[0], b[1], b[2], b[3], b[4], "Xuất Hủy"});
+            model.addRow(new Object[]{false, b[0], b[1], b[2], b[3], b[4]});
         }
 
         JTable table = new JTable(model);
         ComponentUI.styleTable(table, TEXT_DARK, TEXT_DARK, PRIMARY_COLOR);
+        table.getColumnModel().getColumn(0).setPreferredWidth(50);
+        table.getColumnModel().getColumn(0).setMaxWidth(50);
         
-        TableColumn actionCol = table.getColumnModel().getColumn(5);
-        actionCol.setCellRenderer(new ActionButtonRenderer(false, false, true)); 
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        footer.setOpaque(false);
+        JButton btnCreateDispose = ComponentUI.createModernButton("Lập phiếu hủy", new Color(255, 59, 48), Color.WHITE);
         
-        actionCol.setCellEditor(new ActionButtonEditor(new ActionButtonListener() {
-            @Override public void onDelete(int row) {
-                int maLo = (int) table.getValueAt(row, 0);
-                double tonHienTai = (double) table.getValueAt(row, 3);
-                
-                JTextField txtQty = new JTextField();
-                JTextField txtReason = new JTextField();
-                Object[] message = { "Số lượng hủy:", txtQty, "Lý do hủy:", txtReason };
-                
-                int option = JOptionPane.showConfirmDialog(dialog, message, "Xác nhận xuất hủy lô #" + maLo, JOptionPane.OK_CANCEL_OPTION);
-                if (option == JOptionPane.OK_OPTION) {
-                    try {
-                        double qty = Double.parseDouble(txtQty.getText());
-                        String reason = txtReason.getText().trim();
-                        if (qty <= 0 || qty > tonHienTai || reason.isEmpty()) {
-                            JOptionPane.showMessageDialog(dialog, "Dữ liệu không hợp lệ hoặc vượt quá tồn lô!");
-                            return;
-                        }
-                        listener.onDispose(maLo, qty, reason);
-                        dialog.dispose(); 
-                    } catch (Exception e) { JOptionPane.showMessageDialog(dialog, "Vui lòng nhập số hợp lệ!"); }
+        btnCreateDispose.addActionListener(e -> {
+            if (table.isEditing()) table.getCellEditor().stopCellEditing();
+            List<Object[]> selectedBatches = new ArrayList<>();
+            for (int i = 0; i < model.getRowCount(); i++) {
+                Boolean isSelected = (Boolean) model.getValueAt(i, 0);
+                if (isSelected != null && isSelected) {
+                    selectedBatches.add(new Object[]{
+                        model.getValueAt(i, 1), // maLo
+                        model.getValueAt(i, 4)  // tonHienTai
+                    });
                 }
             }
-            @Override public void onEdit(int row) {} @Override public void onDetail(int row) {}
-        }, false, false, true));
+            if (selectedBatches.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Vui lòng chọn ít nhất một lô để lập phiếu hủy!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            showMultiDisposeDialog(dialog, tenNL, selectedBatches, listener);
+        });
+        
+        footer.add(btnCreateDispose);
 
         dialog.add(new JScrollPane(table), BorderLayout.CENTER);
+        dialog.add(footer, BorderLayout.SOUTH);
+        dialog.setVisible(true);
+    }
+    
+    private void showMultiDisposeDialog(JDialog parent, String tenNL, List<Object[]> selectedBatches, BatchDisposeListener listener) {
+        JDialog dialog = new JDialog(parent, "Lập phiếu hủy: " + tenNL, true);
+        dialog.setLayout(new BorderLayout(10, 10));
+        dialog.setSize(600, 400);
+        dialog.setLocationRelativeTo(parent);
+        
+        String[] cols = {"Mã Lô", "Tồn Hiện Tại", "Số Lượng Hủy", "Lý Do Hủy"};
+        DefaultTableModel model = new DefaultTableModel(null, cols) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 2 || column == 3;
+            }
+        };
+        
+        for (Object[] b : selectedBatches) {
+            model.addRow(new Object[]{b[0], b[1], b[1], ""}); 
+        }
+        
+        JTable table = new JTable(model);
+        ComponentUI.styleTable(table, TEXT_DARK, TEXT_DARK, PRIMARY_COLOR);
+        
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        footer.setOpaque(false);
+        JButton btnConfirm = ComponentUI.createModernButton("Xác nhận hủy", new Color(255, 59, 48), Color.WHITE);
+        
+        btnConfirm.addActionListener(e -> {
+            if (table.isEditing()) table.getCellEditor().stopCellEditing();
+            List<java.util.Map<String, Object>> disposes = new ArrayList<>();
+            
+            for (int i = 0; i < model.getRowCount(); i++) {
+                try {
+                    double qty = Double.parseDouble(model.getValueAt(i, 2).toString());
+                    String reason = model.getValueAt(i, 3).toString().trim();
+                    double ton = Double.parseDouble(model.getValueAt(i, 1).toString());
+                    
+                    if (qty <= 0 || qty > ton || reason.isEmpty()) {
+                        JOptionPane.showMessageDialog(dialog, "Dòng " + (i+1) + ": Số lượng hoặc lý do không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    
+                    java.util.Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("maLo", model.getValueAt(i, 0));
+                    map.put("qty", qty);
+                    map.put("reason", reason);
+                    disposes.add(map);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(dialog, "Dòng " + (i+1) + ": Vui lòng nhập số hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+            
+            listener.onDisposeMultiple(disposes);
+            dialog.dispose();
+            parent.dispose();
+        });
+        
+        footer.add(btnConfirm);
+        
+        dialog.add(new JScrollPane(table), BorderLayout.CENTER);
+        dialog.add(footer, BorderLayout.SOUTH);
         dialog.setVisible(true);
     }
 
@@ -900,5 +937,5 @@ public class StockPanel extends JPanel {
         btnFilterWarning.addActionListener(listener);
     }
 
-    public interface BatchDisposeListener { void onDispose(int maLo, double qty, String reason); }
+    public interface BatchDisposeListener { void onDisposeMultiple(List<java.util.Map<String, Object>> disposes); }
 }

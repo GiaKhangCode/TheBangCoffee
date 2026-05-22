@@ -135,4 +135,9 @@ public class OrderService {
     public OrderModel getOrderById(int orderId) {
         return orderDAO.getOrderById(orderId);
     }
+    
+    // Cập nhật giá 1 món
+    public boolean updateOrderDetailPrice(int detailId, int orderId, long newPrice) {
+        return orderDAO.updateOrderDetailPrice(detailId, orderId, newPrice);
+    }
 }

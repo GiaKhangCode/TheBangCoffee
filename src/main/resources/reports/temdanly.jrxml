@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="TemDanLy" pageWidth="160" pageHeight="120" columnWidth="150" leftMargin="5" rightMargin="5" topMargin="5" bottomMargin="5" uuid="22222222-3333-4444-5555-666666666666">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Oracle_Connection"/>
+	
+	<parameter name="p_MaDonHang" class="java.lang.Integer">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	
+	<queryString>
+		<![CDATA[SELECT 
+    sub.*,
+    level as CupIndex
+FROM (
+    SELECT 
+        dh.MaDonHang, 
+        TO_CHAR(dh.NgayDat, 'DD/MM/YYYY HH24:MI') AS NgayDat,
+        sp.TenSanPham, 
+        bt.TenSize, 
+        ctdh.SoLuong,
+        (ctdh.ThanhTien / ctdh.SoLuong) AS DonGia,
+        ctdh.GhiChuMon,
+        ctdh.MaChiTietDon,
+        (SELECT LISTAGG(tp.TenTopping, ', ') WITHIN GROUP (ORDER BY tp.TenTopping)
+         FROM CHI_TIET_TOPPING ctt
+         JOIN TOPPING tp ON ctt.MaTopping = tp.MaTopping
+         WHERE ctt.MaCTHD = ctdh.MaChiTietDon) AS ToppingDiKem
+    FROM DON_HANG dh
+    JOIN CHI_TIET_DON_HANG ctdh ON dh.MaDonHang = ctdh.MaDonHang
+    JOIN BIEN_THE bt ON ctdh.MaBienThe = bt.MaBienThe
+    JOIN SAN_PHAM sp ON bt.MaSanPham = sp.MaSanPham
+    WHERE dh.MaDonHang = $P{p_MaDonHang}
+) sub
+CONNECT BY level <= sub.SoLuong 
+AND PRIOR sub.MaChiTietDon = sub.MaChiTietDon 
+AND PRIOR sys_guid() IS NOT NULL]]>
+	</queryString>
+	
+	<field name="MADONHANG" class="java.math.BigDecimal"/>
+	<field name="NGAYDAT" class="java.lang.String"/>
+	<field name="TENSANPHAM" class="java.lang.String"/>
+	<field name="TENSIZE" class="java.lang.String"/>
+	<field name="SOLUONG" class="java.math.BigDecimal"/>
+	<field name="DONGIA" class="java.math.BigDecimal"/>
+	<field name="GHICHUMON" class="java.lang.String"/>
+	<field name="TOPPINGDIKEM" class="java.lang.String"/>
+	<field name="CUPINDEX" class="java.math.BigDecimal"/>
+
+	<detail>
+		<band height="110" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="150" height="12" uuid="77778888-9999-0000-1111-222233334444"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["THE BANG CAFE & MATCHA"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="12" width="150" height="10" uuid="88889999-0000-1111-2222-333344445555"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{NGAYDAT}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="24" width="150" height="1" uuid="99990000-1111-2222-3333-444455556666"/>
+				<graphicElement>
+					<pen lineStyle="Dashed"/>
+				</graphicElement>
+			</line>
+			<textField textAdjust="StretchHeight">
+				<reportElement x="0" y="27" width="150" height="14" uuid="00001111-2222-3333-4444-555566667777"/>
+				<textElement verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{TENSANPHAM} + ($F{TENSIZE} != null ? " (" + $F{TENSIZE} + ")" : "")]]></textFieldExpression>
+			</textField>
+			
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="0" y="43" width="150" height="35" isRemoveLineWhenBlank="true" uuid="33334444-5555-6666-7777-888899990000">
+					<printWhenExpression><![CDATA[$F{TOPPINGDIKEM} != null || $F{GHICHUMON} != null]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Top">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(($F{TOPPINGDIKEM} != null && !$F{TOPPINGDIKEM}.trim().isEmpty()) ? "Topping: " + $F{TOPPINGDIKEM} + "\n" : "") + (($F{GHICHUMON} != null && !$F{GHICHUMON}.trim().isEmpty()) ? $F{GHICHUMON}.replace(" | ", "\n").replace(" - Ghi", "\nGhi").replace(", Ghi", "\nGhi") : "")]]></textFieldExpression>
+			</textField>
+			
+			<textField pattern="#,##0 đ">
+				<reportElement positionType="FixRelativeToBottom" x="0" y="90" width="75" height="15" uuid="11112222-3333-4444-5555-666677778888"/>
+				<textElement verticalAlignment="Bottom">
+					<font size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{DONGIA}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement positionType="FixRelativeToBottom" x="75" y="90" width="75" height="15" uuid="22223333-4444-5555-6666-777788889999"/>
+				<textElement textAlignment="Right" verticalAlignment="Bottom">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["0972802892"]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

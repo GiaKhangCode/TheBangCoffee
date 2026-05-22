@@ -96,6 +96,8 @@ public class CustomerManagementPanel extends JPanel {
         header.setFont(new Font("Segoe UI", Font.BOLD, 14));
         header.setBackground(new Color(245, 245, 245));
         header.setPreferredSize(new Dimension(100, 40));
+        
+        Common.ComponentUI.applyTableAlignment(customerTable);
 
         JScrollPane scrollPane = new JScrollPane(customerTable);
         scrollPane.getViewport().setBackground(Color.WHITE);
