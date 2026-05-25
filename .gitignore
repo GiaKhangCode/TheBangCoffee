@@ -1,0 +1,87 @@
+# =========================
+# Java / Maven
+# =========================
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven generated files
+dependency-reduced-pom.xml
+.mvn/timing.properties
+
+# =========================
+# Logs / JVM crash logs
+# =========================
+*.log
+logs/
+hs_err_pid*.log
+replay_pid*.log
+
+# =========================
+# Environment / Secrets
+# =========================
+.env
+.env.*
+!.env.example
+
+# Local config files that may contain credentials
+config.properties
+config.local.properties
+src/main/resources/config.properties
+src/main/resources/config.local.properties
+src/main/resources/application-local.properties
+src/main/resources/application-local.yml
+
+# =========================
+# IDE / Editor
+# =========================
+.idea/
+.vscode/
+*.iml
+
+# NetBeans
+nbproject/private/
+nbbuild/
+dist/
+build/
+nbdist/
+.nb-gradle/
+
+# Eclipse / STS
+.project
+.classpath
+.settings/
+
+# VS Code Java
+.factorypath
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# =========================
+# Temporary files
+# =========================
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# =========================
+# Reports generated at runtime
+# =========================
+*.pdf
+*.xlsx
+*.csv
+
+# Keep source report templates if any
+!src/main/resources/reports/**/*.jrxml
+!src/main/resources/reports/**/*.jasper
