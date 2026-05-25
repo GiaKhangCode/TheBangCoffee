@@ -1,18 +1,18 @@
 # =========================
-# Java / Maven
+# Java / Maven build output
 # =========================
 target/
 *.class
 *.jar
 *.war
 *.ear
+dependency-reduced-pom.xml
 
 # Maven generated files
-dependency-reduced-pom.xml
 .mvn/timing.properties
 
 # =========================
-# Logs / JVM crash logs
+# JVM crash / replay logs
 # =========================
 *.log
 logs/
@@ -53,8 +53,6 @@ nbdist/
 .project
 .classpath
 .settings/
-
-# VS Code Java
 .factorypath
 
 # =========================
@@ -76,12 +74,21 @@ temp/
 *.swo
 
 # =========================
-# Reports generated at runtime
+# Runtime generated exports
 # =========================
+exports/
+generated/
 *.pdf
 *.xlsx
 *.csv
 
-# Keep source report templates if any
+# Keep source report templates
 !src/main/resources/reports/**/*.jrxml
 !src/main/resources/reports/**/*.jasper
+
+# =========================
+# Optional local-only folders/files
+# Uncomment if these are only for your local reference/debugging
+# =========================
+# view-tham-khao/
+# GetFunctions.java
