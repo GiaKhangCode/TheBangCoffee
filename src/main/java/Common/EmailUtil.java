@@ -13,8 +13,8 @@ import javax.mail.*;
 import javax.mail.internet.*;
 
 public class EmailUtil {
-    private static final String FROM_EMAIL = "lamnginphat@gmail.com";
-    private static final String APP_PASSWORD = "gmkt emxt fewa ivcb";
+    private static final String FROM_EMAIL = "MAIL_USERNAME";
+    private static final String APP_PASSWORD = "MAIL_PASSWORD";
 
     public static void sendOTP(String toEmail, String otp, String purpose) {
         Properties props = new Properties();
