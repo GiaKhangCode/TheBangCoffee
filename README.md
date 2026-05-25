@@ -1,15 +1,11 @@
 # TheBangCoffee
 
-TheBangCoffee là ứng dụng quản lý quán cà phê viết bằng **Java Swing** và sử dụng **Oracle Database**.
-
-Dự án hiện là project **Maven Java desktop app**, không phải backend Spring Boot và không có frontend Node.js.
+TheBangCoffee là ứng dụng quản lý quán cà phê.
 
 ---
 
 ## 1. Công nghệ sử dụng
 
-- Java Swing
-- Maven
 - Oracle Database
 - Oracle JDBC Driver `ojdbc11`
 - JavaMail / Gmail SMTP
@@ -112,13 +108,13 @@ Password: Admin123
 ```sql
 alter session set "_ORACLE_SCRIPT"=true;
 
-CREATE USER TheBangClone IDENTIFIED BY "Admin123";
+CREATE USER TheBangCoffee_Code IDENTIFIED BY "Admin123";
 
-GRANT CONNECT, RESOURCE TO TheBangClone;
+GRANT CONNECT, RESOURCE TO TheBangCoffee_Code;
 
-ALTER USER TheBangClone QUOTA UNLIMITED ON USERS;
+ALTER USER TheBangCoffee_Code QUOTA UNLIMITED ON USERS;
 
-GRANT CREATE VIEW TO TheBangClone;
+GRANT CREATE VIEW TO TheBangCoffee_Code;
 ```
 
 Sau khi tạo user, đăng nhập lại bằng:
