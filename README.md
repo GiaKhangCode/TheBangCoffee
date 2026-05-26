@@ -1,7 +1,7 @@
 # TheBangCoffee
 
 TheBangCoffee là ứng dụng quản lý quán cà phê.
-
+https://github.com/GiaKhangCode/TheBangCoffee.git
 ---
 
 ## 1. Công nghệ sử dụng
