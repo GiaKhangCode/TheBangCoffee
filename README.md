@@ -46,10 +46,7 @@ TheBangCoffee/
 │   └── test/
 │       └── java/
 │
-├── view-tham-khao/
 ├── COFFEE.sql
-├── query.sql
-├── GetFunctions.java
 ├── pom.xml
 ├── .gitignore
 └── README.md
@@ -67,8 +64,6 @@ Giải thích nhanh:
 - `src/main/resources/images/`: hình ảnh của app
 - `src/main/resources/reports/`: template report
 - `COFFEE.sql`: script database chính
-- `query.sql`: query hỗ trợ
-- `GetFunctions.java`: file tiện ích/test query, không phải luồng chạy chính của app
 
 ---
 
