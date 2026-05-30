@@ -5,6 +5,7 @@ import Common.ValidationUtil;
 import Controller.AccountController;
 import Controller.CustomerController;
 import Controller.PosController; // Import PosController để sử dụng
+import Controller.OrderController;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -42,6 +43,7 @@ public class MainFrame extends JFrame {
     
     // Khai báo PosController để các Controller khác có thể gọi hàm reload
     private PosController posController;
+    private OrderController orderController;
     
     public MainFrame() throws SQLException {
         initComponents();
@@ -242,6 +244,9 @@ public class MainFrame extends JFrame {
     // Getter & Setter cho PosController để reload data từ xa
     public PosController getPosController() { return posController; }
     public void setPosController(PosController posController) { this.posController = posController; }
+
+    public OrderController getOrderController() { return orderController; }
+    public void setOrderController(OrderController orderController) { this.orderController = orderController; }
 
     public void setMenuVisible(String menuKey, boolean isVisible) {
         if (navButtons != null && navButtons.containsKey(menuKey)) {

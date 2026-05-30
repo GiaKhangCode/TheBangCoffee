@@ -26,8 +26,6 @@ public class OrderOptionDialog extends JDialog {
     private boolean isHoliday;
 
     private boolean isConfirmed = false;
-    private boolean isReward = false; 
-    private int availablePoints = 0;  
     private int diemDoiMotLy = 50; 
     
     private VariantModel selectedVariant = null;
@@ -45,26 +43,23 @@ public class OrderOptionDialog extends JDialog {
     private ButtonGroup iceGroup;
     private JTextField txtCustomNote;
     
-    private JLabel lblPoints;
-    private JButton btnRedeem;
+
     
     public interface InventoryValidator {
         String validate(int newQuantity, VariantModel variant, List<ToppingModel> toppings);
     }
     private InventoryValidator inventoryValidator;
 
-    public OrderOptionDialog(Frame owner, ProductModel product, List<VariantModel> variants, List<ToppingModel> toppings, boolean isTakeaway, boolean isHoliday, int availablePoints, int diemDoiMotLy) {
+    public OrderOptionDialog(Frame owner, ProductModel product, List<VariantModel> variants, List<ToppingModel> toppings, boolean isTakeaway, boolean isHoliday, int diemDoiMotLy) {
         super(owner, "Tùy chọn: " + product.getProductName(), true);
         this.product = product;
         this.availableVariants = variants != null ? variants : new ArrayList<>();
         this.availableToppings = toppings != null ? toppings : new ArrayList<>();
         this.isTakeaway = isTakeaway;
         this.isHoliday = isHoliday;
-        this.availablePoints = availablePoints; 
         this.diemDoiMotLy = diemDoiMotLy;
         
         initComponents();
-        updateRedeemState(); 
     }
     
     public void setInventoryValidator(InventoryValidator validator) {
@@ -115,7 +110,6 @@ public class OrderOptionDialog extends JDialog {
                 rb.putClientProperty("variant", v);
                 rb.addActionListener(e -> {
                     selectedVariant = (VariantModel) rb.getClientProperty("variant");
-                    updateRedeemState(); 
                 });
                 
                 sizeGroup.add(rb);
@@ -138,7 +132,6 @@ public class OrderOptionDialog extends JDialog {
                 cb.setFocusPainted(false);
                 
                 cb.putClientProperty("topping", t);
-                cb.addActionListener(e -> updateRedeemState()); 
 
                 toppingCheckboxes.add(cb);
                 toppingPanel.add(cb);
@@ -189,15 +182,6 @@ public class OrderOptionDialog extends JDialog {
         ));
         notePanel.add(txtCustomNote, BorderLayout.CENTER);
         bodyPanel.add(notePanel);
-        
-        JPanel pointsInfoPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 10));
-        pointsInfoPanel.setBackground(Color.WHITE);
-        
-        lblPoints = new JLabel("Điểm HT của bạn: 0 | Cần: 0 điểm");
-        lblPoints.setFont(new Font("Segoe UI", Font.ITALIC, 13));
-        lblPoints.setForeground(new Color(150, 150, 150));
-        pointsInfoPanel.add(lblPoints);
-        bodyPanel.add(pointsInfoPanel);
 
         add(new JScrollPane(bodyPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
 
@@ -230,13 +214,7 @@ public class OrderOptionDialog extends JDialog {
         actionPanel.setOpaque(false);
         
         JButton btnCancel = createModernButton("Hủy", new Color(220, 220, 220), TEXT_DARK);
-        btnRedeem = createModernButton("Quy đổi điểm", REWARD_COLOR, Color.WHITE); 
         JButton btnConfirm = createModernButton("Thêm vào giỏ", PRIMARY_COLOR, Color.WHITE);
-        
-        // [CẬP NHẬT] Ẩn nút đi nếu không có đủ điểm cho ít nhất 1 ly
-        if (availablePoints < diemDoiMotLy) {
-            btnRedeem.setVisible(false);
-        }
 
         btnCancel.addActionListener(e -> dispose());
         
@@ -247,35 +225,10 @@ public class OrderOptionDialog extends JDialog {
             }
             gatherData();
             isConfirmed = true;
-            isReward = false; 
             dispose();
-        });
-        
-        btnRedeem.addActionListener(e -> {
-            if (quantity == 0) { 
-                JOptionPane.showMessageDialog(this, "Vui lòng bấm dấu (+) để thêm số lượng quy đổi!", "Lỗi", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            
-            int pointsNeeded = diemDoiMotLy * quantity;
-
-            int confirm = JOptionPane.showConfirmDialog(this, 
-                "Xác nhận quy đổi " + pointsNeeded + " điểm để lấy " + quantity + " ly miễn phí?", 
-                "Xác nhận quy đổi", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-            
-            if (confirm == JOptionPane.YES_OPTION) {
-                String currentNote = txtCustomNote.getText().trim();
-                txtCustomNote.setText(currentNote.isEmpty() ? "Hàng quy đổi điểm" : currentNote + " | Hàng quy đổi điểm");
-                
-                gatherData();
-                isConfirmed = true;
-                isReward = true; 
-                dispose();
-            }
         });
 
         actionPanel.add(btnCancel);
-        actionPanel.add(btnRedeem); 
         actionPanel.add(btnConfirm);
 
         footerPanel.add(qtyPanel, BorderLayout.WEST);
@@ -305,28 +258,9 @@ public class OrderOptionDialog extends JDialog {
             
             quantity += delta;
             lblQuantity.setText(String.valueOf(quantity));
-            updateRedeemState(); 
         }
     }
     
-    private void updateRedeemState() {
-        int pointsNeeded = diemDoiMotLy * quantity;
-        
-        if (lblPoints != null) {
-            lblPoints.setText(String.format("Điểm HT của bạn: %d | Cần: %d điểm", availablePoints, pointsNeeded));
-        }
-
-        if (btnRedeem != null && btnRedeem.isVisible()) {
-            if (availablePoints >= pointsNeeded && availablePoints > 0 && quantity > 0 && pointsNeeded > 0) {
-                btnRedeem.setEnabled(true);
-                btnRedeem.setBackground(REWARD_COLOR);
-            } else {
-                btnRedeem.setEnabled(false);
-                btnRedeem.setBackground(new Color(200, 200, 200)); 
-            }
-        }
-    }
-
     private void gatherData() {
         selectedToppings.clear();
         for (JCheckBox cb : toppingCheckboxes) {
@@ -390,7 +324,6 @@ public class OrderOptionDialog extends JDialog {
     }
 
     public boolean isConfirmed() { return isConfirmed; }
-    public boolean isReward() { return isReward; } 
     public VariantModel getSelectedVariant() { return selectedVariant; }
     public List<ToppingModel> getSelectedToppings() { return selectedToppings; }
     public int getQuantity() { return quantity; }

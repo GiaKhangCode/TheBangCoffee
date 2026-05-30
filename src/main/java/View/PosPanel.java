@@ -176,8 +176,8 @@ public class PosPanel extends JPanel {
         cartTableModel = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                // Cho phép cột SL (1), Giá (2) và nút Xóa (3) click
-                return column == 1 || column == 2 || column == 3;
+                // Cho phép cột SL (1) và nút Xóa (3) click
+                return column == 1 || column == 3;
             }
         };
         cartTable = new JTable(cartTableModel);

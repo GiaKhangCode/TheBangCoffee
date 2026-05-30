@@ -2,11 +2,15 @@ package Service;
 
 import DatabaseAccessObject.OrderDAO;
 import Model.CartItemModel;
+import Model.CustomerModel;
+import Model.DiscountResultModel;
 import Model.IngredientModel;
 import Model.OrderDetailModel;
 import Model.OrderModel;
 import Model.RecipeModel;
 import Model.ToppingModel;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +29,89 @@ public class OrderService {
         }
  
         return orderDAO.createOrder(accountId, maKhachHang, cart, finalTotal, totalVat, prepStatus, payStatus, isTakeaway, isHoliday, pointsEarned, pointsUsed, discountAmount);
+    }
+    
+    public DiscountResultModel calculateOrderDiscount(String pointsText, CustomerModel currentCustomer, long totalBill, int diemDoiMotLy, int giaTriMotDiem, int tienTichMotDiem, List<CartItemModel> cart) {
+        DiscountResultModel result = new DiscountResultModel();
+        
+        long discountAmount = 0;
+        int pointsUsed = 0;
+        long tierDiscountAmount = 0;
+        int earnedPoints = 0;
+
+        if (pointsText != null && !pointsText.trim().isEmpty() && currentCustomer != null) {
+            try {
+                int p = Integer.parseInt(pointsText.trim());
+                if (p <= 0) {
+                    result.setErrorMessage("Vui lòng nhập số > 0");
+                } else if (p > currentCustomer.getDiemHienTai()) {
+                    result.setErrorMessage("Vượt quá số điểm hiện tại!");
+                } else {
+                    List<Long> eligiblePrices = new ArrayList<>();
+                    if (cart != null) {
+                        for (CartItemModel item : cart) {
+                            if (item.getTotalPrice() > 0 && item.getQuantity() > 0) {
+                                long unitPrice = item.getUnitPrice();
+                                for (int i = 0; i < item.getQuantity(); i++) {
+                                    eligiblePrices.add(unitPrice);
+                                }
+                            }
+                        }
+                        Collections.sort(eligiblePrices);
+                    }
+                    
+                    int maxDrinksInCart = eligiblePrices.size();
+                    int potentialFreeDrinks = p / diemDoiMotLy;
+                    int actualFreeDrinks = Math.min(potentialFreeDrinks, maxDrinksInCart);
+                    
+                    int pointsUsedForDrinks = actualFreeDrinks * diemDoiMotLy;
+                    int leftoverPoints = p - pointsUsedForDrinks;
+                    
+                    long drinksDiscount = 0;
+                    for (int i = 0; i < actualFreeDrinks; i++) {
+                        drinksDiscount += eligiblePrices.get(i);
+                    }
+                    
+                    long cashDiscount = (long) leftoverPoints * giaTriMotDiem;
+                    long discount = drinksDiscount + cashDiscount;
+                    
+                    if (discount > totalBill) {
+                        discount = totalBill;
+                    }
+                    
+                    pointsUsed = p;
+                    discountAmount = discount;
+                    
+                    if (actualFreeDrinks > 0 || cashDiscount > 0) {
+                        String msg = "";
+                        if (actualFreeDrinks > 0) msg += "Quy đổi: " + actualFreeDrinks + " ly miễn phí";
+                        if (cashDiscount > 0) msg += (msg.isEmpty() ? "Giảm: " : " và giảm thêm ") + String.format("%,d đ", cashDiscount);
+                        result.setSuccessMessage(msg);
+                    }
+                }
+            } catch (NumberFormatException ex) {
+                result.setErrorMessage("Dữ liệu không hợp lệ!");
+            }
+        }
+        
+        result.setPointsUsed(pointsUsed);
+        result.setDiscountAmount(discountAmount);
+        
+        long remainingForTier = totalBill - discountAmount;
+        if (remainingForTier > 0 && currentCustomer != null && currentCustomer.getPhanTramChietKhau() > 0) {
+            tierDiscountAmount = (long) (remainingForTier * (currentCustomer.getPhanTramChietKhau() / 100.0));
+        }
+        result.setTierDiscountAmount(tierDiscountAmount);
+        
+        if (currentCustomer != null && tienTichMotDiem > 0) {
+            long paid = totalBill - discountAmount - tierDiscountAmount;
+            if (paid > 0) {
+                earnedPoints = (int) (paid / tienTichMotDiem);
+            }
+        }
+        result.setEarnedPoints(earnedPoints);
+        
+        return result;
     }
     
     public String validateInventory(List<CartItemModel> cart) {

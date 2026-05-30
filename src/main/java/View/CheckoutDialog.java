@@ -1,5 +1,6 @@
 package View;
 
+import Common.ComponentUI;
 import Model.CustomerModel;
 import Service.CustomerService;
 
@@ -15,6 +16,7 @@ import java.awt.*;
 public class CheckoutDialog extends JDialog {
 
     private final Color PRIMARY_COLOR = new Color(67, 142, 104);
+    private final Color TEXT_DARK = new Color(33, 37, 41);
     
     private CustomerService customerService;
     private CustomerModel currentCustomer = null;
@@ -22,11 +24,22 @@ public class CheckoutDialog extends JDialog {
     private long subTotal;
     private double totalVat;
     private long totalBill;
-    private long nonRewardTotal;
     private int giaTriMotDiem;
     private int tienTichMotDiem;
     private int diemDoiMotLy;
     private java.util.List<Model.CartItemModel> currentCart;
+
+    private Runnable onStateChanged;
+
+    public void setOnStateChanged(Runnable callback) {
+        this.onStateChanged = callback;
+    }
+    
+    private void triggerStateChange() {
+        if (onStateChanged != null) {
+            onStateChanged.run();
+        }
+    }
 
     private boolean isConfirmed = false;
     private int pointsUsed = 0;
@@ -62,24 +75,23 @@ public class CheckoutDialog extends JDialog {
 
     private JButton btnConfirm;
 
-    public CheckoutDialog(Frame owner, long subTotal, double totalVat, long totalBill, long nonRewardTotal, int giaTriMotDiem, int tienTichMotDiem, int diemDoiMotLy, java.util.List<Model.CartItemModel> currentCart) {
+    public CheckoutDialog(Frame owner, long subTotal, double totalVat, long totalBill, int giaTriMotDiem, int tienTichMotDiem, int diemDoiMotLy, java.util.List<Model.CartItemModel> currentCart) {
         super(owner, "Thanh Toán & Tạo Đơn", true);
         this.customerService = new CustomerService();
         this.subTotal = subTotal;
         this.totalVat = totalVat;
         this.totalBill = totalBill;
-        this.nonRewardTotal = nonRewardTotal;
         this.giaTriMotDiem = giaTriMotDiem;
         this.tienTichMotDiem = tienTichMotDiem;
         this.diemDoiMotLy = diemDoiMotLy;
         this.currentCart = currentCart;
 
         initComponents();
-        updateSummary();
+        triggerStateChange();
     }
 
     private void initComponents() {
-        setSize(450, 600);
+        setSize(450, 680);
         setLocationRelativeTo(getParent());
         setLayout(new BorderLayout());
         getContentPane().setBackground(Color.WHITE);
@@ -120,11 +132,7 @@ public class CheckoutDialog extends JDialog {
         txtPhone.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtPhone.setPreferredSize(new Dimension(0, 35));
         
-        btnCheckPhone = new JButton("Kiểm tra");
-        btnCheckPhone.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnCheckPhone.setBackground(PRIMARY_COLOR);
-        btnCheckPhone.setForeground(Color.WHITE);
-        btnCheckPhone.setFocusPainted(false);
+        btnCheckPhone = ComponentUI.createModernButton("Kiểm tra", PRIMARY_COLOR, Color.WHITE);
         
         btnCheckPhone.addActionListener(e -> handleCheckCustomer());
         txtPhone.addActionListener(e -> handleCheckCustomer()); // Enter in text field
@@ -143,7 +151,7 @@ public class CheckoutDialog extends JDialog {
             currentCustomer = null;
             pointsUsed = 0;
             discountAmount = 0;
-            updateSummary();
+            triggerStateChange();
             
             revalidate();
             repaint();
@@ -242,11 +250,6 @@ public class CheckoutDialog extends JDialog {
         lblPointsError.setForeground(Color.RED);
         lblPointsError.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        txtPointsToUse.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) { calculateDiscount(); }
-            public void removeUpdate(DocumentEvent e) { calculateDiscount(); }
-            public void changedUpdate(DocumentEvent e) { calculateDiscount(); }
-        });
 
         pointsPanel.add(infoRow);
         pointsPanel.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -313,14 +316,11 @@ public class CheckoutDialog extends JDialog {
         footer.setBackground(Color.WHITE);
         footer.setBorder(new MatteBorder(1, 0, 0, 0, new Color(230, 230, 230)));
 
-        JButton btnCancel = new JButton("Hủy");
+        JButton btnCancel = ComponentUI.createModernButton("Hủy", new Color(241, 243, 245), TEXT_DARK);;
         btnCancel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         btnCancel.addActionListener(e -> dispose());
 
-        btnConfirm = new JButton("XÁC NHẬN TẠO ĐƠN");
-        btnConfirm.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnConfirm.setBackground(PRIMARY_COLOR);
-        btnConfirm.setForeground(Color.WHITE);
+        btnConfirm = ComponentUI.createModernButton("XÁC NHẬN TẠO ĐƠN", PRIMARY_COLOR, Color.WHITE);
         btnConfirm.addActionListener(e -> {
             if (lblPointsError.getText().trim().length() > 0 && lblPointsError.getForeground().equals(Color.RED)) {
                 JOptionPane.showMessageDialog(this, "Số điểm sử dụng không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -371,7 +371,7 @@ public class CheckoutDialog extends JDialog {
         
         pointsUsed = 0;
         discountAmount = 0;
-        updateSummary();
+        triggerStateChange();
         revalidate();
         repaint();
     }
@@ -388,8 +388,9 @@ public class CheckoutDialog extends JDialog {
         try {
             CustomerModel newCustomer = customerService.registerNewCustomer(phone, name);
             if (newCustomer != null) {
-                JOptionPane.showMessageDialog(this, "Đăng ký thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Đăng ký thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                 handleCheckCustomer(); // Reload customer info
+                triggerStateChange();
             } else {
                 JOptionPane.showMessageDialog(this, "Đăng ký thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
@@ -408,123 +409,55 @@ public class CheckoutDialog extends JDialog {
             pointsUsed = 0;
             discountAmount = 0;
             lblPointsError.setText(" ");
-            updateSummary();
+            triggerStateChange();
         }
     }
 
-    private java.util.List<Long> getEligibleItemPrices() {
-        java.util.List<Long> prices = new java.util.ArrayList<>();
-        if (currentCart != null) {
-            for (Model.CartItemModel item : currentCart) {
-                if (!item.isReward() && item.getTotalPrice() > 0) {
-                    long unitPrice = item.getUnitPrice();
-                    for (int i = 0; i < item.getQuantity(); i++) {
-                        prices.add(unitPrice);
-                    }
-                }
-            }
-        }
-        java.util.Collections.sort(prices); 
-        return prices;
+    public Model.CustomerModel getCurrentCustomer() {
+        return currentCustomer;
     }
 
-    private void calculateDiscount() {
-        if (!chkUsePoints.isSelected() || currentCustomer == null) return;
-        
-        String text = txtPointsToUse.getText().trim();
-        if (text.isEmpty()) {
-            pointsUsed = 0;
-            discountAmount = 0;
+    public void addPointsInputListener(javax.swing.event.DocumentListener listener) {
+        txtPointsToUse.getDocument().addDocumentListener(listener);
+    }
+
+    public String getPointsInputText() {
+        if (!chkUsePoints.isSelected()) return "";
+        return txtPointsToUse.getText();
+    }
+
+    public void updateDiscountUI(Model.DiscountResultModel result) {
+        if (result.getErrorMessage() != null && !result.getErrorMessage().isEmpty()) {
+            lblPointsError.setForeground(Color.RED);
+            lblPointsError.setText(result.getErrorMessage());
+            btnConfirm.setEnabled(false);
+        } else if (result.getSuccessMessage() != null && !result.getSuccessMessage().isEmpty()) {
+            lblPointsError.setForeground(new Color(39, 174, 96)); // Màu xanh lá
+            lblPointsError.setText(result.getSuccessMessage());
+            btnConfirm.setEnabled(true);
+        } else {
             lblPointsError.setText(" ");
             btnConfirm.setEnabled(true);
-            updateSummary();
-            return;
         }
-
-        try {
-            int p = Integer.parseInt(text);
-            if (p <= 0) {
-                lblPointsError.setForeground(Color.RED);
-                lblPointsError.setText("Vui lòng nhập số > 0");
-                btnConfirm.setEnabled(false);
-                return;
-            }
-            if (p > currentCustomer.getDiemHienTai()) {
-                lblPointsError.setForeground(Color.RED);
-                lblPointsError.setText("Vượt quá số điểm hiện tại!");
-                btnConfirm.setEnabled(false);
-                return;
-            }
-
-            java.util.List<Long> eligiblePrices = getEligibleItemPrices();
-            int maxDrinksInCart = eligiblePrices.size();
-
-            int potentialFreeDrinks = p / diemDoiMotLy;
-            int actualFreeDrinks = Math.min(potentialFreeDrinks, maxDrinksInCart);
-
-            int pointsUsedForDrinks = actualFreeDrinks * diemDoiMotLy;
-            int leftoverPoints = p - pointsUsedForDrinks;
-
-            long drinksDiscount = 0;
-            for (int i = 0; i < actualFreeDrinks; i++) {
-                drinksDiscount += eligiblePrices.get(i);
-            }
-
-            long cashDiscount = (long) leftoverPoints * giaTriMotDiem;
-            long discount = drinksDiscount + cashDiscount;
-
-            if (discount > totalBill) {
-                discount = totalBill;
-            }
-
-            if (actualFreeDrinks > 0 || cashDiscount > 0) {
-                lblPointsError.setForeground(new Color(39, 174, 96)); // Màu xanh lá
-                String msg = "";
-                if (actualFreeDrinks > 0) msg += "Quy đổi: " + actualFreeDrinks + " ly miễn phí";
-                if (cashDiscount > 0) msg += (msg.isEmpty() ? "Giảm: " : " và giảm thêm ") + String.format("%,d đ", cashDiscount);
-                lblPointsError.setText(msg);
-            } else {
-                lblPointsError.setText(" ");
-            }
-
-            btnConfirm.setEnabled(true);
-            pointsUsed = p;
-            discountAmount = discount;
-            updateSummary();
-
-        } catch (NumberFormatException ex) {
-            lblPointsError.setForeground(Color.RED);
-            lblPointsError.setText("Dữ liệu không hợp lệ!");
-            btnConfirm.setEnabled(false);
-        }
-    }
-
-    private void updateSummary() {
+        
+        pointsUsed = result.getPointsUsed();
+        discountAmount = result.getDiscountAmount();
+        tierDiscountAmount = result.getTierDiscountAmount();
+        
         lblSubtotal.setText(String.format("%,d đ", subTotal));
         lblVat.setText(String.format("%,.0f đ", totalVat));
         lblTotalBill.setText(String.format("%,d đ", totalBill));
-        lblDiscount.setText(String.format("-%,d đ", discountAmount));
         
-        tierDiscountAmount = 0;
-        long remainingForTier = totalBill - discountAmount;
-        if (remainingForTier > 0 && currentCustomer != null && currentCustomer.getPhanTramChietKhau() > 0) {
-            tierDiscountAmount = (long) (remainingForTier * (currentCustomer.getPhanTramChietKhau() / 100.0));
-        }
+        lblDiscount.setText(String.format("-%,d đ", discountAmount));
         lblTierDiscount.setText(String.format("-%,d đ", tierDiscountAmount));
         
-        long finalAmt = remainingForTier - tierDiscountAmount;
+        long finalAmt = totalBill - discountAmount - tierDiscountAmount;
         if (finalAmt < 0) finalAmt = 0;
         lblFinalTotal.setText(String.format("%,d đ", finalAmt));
         
-        int earned = 0;
-        if (currentCustomer != null && tienTichMotDiem > 0) {
-            long paid = nonRewardTotal - discountAmount - tierDiscountAmount;
-            if (paid > 0) {
-                earned = (int) (paid / tienTichMotDiem);
-            }
-        }
-        lblEarnedPoints.setText(String.format("+%d điểm", earned));
+        lblEarnedPoints.setText(String.format("+%d điểm", result.getEarnedPoints()));
     }
+
 
     public boolean isConfirmed() { return isConfirmed; }
     public int getCustomerId() { return currentCustomer != null ? currentCustomer.getMaKH() : -1; }

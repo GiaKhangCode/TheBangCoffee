@@ -235,6 +235,7 @@ public class AccountController {
             roleController.hiddenButton();
             new ProductController(mainFrame);
             new PosController(mainFrame);
+            new OrderController(mainFrame);
             new DashboardController(mainFrame);
             
             this.setRoleController(roleController);

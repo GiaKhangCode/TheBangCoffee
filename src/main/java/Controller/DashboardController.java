@@ -2,11 +2,17 @@ package Controller;
 
 import Service.ReportService;
 import Service.RoleService;
+import Service.ExcelExportService;
 import Model.SessionManager;
 import View.DashboardPanel;
 import View.MainFrame;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.File;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Date;
 
 public class DashboardController {
     
@@ -14,12 +20,20 @@ public class DashboardController {
     private DashboardPanel dashboardPanel;
     private ReportService reportService;
     private RoleService roleService;
+    private ExcelExportService excelExportService;
+    
+    // State cho ngày tùy chỉnh
+    private Date revStartDate = null;
+    private Date revEndDate = null;
+    private Date cusStartDate = null;
+    private Date cusEndDate = null;
 
     public DashboardController(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
         this.dashboardPanel = mainFrame.getDashboardPanel();
         this.reportService = new ReportService();
         this.roleService = new RoleService();
+        this.excelExportService = new ExcelExportService();
         
         try {
             hiddenButton();
@@ -40,6 +54,8 @@ public class DashboardController {
                 // Gọi hộp thoại chọn ngày lên
                 java.util.Date[] dates = dashboardPanel.showCustomDateDialog();
                 if (dates != null) {
+                    revStartDate = dates[0];
+                    revEndDate = dates[1];
                     // Nếu người dùng chọn ngày thành công, truyền vào hàm vẽ biểu đồ Custom
                     loadCustomRevenueStats(dates[0], dates[1]);
                 }
@@ -58,6 +74,8 @@ public class DashboardController {
             if(selectedFilter.contains("Tùy chỉnh")) {
                 java.util.Date[] dates = dashboardPanel.showCustomDateDialog();
                 if (dates != null) {
+                    cusStartDate = dates[0];
+                    cusEndDate = dates[1];
                     loadCustomCustomerStats(dates[0], dates[1]);
                 }
             } else {
@@ -65,12 +83,58 @@ public class DashboardController {
             }
         });
         
-        // --- SỰ KIỆN LÀM MỚI BÁO CÁO ---
         this.dashboardPanel.addRefreshListener(e -> {
             refreshData();
         });
         
+        // --- SỰ KIỆN XUẤT EXCEL ---
+        this.dashboardPanel.addExportExcelListener(e -> {
+            exportToExcel();
+        });
+        
         loadData();
+    }
+    
+    private void exportToExcel() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Chọn vị trí lưu file Excel");
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx");
+        fileChooser.setFileFilter(filter);
+        
+        int userSelection = fileChooser.showSaveDialog(dashboardPanel);
+        
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            String filePath = fileToSave.getAbsolutePath();
+            if (!filePath.toLowerCase().endsWith(".xlsx")) {
+                filePath += ".xlsx";
+            }
+            
+            try {
+                String revFilter = dashboardPanel.getSelectedRevenueFilter();
+                String cusFilter = dashboardPanel.getSelectedCustomerFilter();
+                
+                boolean success = excelExportService.exportDashboardDataToExcel(
+                    filePath, 
+                    revFilter, 
+                    cusFilter, 
+                    reportService,
+                    revStartDate,
+                    revEndDate,
+                    cusStartDate,
+                    cusEndDate
+                );
+                
+                if (success) {
+                    JOptionPane.showMessageDialog(dashboardPanel, "Xuất file Excel thành công!\nLưu tại: " + filePath, "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(dashboardPanel, "Xuất file Excel thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(dashboardPanel, "Lỗi khi xuất file Excel:\n" + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
     private void loadData() {

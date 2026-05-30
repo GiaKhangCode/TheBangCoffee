@@ -1,7 +1,7 @@
 package View;
 
-import Model.ProductListModel;
 import Model.ProductModel;
+import java.util.List;
 import Controller.CategoryController;
 import Controller.ToppingController;
 
@@ -181,9 +181,9 @@ public class MenuPanel extends JPanel {
         public boolean getScrollableTracksViewportHeight() { return false; }
     }
 
-    public void displayProductList(ProductListModel list) {
+    public void displayProductList(List<ProductModel> list) {
         gridPanel.removeAll();
-        for (ProductModel p : list.getProductList()) {
+        for (ProductModel p : list) {
             gridPanel.add(createProductCard(p));
         }
         gridPanel.revalidate();

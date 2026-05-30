@@ -12,9 +12,6 @@ public class CartItemModel {
     private String note;
     private boolean isTakeaway = false;
     private boolean isHoliday = false;
-    // [MỚI] Biến xác định đây có phải là hàng quy đổi điểm không
-    private boolean isReward = false;
-    private Long customRowPrice = null;
  
     public CartItemModel(ProductModel product, VariantModel selectedVariant, List<ToppingModel> selectedToppings, int quantity, String note) {
         this.cartItemId = java.util.UUID.randomUUID().toString(); 
@@ -28,14 +25,8 @@ public class CartItemModel {
         this.isTakeaway = isTakeaway;
         this.isHoliday = isHoliday;
     }
-    // [MỚI] Getter/Setter cho isReward
-    public boolean isReward() { return isReward; }
-    public void setReward(boolean reward) { this.isReward = reward; }
-    
-    public void setCustomRowPrice(Long price) { this.customRowPrice = price; }
  
     public long getMainSellingPrice() {
-        if (isReward) return 0; // Hàng đổi điểm giá 0đ
         if (selectedVariant != null) {
             if (isHoliday) return selectedVariant.getHolidayPrice();
             if (isTakeaway) return selectedVariant.getTakeawayPrice();
@@ -52,7 +43,6 @@ public class CartItemModel {
     }
  
     public long getUnitPrice() {
-        if (isReward) return 0; // Đã đổi điểm thì Topping cũng free (hoặc bạn có thể tính tiền topping tùy ý, ở đây set free toàn bộ ly)
         long basePrice = getMainSellingPrice();
         long toppingsPrice = 0;
         for (ToppingModel t : selectedToppings) {
@@ -61,14 +51,12 @@ public class CartItemModel {
         return basePrice + toppingsPrice;
     }
     public double getMainVatAmount() {
-        if (isReward) return 0;
         long basePrice = getMainSellingPrice();
         double vatRate = product.getVat(); 
         double priceBeforeTax = basePrice / (1.0 + (vatRate / 100.0));
         return (basePrice - priceBeforeTax) * quantity;
     }
     public double getToppingsVatAmount() {
-        if (isReward) return 0;
         double totalToppingVat = 0;
         for (ToppingModel t : selectedToppings) {
             double vatRate = t.getVat(); 
@@ -79,7 +67,6 @@ public class CartItemModel {
     }
  
     public long getTotalPrice() {
-        if (customRowPrice != null) return customRowPrice;
         return getUnitPrice() * quantity;
     }
     public double getTotalVatAmount() {
@@ -88,10 +75,7 @@ public class CartItemModel {
  
     public String getDisplayName() {
         StringBuilder sb = new StringBuilder();
-        sb.append("<html><b>").append(product.getProductName()).append("</b>");
-        // [MỚI] Hiển thị icon hộp quà nếu là hàng đổi điểm
-        if (isReward) sb.append(" <span style='color:#e67e22'>[🎁 QUÀ TẶNG]</span>");
-        sb.append("<br>");
+        sb.append("<html><b>").append(product.getProductName()).append("</b><br>");
         sb.append("<small style='color:gray'>");
         if (selectedVariant != null) sb.append("Size ").append(selectedVariant.getSizeName());
         if (!selectedToppings.isEmpty()) {
@@ -117,10 +101,8 @@ public class CartItemModel {
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
     public String getNote() { return note; }
-    public boolean isSameItem(ProductModel otherProduct, VariantModel otherVariant, List<ToppingModel> otherToppings, String otherNote, boolean otherIsReward) {
+    public boolean isSameItem(ProductModel otherProduct, VariantModel otherVariant, List<ToppingModel> otherToppings, String otherNote) {
         if (this.product.getProductID() != otherProduct.getProductID()) return false;
-        // [MỚI] Không gộp chung hàng mua và hàng tặng
-        if (this.isReward != otherIsReward) return false;
  
         if (this.selectedVariant == null && otherVariant != null) return false;
         if (this.selectedVariant != null && otherVariant == null) return false;

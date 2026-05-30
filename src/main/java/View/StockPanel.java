@@ -477,7 +477,7 @@ public class StockPanel extends JPanel {
     
     public Object[] showAddIngredientDialog(List<IngredientTypeModel> categories) {
         JTextField txtName = new JTextField();
-        JComboBox<String> cbUom = new JComboBox<>(new String[]{"kg", "gram", "lít", "ml", "cái"});
+        JComboBox<String> cbUom = new JComboBox<>(new String[]{"kg", "gram", "lít", "ml", "cái", "trái"});
         JTextField txtThres = new JTextField("0");
 
         JPanel panel = new JPanel(new GridLayout(0, 1, 5, 5));

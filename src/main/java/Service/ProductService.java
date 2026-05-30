@@ -1,7 +1,7 @@
 package Service;
 
 import DatabaseAccessObject.ProductDAO;
-import Model.ProductListModel;
+import Model.ProductModel;
 import Model.VariantModel;
 import java.io.File;
 import java.sql.SQLException;
@@ -16,7 +16,7 @@ public class ProductService {
         productDAO = new ProductDAO();
     }
     
-    public ProductListModel getProductList(){
+    public List<ProductModel> getProductList(){
         return productDAO.getAllProduct();
     }
     

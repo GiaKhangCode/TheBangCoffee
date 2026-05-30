@@ -1635,7 +1635,7 @@ public class RolePanel extends JPanel {
     }
 
     class AccountActionPanel extends JPanel {
-        protected JButton btnToggle = new JButton("Vô hiệu hoá");
+        protected JButton btnToggle = new JButton("Khoá TK");
         protected JButton btnEdit = new JButton("Sửa");
 
         public AccountActionPanel() {
@@ -1655,7 +1655,7 @@ public class RolePanel extends JPanel {
             btnToggle.setBackground(Color.WHITE);
             btnToggle.setBorder(BorderFactory.createLineBorder(new Color(255, 140, 0), 1));
             btnToggle.setFocusPainted(false);
-            btnToggle.setPreferredSize(new Dimension(100, 22));
+            btnToggle.setPreferredSize(new Dimension(70, 22));
             btnToggle.setCursor(new Cursor(Cursor.HAND_CURSOR));
             
             add(btnEdit);

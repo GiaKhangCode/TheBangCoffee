@@ -34,8 +34,7 @@ public class PayOSService {
         public long orderCode;
     }
 
-    public PayOSService() {
-    }
+    public PayOSService() {}
 
     private String createSignature(String data) throws Exception {
         Mac sha256_HMAC = Mac.getInstance("HmacSHA256");

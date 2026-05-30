@@ -342,6 +342,10 @@ public void onEdit(int row) {
                 // [SỬA] Reload lại từ DB để xác nhận dữ liệu đã được lưu đúng
                 loadRules();
                 
+                if (mainFrame != null && mainFrame.getPosController() != null) {
+                    mainFrame.getPosController().reloadPosData();
+                }
+                
                 JOptionPane.showMessageDialog(loyaltyView, "Lưu Tỷ lệ quy đổi thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(loyaltyView, "Tỷ lệ quy đổi phải là số nguyên dương lớn hơn 0!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);

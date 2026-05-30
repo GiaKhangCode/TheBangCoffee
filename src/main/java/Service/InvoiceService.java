@@ -1,13 +1,16 @@
 package Service;
 
+import java.awt.image.BufferedImage;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.view.JasperViewer;
 
 import javax.swing.*;
 import java.io.InputStream;
+import java.net.URL;
 import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
+import javax.imageio.ImageIO;
 
 public class InvoiceService {
 
@@ -18,7 +21,7 @@ public class InvoiceService {
      * @param qrImage Hình ảnh QR Code động (nếu có, null nếu thanh toán tiền mặt)
      * @param isPaid Xác định đơn hàng đã thanh toán hay chưa (nếu đã thanh toán sẽ không hiển thị QR Code tĩnh dự phòng)
      */
-    public void printInvoice(int maDonHang, boolean isPrintDirectly, java.awt.image.BufferedImage qrImage, boolean isPaid) {
+    public void printInvoice(int maDonHang, boolean isPrintDirectly, BufferedImage qrImage, boolean isPaid) {
         try (Connection conn = ConnectDatabase.ConnectionUtils.getMyConnection()) {
             
             // 1. Đọc file thiết kế XML từ thư mục resources
@@ -40,9 +43,9 @@ public class InvoiceService {
             } else if (!isPaid) {
                 // Load default static QR if null AND order is not paid
                 try {
-                    java.net.URL defaultQrUrl = getClass().getResource("/images/qr_code.jpg");
+                    URL defaultQrUrl = getClass().getResource("/images/qr_code.jpg");
                     if (defaultQrUrl != null) {
-                        parameters.put("p_QRCodeImage", javax.imageio.ImageIO.read(defaultQrUrl));
+                        parameters.put("p_QRCodeImage", ImageIO.read(defaultQrUrl));
                     }
                 } catch (Exception ex) {
                     // Ignore

@@ -1,6 +1,7 @@
 package View;
 
 import Common.AutoCompleteComboBox;
+import Common.ComponentUI;
 import Model.ToppingModel;
 import Model.VariantModel;
 import Model.RecipeModel; 
@@ -182,7 +183,7 @@ public class ProductEditDialog extends JDialog {
         // Biến thể
         JPanel variantPanel = createSectionPanel("Biến thể (Size & Giá)");
         variantPanel.setLayout(new BorderLayout(0, 5));
-        btnAddVariant = new JButton("+ Thêm Size");
+        btnAddVariant = ComponentUI.createModernButton("+ Thêm Size", PRIMARY_COLOR, Color.WHITE);
         JPanel varCtrlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         varCtrlPanel.setOpaque(false); varCtrlPanel.add(btnAddVariant);
         
@@ -290,7 +291,7 @@ public class ProductEditDialog extends JDialog {
         };
         recipeTable = new JTable(recipeModel);
         Common.ComponentUI.applyTableAlignment(recipeTable);
-        recipeTable.setRowHeight(30); recipeTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        recipeTable.setRowHeight(40); recipeTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         recipeTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         recipeTable.getTableHeader().setBackground(new Color(242, 242, 242));
         

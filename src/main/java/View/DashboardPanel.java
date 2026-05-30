@@ -41,6 +41,7 @@ public class DashboardPanel extends JPanel {
 
     private JTabbedPane tabbedPane;
     private JButton btnRefresh;
+    private JButton btnExportExcel; // Thêm nút Xuất Excel
     
     // Khai báo Báo Cáo Doanh Thu
     private StatCard cardTotalRevenue;
@@ -92,7 +93,17 @@ public class DashboardPanel extends JPanel {
         btnRefresh = ComponentUI.createModernButton(" Làm mới", PRIMARY_COLOR, Color.WHITE);
         btnRefresh.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
         btnRefresh.setPreferredSize(new Dimension(140, 35));
-        headerPanel.add(btnRefresh, BorderLayout.EAST);
+        
+        btnExportExcel = ComponentUI.createModernButton(" Xuất Excel", PRIMARY_COLOR, Color.WHITE); // Màu xanh lá Excel
+        btnExportExcel.setFont(new Font("Segoe UI", Font.BOLD, normalFont));
+        btnExportExcel.setPreferredSize(new Dimension(140, 35));
+
+        JPanel rightActionsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rightActionsPanel.setOpaque(false);
+        rightActionsPanel.add(btnExportExcel);
+        rightActionsPanel.add(btnRefresh);
+
+        headerPanel.add(rightActionsPanel, BorderLayout.EAST);
 
         add(headerPanel, BorderLayout.NORTH);
 
@@ -481,6 +492,10 @@ public class DashboardPanel extends JPanel {
 
     public void addRefreshListener(ActionListener listener) {
         btnRefresh.addActionListener(listener);
+    }
+    
+    public void addExportExcelListener(ActionListener listener) {
+        btnExportExcel.addActionListener(listener);
     }
 
     public void setSelectedRevenueFilter(String filter) { cbFilterRevenue.setSelectedItem(filter); }

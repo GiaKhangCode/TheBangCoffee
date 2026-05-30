@@ -94,7 +94,7 @@ public class OrderDAO {
                         long totalToppingPrice = 0;
                         if (item.getSelectedToppings() != null && !item.getSelectedToppings().isEmpty()) {
                             for (ToppingModel topping : item.getSelectedToppings()) {
-                                long toppingPrice = item.isReward() ? 0 : topping.getPrice();
+                                long toppingPrice = topping.getPrice();
                                 totalToppingPrice += toppingPrice;
                             }
                         }
@@ -125,7 +125,7 @@ public class OrderDAO {
                         if (item.getSelectedToppings() != null && !item.getSelectedToppings().isEmpty()) {
                             for (ToppingModel topping : item.getSelectedToppings()) {
                                 double toppingVatRate = topping.getVat();
-                                long toppingPrice = item.isReward() ? 0 : topping.getPrice();
+                                long toppingPrice = topping.getPrice();
                                 double toppingPriceBeforeTax = toppingPrice / (1.0 + (toppingVatRate / 100.0));
                                 double toppingTax = toppingPrice - toppingPriceBeforeTax;
 

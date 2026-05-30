@@ -1,7 +1,6 @@
 package DatabaseAccessObject;
 
 import static ConnectDatabase.ConnectionUtils.getMyConnection;
-import Model.ProductListModel;
 import Model.ProductModel;
 import Model.VariantModel;
 import java.awt.Image;
@@ -20,8 +19,8 @@ import java.util.List;
 import javax.swing.ImageIcon;
 
 public class ProductDAO {
-    public ProductListModel getAllProduct() {
-        ProductListModel productList = new ProductListModel();
+    public List<ProductModel> getAllProduct() {
+        List<ProductModel> productList = new ArrayList<>();
         
         String sqlProduct = "SELECT SP.MaSanPham, SP.TenSanPham, SP.TenAnhSanPham, SP.KieuDuLieuAnh, " +
                             "SP.TrangThai AS TrangThaiSP, LSP.TenLoaiSanPham, LSP.TrangThai AS TrangThaiLoai, " +
@@ -73,7 +72,7 @@ public class ProductDAO {
                     }
                 }
                 
-                productList.addProduct(product);
+                productList.add(product);
             }
         } catch (Exception e){
             e.printStackTrace();

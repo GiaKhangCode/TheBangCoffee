@@ -1,6 +1,5 @@
 package Controller;
 
-import Model.ProductListModel;
 import Model.ProductModel;
 import Model.RecipeModel;
 import Model.ToppingModel;
@@ -29,7 +28,7 @@ public class ProductController {
     private ProductService productService;
     private MenuPanel menuPanel;
     private MainFrame mainFrame;
-    private ProductListModel productList;
+    private List<ProductModel> productList;
     private List<ProductModel> allProducts;
     private CategoryService categoryService;
     private IngredientService ingredientService;
@@ -312,8 +311,8 @@ public class ProductController {
     private void loadMainMenuData() {
         productList = productService.getProductList();
         
-        if (productList != null && productList.getProductList() != null) {
-            allProducts = new ArrayList<>(productList.getProductList()); 
+        if (productList != null) {
+            allProducts = new ArrayList<>(productList); 
         } else {
             allProducts = new ArrayList<>();
         }
@@ -389,12 +388,12 @@ public class ProductController {
             keyword = "";
         }
 
-        ProductListModel filteredModel = new ProductListModel();
+        List<ProductModel> filteredModel = new ArrayList<>();
         
         for (ProductModel p : allProducts) {
             if (p.getProductName().toLowerCase().contains(keyword) || 
                 p.getCategoryName().toLowerCase().contains(keyword)) {
-                filteredModel.addProduct(p); 
+                filteredModel.add(p); 
             }
         }
         
