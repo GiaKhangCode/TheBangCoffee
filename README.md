@@ -1,10 +1,20 @@
-# TheBangCoffee
+<div align="center">
+<h1>☕ TheBangCoffee</h1>
+</div>
 
-TheBangCoffee là ứng dụng quản lý quán cà phê.
-https://github.com/GiaKhangCode/TheBangCoffee.git
+> **Ứng dụng quản lý quán cà phê**
+> 
+> *TheBangCoffee là giải pháp phần mềm Desktop toàn diện được phát triển trên nền tảng Java Swing, thiết kế chuyên biệt để hỗ trợ tối ưu hóa quy trình quản lý và vận hành quán cà phê. Hệ thống mang đến trải nghiệm mượt mà với đầy đủ các tính năng thiết yếu bao gồm: xử lý đơn hàng nhanh chóng, thanh toán tự động tích hợp mã QR qua PayOS, quản lý dữ liệu bảo mật trên Oracle Database, thống kê doanh thu trực quan, xuất báo cáo chuyên nghiệp và hệ thống gửi thông báo OTP tự động qua Email.*
+
 ---
 
-## 1. Công nghệ sử dụng
+<div align="center">
+  <img src="figs/order.png" alt="TheBangCoffee Interface">
+</div>
+
+---
+
+## 🛠️ 1. Công nghệ sử dụng
 
 - Java Desktop App
 - Java Swing
@@ -22,7 +32,7 @@ https://github.com/GiaKhangCode/TheBangCoffee.git
 
 ---
 
-## 2. Cấu trúc thư mục
+## 📁 2. Cấu trúc thư mục
 
 ```txt
 TheBangCoffee/
@@ -67,7 +77,7 @@ Giải thích nhanh:
 
 ---
 
-## 3. Yêu cầu cài đặt
+## ⚙️ 3. Yêu cầu cài đặt
 
 Cần cài trước:
 
@@ -102,7 +112,7 @@ hoặc:
 
 ---
 
-## 4. Clone project
+## 🚀 4. Clone project
 
 ```bash
 git clone https://github.com/GiaKhangCode/TheBangCoffee.git
@@ -111,7 +121,7 @@ cd TheBangCoffee
 
 ---
 
-## 5. Tạo Oracle user/schema
+## 👤 5. Tạo Oracle user/schema
 
 Code kết nối database hiện tại đang dùng thông tin mặc định:
 
@@ -146,7 +156,7 @@ Password: Admin123
 
 ---
 
-## 6. Import database
+## 💾 6. Import database
 
 Chạy file SQL chính:
 
@@ -166,7 +176,7 @@ Sau đó có thể dùng `query.sql` để kiểm tra dữ liệu hoặc chạy 
 
 ---
 
-## 7. Cấu hình Gmail để gửi OTP/email
+## 📧 7. Cấu hình Gmail để gửi OTP/email
 
 Project có chức năng gửi email bằng Gmail SMTP thông qua JavaMail.
 
@@ -181,7 +191,7 @@ private static final String FROM_EMAIL = System.getenv("MAIL_USERNAME");
 private static final String APP_PASSWORD = System.getenv("MAIL_PASSWORD");
 ```
 
-### Tạo Gmail App Password
+### 🔑 Tạo Gmail App Password
 
 Sử dụng **Google App Password**.
 
@@ -199,8 +209,7 @@ https://myaccount.google.com/apppasswords
 
 ---
 
-
-## 8. Cấu hình PayOS nếu app có dùng thanh toán
+## 💳 8. Cấu hình PayOS nếu app có dùng thanh toán
 
 Java:
 
@@ -212,9 +221,9 @@ String checksumKey = System.getenv("PAYOS_CHECKSUM_KEY");
 
 ---
 
-## 9. Một số lỗi thường gặp
+## 🐛 9. Một số lỗi thường gặp
 
-### Lỗi không kết nối được Oracle
+### ❌ Lỗi không kết nối được Oracle
 
 Kiểm tra:
 
@@ -243,7 +252,7 @@ sang dạng service name:
 jdbc:oracle:thin:@localhost:1521/XEPDB1
 ```
 
-### Lỗi `Unsupported class file major version`
+### ❌ Lỗi `Unsupported class file major version`
 
 Nguyên nhân thường là JDK không đúng phiên bản.
 
@@ -259,7 +268,7 @@ Cách xử lý:
 - Cài JDK 22
 - Hoặc đổi `maven.compiler.release` trong `pom.xml` về phiên bản JDK đang dùng
 
-### Lỗi gửi email thất bại
+### ❌ Lỗi gửi email thất bại
 
 Kiểm tra:
 
@@ -294,7 +303,7 @@ echo $MAIL_USERNAME
 
 Không nên in `MAIL_PASSWORD` nếu đang quay màn hình hoặc chia sẻ máy.
 
-### Lỗi thiếu dependency Maven
+### ❌ Lỗi thiếu dependency Maven
 
 Chạy lại:
 
